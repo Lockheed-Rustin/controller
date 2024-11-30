@@ -1,13 +1,17 @@
-use drone_networks::controller::SimulationController;
-use eframe::egui::{vec2, CentralPanel, Context, Key, Label, ScrollArea, Sense, SidePanel, TextEdit, TextStyle, Ui, Window};
 use std::collections::{HashMap, HashSet};
+use eframe::egui::{
+    vec2, CentralPanel, Context, CursorIcon, Key, Label, ScrollArea, Sense, SidePanel, TextEdit,
+    TextStyle, Ui, Window,
+};
+use drone_networks::controller::SimulationController;
+use wg_2024::controller::DroneCommand;
 use wg_2024::network::NodeId;
 
 pub struct SimulationControllerUI {
     sm: SimulationController,
     logs: HashMap<NodeId, String>,
-    command_lines: HashMap<NodeId, String>,
     open_windows: HashMap<NodeId, bool>,
+    clients_command_lines: HashMap<NodeId, String>,
 }
 
 impl eframe::App for SimulationControllerUI {
@@ -36,7 +40,7 @@ impl eframe::App for SimulationControllerUI {
 
             ui.label("Drones");
             ui.indent("drones", |ui| {
-                // For every item, show its name as a clickable label.
+                // clickable labels
                 for id in self.get_drone_ids() {
                     self.spawn_node_list_element(ui, id, "Drone");
                 }
@@ -50,8 +54,14 @@ impl eframe::App for SimulationControllerUI {
         });
 
         CentralPanel::default().show(ctx, |ui| {
-            for couple in self.open_windows.clone() {
-                self.node_window(ctx, couple.0);
+            for id in self.get_drone_ids() {
+                self.drone_window(ctx, id);
+            }
+            for id in self.get_server_ids() {
+                self.server_window(ctx, id);
+            }
+            for id in self.get_client_ids() {
+                self.client_window(ctx, id);
             }
         });
     }
@@ -59,7 +69,6 @@ impl eframe::App for SimulationControllerUI {
 
 impl SimulationControllerUI {
     pub fn new(sm: SimulationController) -> Self {
-
         // TODO: Add topology!
 
         // get all node ids
@@ -86,16 +95,16 @@ impl SimulationControllerUI {
             sm,
             logs: h_str.clone(),
             open_windows: h_bool,
-            command_lines: h_str.clone(),
+            clients_command_lines: h_str.clone(),
         }
     }
 
-    pub fn node_window(&mut self, ctx: &Context, id: NodeId) {
-        let line = self.command_lines.get_mut(&id).unwrap();
+    pub fn client_window(&mut self, ctx: &Context, id: NodeId) {
+        let line = self.clients_command_lines.get_mut(&id).unwrap();
         let log = self.logs.get_mut(&id).unwrap();
         let open = self.open_windows.get_mut(&id).unwrap();
 
-        Window::new(format!("Node {}", id))
+        Window::new(format!("Client #{}", id))
             .open(open) // Automatically closes when X is clicked
             //.default_open(false)
             .min_size(vec2(200.0, 300.0)) // Minimum dimensions
@@ -134,6 +143,97 @@ impl SimulationControllerUI {
             });
     }
 
+    pub fn server_window(&mut self, ctx: &Context, id: NodeId) {
+        let log = self.logs.get_mut(&id).unwrap();
+        let open = self.open_windows.get_mut(&id).unwrap();
+
+        Window::new(format!("Server #{}", id))
+            .open(open) // Automatically closes when X is clicked
+            //.default_open(false)
+            .min_size(vec2(200.0, 300.0)) // Minimum dimensions
+            .max_size(vec2(500.0, 300.0))
+            .show(ctx, |ui| {
+                ui.horizontal(|ui| {
+                    ui.label("Stats about the server");
+                });
+
+                ui.add_space(5.0); // Add some spacing between the sections
+
+                ui.vertical(|ui| {
+                    // Central panel replacement
+                    ui.group(|ui| {
+                        ScrollArea::vertical()
+                            .stick_to_bottom(true)
+                            .auto_shrink([false, false])
+                            .show(ui, |ui| {
+                                ui.monospace(log.clone());
+                            });
+                    });
+                });
+            });
+    }
+
+    pub fn drone_window(&mut self, ctx: &Context, id: NodeId) {
+        let log = self.logs.get_mut(&id).unwrap();
+        let open = self.open_windows.get_mut(&id).unwrap();
+        let sender = self.sm.drones_send.get(&id).unwrap();
+
+        Window::new(format!("Drone #{}", id))
+            .open(open) // Automatically closes when X is clicked
+            .min_size(vec2(200.0, 300.0)) // Minimum dimensions
+            .max_size(vec2(500.0, 300.0))
+            .show(ctx, |ui| {
+                ui.vertical(|ui| {
+                    // Central panel replacement
+                    ui.group(|ui| {
+                        ScrollArea::vertical()
+                            .stick_to_bottom(true)
+                            .auto_shrink([false, false])
+                            .show(ui, |ui| {
+                                ui.monospace(log.clone());
+                            });
+                    });
+
+                    ui.add_space(5.0);
+
+                    // Bottom panel replacement
+                    ui.horizontal(|ui| {
+                        if ui.button("Crash").clicked() {
+                            match sender.send(DroneCommand::Crash) {
+                                Ok(_) => {
+                                    log.push_str("drone crashed successfully\n");
+                                }
+                                Err(_) => log.push_str("ERROR: drone already crashed\n"),
+                            }
+                        }
+                        if ui.button("Add link").clicked() {
+                            // TODO: change message
+                            match sender.send(DroneCommand::SetPacketDropRate(69.69)) {
+                                Ok(_) => {
+                                    log.push_str(&format!("added link with node #{}\n", id));
+                                }
+                                Err(e) => {
+                                    log.push_str(&format!("ERROR: {}\n", e));
+                                }
+                            }
+                        }
+                        if ui.button("Change PDR").clicked() {
+                            // TODO: change message
+                            let tmp = 69.69;
+                            match sender.send(DroneCommand::SetPacketDropRate(tmp)) {
+                                Ok(_) => {
+                                    log.push_str(&format!("changed PDR to {}\n", tmp));
+                                }
+                                Err(e) => {
+                                    log.push_str(&format!("ERROR: {}\n", e));
+                                }
+                            }
+                        }
+                    });
+                });
+            });
+    }
+
     fn get_node_ids(&self) -> Vec<NodeId> {
         let mut res = self.get_server_ids();
         res.append(&mut self.get_drone_ids());
@@ -162,21 +262,18 @@ impl SimulationControllerUI {
     }
 
     fn spawn_node_list_element(&mut self, ui: &mut Ui, id: NodeId, s: &'static str) {
-        // Add some spacing to let it breathe
         ui.add_space(5.0);
 
-        // Add a clickable label using egui::Label::sense()
-        if ui
-            .add(Label::new(
-                format!("{} #{}", s, id)
-            ).sense(Sense::click()))
-            .clicked()
-        {
-            // Set this item to be the currently edited one
+        let response = ui.add(Label::new(format!("{} #{}", s, id)).sense(Sense::click()));
+
+        if response.hovered() {
+            ui.ctx().set_cursor_icon(CursorIcon::PointingHand);
+        }
+
+        if response.clicked() {
             self.open_windows.insert(id, true);
         };
 
-        // Add some spacing to let it breathe
         ui.add_space(5.0);
     }
 }
