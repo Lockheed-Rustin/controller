@@ -16,43 +16,9 @@ pub struct SimulationControllerUI {
 
 impl eframe::App for SimulationControllerUI {
     fn update(&mut self, ctx: &Context, _frame: &mut eframe::Frame) {
-        SidePanel::left("left").show(ctx, |ui| {
-            ui.heading("Nodes");
-            ui.separator();
-
-            ui.label("Clients");
-            ui.indent("clients", |ui| {
-                // For every item, show its name as a clickable label.
-                for id in self.get_client_ids() {
-                    self.spawn_node_list_element(ui, id, "Client");
-                }
-            });
-            ui.separator();
-
-            ui.label("Servers");
-            ui.indent("servers", |ui| {
-                // For every item, show its name as a clickable label.
-                for id in self.get_server_ids() {
-                    self.spawn_node_list_element(ui, id, "Server");
-                }
-            });
-            ui.separator();
-
-            ui.label("Drones");
-            ui.indent("drones", |ui| {
-                // clickable labels
-                for id in self.get_drone_ids() {
-                    self.spawn_node_list_element(ui, id, "Drone");
-                }
-            });
-            ui.separator();
-
-            // Quit button, will close all windows
-            if ui.button("Quit").clicked() {
-                std::process::exit(0);
-            }
-        });
-
+        // sidebar
+        self.sidebar(ctx);
+        // node windows
         CentralPanel::default().show(ctx, |ui| {
             for id in self.get_drone_ids() {
                 self.drone_window(ctx, id);
@@ -97,6 +63,45 @@ impl SimulationControllerUI {
             open_windows: h_bool,
             clients_command_lines: h_str.clone(),
         }
+    }
+
+    pub fn sidebar(&mut self, ctx: &Context) {
+        SidePanel::left("left").show(ctx, |ui| {
+            ui.heading("Nodes");
+            ui.separator();
+
+            ui.label("Clients");
+            ui.indent("clients", |ui| {
+                // For every item, show its name as a clickable label.
+                for id in self.get_client_ids() {
+                    self.spawn_node_list_element(ui, id, "Client");
+                }
+            });
+            ui.separator();
+
+            ui.label("Servers");
+            ui.indent("servers", |ui| {
+                // For every item, show its name as a clickable label.
+                for id in self.get_server_ids() {
+                    self.spawn_node_list_element(ui, id, "Server");
+                }
+            });
+            ui.separator();
+
+            ui.label("Drones");
+            ui.indent("drones", |ui| {
+                // clickable labels
+                for id in self.get_drone_ids() {
+                    self.spawn_node_list_element(ui, id, "Drone");
+                }
+            });
+            ui.separator();
+
+            // Quit button, will close all windows
+            if ui.button("Quit").clicked() {
+                std::process::exit(0);
+            }
+        });
     }
 
     pub fn client_window(&mut self, ctx: &Context, id: NodeId) {
