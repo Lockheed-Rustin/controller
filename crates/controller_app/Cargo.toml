@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 eframe = "0.29.1"
-drone-networks = { git = "https://github.com/Lockheed-Rustin/drone-network.git", branch = "simulation-controller" }
+drone-networks = { git = "https://github.com/Lockheed-Rustin/drone-network.git"}
 wg_2024 =  { git = "https://github.com/WGL-2024/WGL_repo_2024.git", features = ["serialize"] }
 controller_data = { path = "../controller_data" }
 controller_receiver_thread = { path = "../controller_receiver_thread" }

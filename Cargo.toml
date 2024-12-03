@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 controller_internal = { path = "crates/controller_internal" }
-drone-networks = { git = "https://github.com/Lockheed-Rustin/drone-network.git", branch = "simulation-controller" }
+drone-networks = { git = "https://github.com/Lockheed-Rustin/drone-network.git" }
 wg_2024 =  { git = "https://github.com/WGL-2024/WGL_repo_2024.git", features = ["serialize"] }
 eframe = "0.29.1"
 toml = "0.8.19"

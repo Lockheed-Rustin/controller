@@ -7,7 +7,6 @@ use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
 
 use drone_networks::controller::SimulationController;
-use wg_2024::controller::DroneCommand;
 use wg_2024::network::NodeId;
 
 use controller_data::{SimulationData, DroneStats};
@@ -144,7 +143,7 @@ impl SimulationControllerUI {
                             .stick_to_bottom(true)
                             .auto_shrink([false, false])
                             .show(ui, |ui| {
-                                //ui.monospace(log.clone());
+                                ui.label("Client logs");
                             });
                     });
 
@@ -193,7 +192,7 @@ impl SimulationControllerUI {
                             .stick_to_bottom(true)
                             .auto_shrink([false, false])
                             .show(ui, |ui| {
-                                //ui.monospace(log.clone());
+                                ui.monospace("Server logs");
                             });
                     });
                 });
@@ -201,9 +200,7 @@ impl SimulationControllerUI {
     }
 
     pub fn drone_window(&mut self, ctx: &Context, id: NodeId) {
-        //let log = self.logs.get_mut(&id).unwrap();
         let open = self.open_windows.get_mut(&id).unwrap();
-        //let sender = self.sm.;
 
         Window::new(format!("Drone #{}", id))
             .open(open) // Automatically closes when X is clicked
@@ -217,7 +214,9 @@ impl SimulationControllerUI {
                             .stick_to_bottom(true)
                             .auto_shrink([false, false])
                             .show(ui, |ui| {
-                                //ui.monospace(log.clone());
+                                ui.monospace(
+                                    self.simulation_data_ref.lock().unwrap().logs.get_mut(&id).unwrap()
+                                );
                             });
                     });
 
@@ -263,13 +262,6 @@ impl SimulationControllerUI {
             });
     }
 
-    fn get_node_ids(&self) -> Vec<NodeId> {
-        // let mut res = self.sm.get_server_ids();
-        // res.append(&mut self.sm.get_drone_ids());
-        // res.append(&mut self.sm.get_client_ids());
-        // res
-        vec![]
-    }
 
     fn spawn_node_list_element(&mut self, ui: &mut Ui, id: NodeId, s: &'static str) {
         ui.add_space(5.0);
