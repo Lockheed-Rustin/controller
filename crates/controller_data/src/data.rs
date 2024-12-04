@@ -2,7 +2,6 @@ use std::collections::HashMap;
 
 use eframe::egui::Context;
 
-use drone_networks::controller::SimulationController;
 use wg_2024::network::NodeId;
 
 

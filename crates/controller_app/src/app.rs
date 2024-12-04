@@ -24,7 +24,7 @@ impl eframe::App for SimulationControllerUI {
         // sidebar
         self.sidebar(ctx);
         // node windows
-        CentralPanel::default().show(ctx, |ui| {
+        CentralPanel::default().show(ctx, |_ui| {
             for id in self.sc.get_drone_ids() {
                 self.drone_window(ctx, id);
             }
@@ -137,14 +137,7 @@ impl SimulationControllerUI {
             .show(ctx, |ui| {
                 ui.vertical(|ui| {
                     // logs
-                    let v = self
-                        .simulation_data_ref
-                        .lock()
-                        .unwrap();
-                    let v = v.logs
-                        .get(&id)
-                        .unwrap();
-                    Self::spawn_logs(ui, v);
+                    Self::spawn_logs(ui, Arc::clone(&self.simulation_data_ref), id);
 
                     ui.add_space(5.0);
 
@@ -183,14 +176,7 @@ impl SimulationControllerUI {
 
                 ui.vertical(|ui| {
                     // logs
-                    let v = self
-                        .simulation_data_ref
-                        .lock()
-                        .unwrap();
-                    let v = v.logs
-                        .get(&id)
-                        .unwrap();
-                    Self::spawn_logs(ui, v);
+                    Self::spawn_logs(ui, Arc::clone(&self.simulation_data_ref), id);
                 });
             });
     }
@@ -205,14 +191,7 @@ impl SimulationControllerUI {
             .show(ctx, |ui| {
                 ui.vertical(|ui| {
                     // logs
-                    let v = self
-                        .simulation_data_ref
-                        .lock()
-                        .unwrap();
-                    let v = v.logs
-                        .get(&id)
-                        .unwrap();
-                    Self::spawn_logs(ui, v);
+                    Self::spawn_logs(ui, Arc::clone(&self.simulation_data_ref), id);
 
                     ui.add_space(5.0);
 
@@ -255,21 +234,22 @@ impl SimulationControllerUI {
             });
     }
 
-
-    fn spawn_logs(ui: &mut Ui, v: &Vec<String>) {
+    fn spawn_logs(ui: &mut Ui, m: Arc<Mutex<SimulationData>>, id: NodeId) {
         ui.group(|ui| {
             ScrollArea::vertical()
                 .stick_to_bottom(true)
                 .auto_shrink([false, false])
                 .show(ui, |ui| {
+                    let v = m.lock().unwrap();
+                    let v = v.logs
+                        .get(&id)
+                        .unwrap();
                     for line in v {
                         ui.monospace(line);
                     }
                 });
         });
     }
-
-
 
     fn spawn_node_list_element(&mut self, ui: &mut Ui, id: NodeId, s: &'static str) {
         ui.add_space(5.0);

@@ -3,7 +3,6 @@ mod simulation_controller_ui;
 use std::fs;
 use eframe::egui;
 
-use wg_2024::config::Config;
 use drone_networks::network::*;
 use controller_internal::app::SimulationControllerUI;
 
