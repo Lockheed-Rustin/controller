@@ -23,8 +23,9 @@ impl SimulationData {
 
 #[derive(Default)]
 pub struct DroneStats {
-    packets_forwarded: HashMap<PacketType, u32>,
-    packets_dropped: HashMap<PacketType, u32>,
+    // 0:Fragment, 1:Ack, 2:Nack, 3:Flood Req, 4:Flood Resp
+    pub packets_forwarded: [u32; 5],
+    pub fragments_dropped: u32,
 }
 
 #[derive(Default)]

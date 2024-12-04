@@ -1,4 +1,7 @@
-use eframe::egui::{vec2, CentralPanel, Context, CursorIcon, Direction, Grid, Key, Label, Layout, ScrollArea, Sense, SidePanel, TextEdit, TextStyle, Ui, Window};
+use eframe::egui::{
+    vec2, CentralPanel, Context, CursorIcon, Direction, Grid, Key, Label, Layout, ScrollArea,
+    Sense, SidePanel, TextEdit, TextStyle, Ui, Window,
+};
 use eframe::CreationContext;
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
@@ -8,6 +11,7 @@ use wg_2024::network::NodeId;
 
 use controller_data::{DroneStats, SimulationData};
 use controller_receiver_thread::receiver_loop;
+use wg_2024::packet::PacketType;
 
 pub struct SimulationControllerUI {
     sc: SimulationController,
@@ -183,7 +187,7 @@ impl SimulationControllerUI {
         Window::new(format!("Drone #{}", id))
             .open(open)
             .fixed_size(vec2(400.0, 300.0))
-            //.min_size(vec2(500.0, 300.0)) // Minimum dimensions
+            //.min_size(vec2(500.0, 300.0))
             //.max_size(vec2(500.0, 300.0))
             .show(ctx, |ui| {
                 ui.vertical(|ui| {
@@ -249,32 +253,44 @@ impl SimulationControllerUI {
     }
 
     fn spawn_drone_stats(ui: &mut Ui, m: Arc<Mutex<SimulationData>>, id: NodeId) {
-        Grid::new("done_stats")
-            .striped(true)
-            .show(ui, |ui| {
-                // First row
-                for header in [
-                    "Packet type ",
-                    "Fragment",
-                    "Ack",
-                    "Nack",
-                    "Flood Req.",
-                    "Flood Resp.",
-                ] {
-                    ui.with_layout(Layout::centered_and_justified(Direction::LeftToRight), |ui| {
+        Grid::new("done_stats").striped(true).show(ui, |ui| {
+            // First row
+            for header in [
+                "Packet type ",
+                "Fragment",
+                "Ack",
+                "Nack",
+                "Flood Req.",
+                "Flood Resp.",
+            ] {
+                ui.with_layout(
+                    Layout::centered_and_justified(Direction::LeftToRight),
+                    |ui| {
                         ui.monospace(header);
-                    });
-                }
-                ui.end_row();
+                    },
+                );
+            }
+            ui.end_row();
 
-                // Second row
-                for cell in ["Forwarded  ", "1", "2", "3", "4", "5"] {
-                    ui.with_layout(Layout::centered_and_justified(Direction::LeftToRight), |ui| {
-                        ui.monospace(cell);
-                    });
-                }
-                ui.end_row();
-            });
+            // Second row
+            ui.with_layout(
+                Layout::centered_and_justified(Direction::LeftToRight),
+                |ui| {
+                    ui.monospace("Forwarded  ");
+                },
+            );
+            let tmp = m.lock().unwrap();
+            let stats = tmp.stats.get(&id).unwrap();
+            for n in stats.packets_forwarded {
+                ui.with_layout(
+                    Layout::centered_and_justified(Direction::LeftToRight),
+                    |ui| {
+                        ui.monospace(n.to_string());
+                    },
+                );
+            }
+            ui.end_row();
+        });
     }
 
     fn spawn_node_list_element(&mut self, ui: &mut Ui, id: NodeId, s: &'static str) {
