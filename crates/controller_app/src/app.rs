@@ -1,7 +1,4 @@
-use eframe::egui::{
-    vec2, CentralPanel, Context, CursorIcon, Key, Label, ScrollArea, Sense, SidePanel, TextEdit,
-    TextStyle, Ui, Window,
-};
+use eframe::egui::{vec2, CentralPanel, Context, CursorIcon, Direction, Grid, Key, Label, Layout, ScrollArea, Sense, SidePanel, TextEdit, TextStyle, Ui, Window};
 use eframe::CreationContext;
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
@@ -183,20 +180,22 @@ impl SimulationControllerUI {
 
     pub fn drone_window(&mut self, ctx: &Context, id: NodeId) {
         let open = self.open_windows.get_mut(&id).unwrap();
-
         Window::new(format!("Drone #{}", id))
-            .open(open) // Automatically closes when X is clicked
-            .min_size(vec2(200.0, 300.0)) // Minimum dimensions
-            .max_size(vec2(500.0, 300.0))
+            .open(open)
+            .fixed_size(vec2(400.0, 300.0))
+            //.min_size(vec2(500.0, 300.0)) // Minimum dimensions
+            //.max_size(vec2(500.0, 300.0))
             .show(ctx, |ui| {
                 ui.vertical(|ui| {
+                    //stats
+                    Self::spawn_drone_stats(ui, Arc::clone(&self.simulation_data_ref), id);
+                    ui.add_space(5.0);
+
                     // logs
                     Self::spawn_logs(ui, Arc::clone(&self.simulation_data_ref), id);
-
                     ui.add_space(5.0);
 
                     // actions
-
                     ui.horizontal(|ui| {
                         if ui.button("Crash").clicked() {
                             // match sender.send(DroneCommand::Crash) {
@@ -241,14 +240,41 @@ impl SimulationControllerUI {
                 .auto_shrink([false, false])
                 .show(ui, |ui| {
                     let v = m.lock().unwrap();
-                    let v = v.logs
-                        .get(&id)
-                        .unwrap();
+                    let v = v.logs.get(&id).unwrap();
                     for line in v {
                         ui.monospace(line);
                     }
                 });
         });
+    }
+
+    fn spawn_drone_stats(ui: &mut Ui, m: Arc<Mutex<SimulationData>>, id: NodeId) {
+        Grid::new("done_stats")
+            .striped(true)
+            .show(ui, |ui| {
+                // First row
+                for header in [
+                    "Packet type ",
+                    "Fragment",
+                    "Ack",
+                    "Nack",
+                    "Flood Req.",
+                    "Flood Resp.",
+                ] {
+                    ui.with_layout(Layout::centered_and_justified(Direction::LeftToRight), |ui| {
+                        ui.monospace(header);
+                    });
+                }
+                ui.end_row();
+
+                // Second row
+                for cell in ["Forwarded  ", "1", "2", "3", "4", "5"] {
+                    ui.with_layout(Layout::centered_and_justified(Direction::LeftToRight), |ui| {
+                        ui.monospace(cell);
+                    });
+                }
+                ui.end_row();
+            });
     }
 
     fn spawn_node_list_element(&mut self, ui: &mut Ui, id: NodeId, s: &'static str) {
