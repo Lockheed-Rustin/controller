@@ -9,14 +9,14 @@ use std::sync::{Arc, Mutex};
 use drone_networks::controller::SimulationController;
 use wg_2024::network::NodeId;
 
-use controller_data::{SimulationData, DroneStats};
+use controller_data::{DroneStats, SimulationData};
 use controller_receiver_thread::receiver_loop;
 
 pub struct SimulationControllerUI {
     sc: SimulationController,
     simulation_data_ref: Arc<Mutex<SimulationData>>,
     open_windows: HashMap<NodeId, bool>,
-    clients_command_lines: HashMap<NodeId, String>,
+    client_command_lines: HashMap<NodeId, String>,
 }
 
 impl eframe::App for SimulationControllerUI {
@@ -53,36 +53,39 @@ impl SimulationControllerUI {
         }
 
         // create hashmaps
-        let mut h_str = HashMap::new();
-        let mut h_bool = HashMap::new();
+        let mut logs = HashMap::new();
+        let mut client_command_lines = HashMap::new();
+        let mut open_windows = HashMap::new();
         for id in ids.clone() {
-            h_str.insert(id, "".to_string());
-            h_bool.insert(id, false);
+            logs.insert(id, vec![]);
+            client_command_lines.insert(id, "".to_string());
+            open_windows.insert(id, false);
         }
-
-        // drone stat hashmap
-        let mut h_stats = HashMap::new();
+        let mut stats = HashMap::new();
         for id in sc.get_drone_ids() {
-            h_stats.insert(id, DroneStats::default());
+            stats.insert(id, DroneStats::default());
         }
 
-        // create shared data and spawn thread
+        // create shared data
         let data_ref = Arc::new(Mutex::new(SimulationData::new(
-            h_str.clone(),
-            h_stats,
+            logs,
+            stats,
             cc.egui_ctx.clone(),
         )));
+
+        // spawn thread
         let data_ref_clone = Arc::clone(&data_ref);
         let sc_receiver_clone = sc.get_receiver();
         std::thread::spawn(move || {
             receiver_loop(data_ref_clone, sc_receiver_clone);
         });
 
+        // return
         Self {
             sc,
             simulation_data_ref: data_ref,
-            open_windows: h_bool,
-            clients_command_lines: h_str,
+            open_windows,
+            client_command_lines,
         }
     }
 
@@ -126,37 +129,32 @@ impl SimulationControllerUI {
     }
 
     pub fn client_window(&mut self, ctx: &Context, id: NodeId) {
-        let line = self.clients_command_lines.get_mut(&id).unwrap();
-        //let log = self.logs.get_mut(&id).unwrap();
         let open = self.open_windows.get_mut(&id).unwrap();
-
         Window::new(format!("Client #{}", id))
-            .open(open) // Automatically closes when X is clicked
-            //.default_open(false)
-            .min_size(vec2(200.0, 300.0)) // Minimum dimensions
+            .open(open)
+            .min_size(vec2(200.0, 300.0))
             .max_size(vec2(500.0, 300.0))
             .show(ctx, |ui| {
                 ui.vertical(|ui| {
-                    // Central panel replacement
-                    ui.group(|ui| {
-                        ScrollArea::vertical()
-                            .stick_to_bottom(true)
-                            .auto_shrink([false, false])
-                            .show(ui, |ui| {
-                                ui.label("Client logs");
-                            });
-                    });
+                    // logs
+                    let v = self
+                        .simulation_data_ref
+                        .lock()
+                        .unwrap();
+                    let v = v.logs
+                        .get(&id)
+                        .unwrap();
+                    Self::spawn_logs(ui, v);
 
-                    ui.add_space(5.0); // Add some spacing between the sections
+                    ui.add_space(5.0);
 
-                    // Bottom panel replacement
                     ui.horizontal(|ui| {
+                        let line = self.client_command_lines.get_mut(&id).unwrap();
                         let command_line_response = ui.add(
                             TextEdit::singleline(line)
                                 .desired_width(f32::INFINITY)
                                 .font(TextStyle::Monospace),
                         );
-
                         if command_line_response.lost_focus()
                             && ui.input(|i| i.key_pressed(Key::Enter))
                         {
@@ -170,31 +168,29 @@ impl SimulationControllerUI {
     }
 
     pub fn server_window(&mut self, ctx: &Context, id: NodeId) {
-        //let log = self.logs.get_mut(&id).unwrap();
         let open = self.open_windows.get_mut(&id).unwrap();
-
         Window::new(format!("Server #{}", id))
-            .open(open) // Automatically closes when X is clicked
+            .open(open)
             //.default_open(false)
-            .min_size(vec2(200.0, 300.0)) // Minimum dimensions
+            .min_size(vec2(200.0, 300.0))
             .max_size(vec2(500.0, 300.0))
             .show(ctx, |ui| {
                 ui.horizontal(|ui| {
                     ui.label("Stats about the server");
                 });
 
-                ui.add_space(5.0); // Add some spacing between the sections
+                ui.add_space(5.0);
 
                 ui.vertical(|ui| {
-                    // Central panel replacement
-                    ui.group(|ui| {
-                        ScrollArea::vertical()
-                            .stick_to_bottom(true)
-                            .auto_shrink([false, false])
-                            .show(ui, |ui| {
-                                ui.monospace("Server logs");
-                            });
-                    });
+                    // logs
+                    let v = self
+                        .simulation_data_ref
+                        .lock()
+                        .unwrap();
+                    let v = v.logs
+                        .get(&id)
+                        .unwrap();
+                    Self::spawn_logs(ui, v);
                 });
             });
     }
@@ -208,59 +204,71 @@ impl SimulationControllerUI {
             .max_size(vec2(500.0, 300.0))
             .show(ctx, |ui| {
                 ui.vertical(|ui| {
-                    // Central panel replacement
-                    ui.group(|ui| {
-                        ScrollArea::vertical()
-                            .stick_to_bottom(true)
-                            .auto_shrink([false, false])
-                            .show(ui, |ui| {
-                                ui.monospace(
-                                    self.simulation_data_ref.lock().unwrap().logs.get_mut(&id).unwrap()
-                                );
-                            });
-                    });
+                    // logs
+                    let v = self
+                        .simulation_data_ref
+                        .lock()
+                        .unwrap();
+                    let v = v.logs
+                        .get(&id)
+                        .unwrap();
+                    Self::spawn_logs(ui, v);
 
                     ui.add_space(5.0);
 
-                    // Bottom panel replacement
-                    /*
+                    // actions
+
                     ui.horizontal(|ui| {
                         if ui.button("Crash").clicked() {
-                            match sender.send(DroneCommand::Crash) {
-                                Ok(_) => {
-                                    log.push_str("drone crashed successfully\n");
-                                }
-                                Err(_) => log.push_str("ERROR: drone already crashed\n"),
-                            }
+                            // match sender.send(DroneCommand::Crash) {
+                            //     Ok(_) => {
+                            //         log.push_str("drone crashed successfully\n");
+                            //     }
+                            //     Err(_) => log.push_str("ERROR: drone already crashed\n"),
+                            // }
                         }
                         if ui.button("Add link").clicked() {
                             // TODO: change message
-                            match sender.send(DroneCommand::SetPacketDropRate(69.69)) {
-                                Ok(_) => {
-                                    log.push_str(&format!("added link with node #{}\n", id));
-                                }
-                                Err(e) => {
-                                    log.push_str(&format!("ERROR: {}\n", e));
-                                }
-                            }
+                            // match sender.send(DroneCommand::SetPacketDropRate(69.69)) {
+                            //     Ok(_) => {
+                            //         log.push_str(&format!("added link with node #{}\n", id));
+                            //     }
+                            //     Err(e) => {
+                            //         log.push_str(&format!("ERROR: {}\n", e));
+                            //     }
+                            // }
                         }
                         if ui.button("Change PDR").clicked() {
                             // TODO: change message
-                            let tmp = 69.69;
-                            match sender.send(DroneCommand::SetPacketDropRate(tmp)) {
-                                Ok(_) => {
-                                    log.push_str(&format!("changed PDR to {}\n", tmp));
-                                }
-                                Err(e) => {
-                                    log.push_str(&format!("ERROR: {}\n", e));
-                                }
-                            }
+                            // let tmp = 69.69;
+                            // match sender.send(DroneCommand::SetPacketDropRate(tmp)) {
+                            //     Ok(_) => {
+                            //         log.push_str(&format!("changed PDR to {}\n", tmp));
+                            //     }
+                            //     Err(e) => {
+                            //         log.push_str(&format!("ERROR: {}\n", e));
+                            //     }
+                            // }
                         }
                     });
-                     */
                 });
             });
     }
+
+
+    fn spawn_logs(ui: &mut Ui, v: &Vec<String>) {
+        ui.group(|ui| {
+            ScrollArea::vertical()
+                .stick_to_bottom(true)
+                .auto_shrink([false, false])
+                .show(ui, |ui| {
+                    for line in v {
+                        ui.monospace(line);
+                    }
+                });
+        });
+    }
+
 
 
     fn spawn_node_list_element(&mut self, ui: &mut Ui, id: NodeId, s: &'static str) {
