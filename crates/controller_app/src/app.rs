@@ -1,17 +1,17 @@
+use std::collections::{HashMap, HashSet};
+use std::sync::{Arc, Mutex};
+
 use eframe::egui::{
     vec2, CentralPanel, Context, CursorIcon, Direction, Grid, Key, Label, Layout, ScrollArea,
     Sense, SidePanel, TextEdit, TextStyle, Ui, Window,
 };
 use eframe::CreationContext;
-use std::collections::{HashMap, HashSet};
-use std::sync::{Arc, Mutex};
 
 use drone_networks::controller::SimulationController;
 use wg_2024::network::NodeId;
 
 use controller_data::{DroneStats, SimulationData};
 use controller_receiver_thread::receiver_loop;
-use wg_2024::packet::PacketType;
 
 pub struct SimulationControllerUI {
     sc: SimulationController,

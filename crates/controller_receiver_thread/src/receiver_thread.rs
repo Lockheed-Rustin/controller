@@ -2,10 +2,11 @@ use std::sync::{Arc, Mutex};
 
 use crossbeam_channel::{select, Receiver};
 
-use controller_data::SimulationData;
 use wg_2024::controller::DroneEvent;
 use wg_2024::network::NodeId;
 use wg_2024::packet::{Packet, PacketType};
+
+use controller_data::SimulationData;
 
 pub fn receiver_loop(data_ref: Arc<Mutex<SimulationData>>, rec: Receiver<DroneEvent>) {
     loop {
@@ -38,7 +39,9 @@ fn handle_packet_sent(data_ref: Arc<Mutex<SimulationData>>, p: Packet) {
     let mut data = data_ref.lock().unwrap();
 
     // add log
-    data.logs.get_mut(&drone_id).unwrap()
+    data.logs
+        .get_mut(&drone_id)
+        .unwrap()
         .push("Packet sent!".to_string());
 
     // increment stat
@@ -59,7 +62,9 @@ fn handle_packet_dropped(data_ref: Arc<Mutex<SimulationData>>, p: Packet) {
     let mut data = data_ref.lock().unwrap();
 
     // add log
-    data.logs.get_mut(&drone_id).unwrap()
+    data.logs
+        .get_mut(&drone_id)
+        .unwrap()
         .push("Packet dropped!".to_string());
 
     // increment stat

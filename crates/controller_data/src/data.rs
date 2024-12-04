@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use eframe::egui::Context;
 
 use wg_2024::network::NodeId;
-use wg_2024::packet::{Packet, PacketType};
+use wg_2024::packet::PacketType;
 
 pub struct SimulationData {
     pub logs: HashMap<NodeId, Vec<String>>,
