@@ -4,6 +4,7 @@ use crossbeam_channel::{select, Receiver};
 
 use controller_data::SimulationData;
 use wg_2024::controller::DroneEvent;
+use wg_2024::network::NodeId;
 use wg_2024::packet::{Packet, PacketType};
 
 pub fn receiver_loop(data_ref: Arc<Mutex<SimulationData>>, rec: Receiver<DroneEvent>) {
@@ -23,8 +24,8 @@ fn handle_drone_event(data_ref: Arc<Mutex<SimulationData>>, event: DroneEvent) {
         DroneEvent::PacketSent(p) => {
             handle_packet_sent(data_ref, p);
         }
-        DroneEvent::PacketDropped(_) => {
-            println!("PacketDropped");
+        DroneEvent::PacketDropped(p) => {
+            handle_packet_dropped(data_ref, p);
         }
         DroneEvent::ControllerShortcut(_) => {
             println!("ControllerShortcut");
@@ -33,7 +34,7 @@ fn handle_drone_event(data_ref: Arc<Mutex<SimulationData>>, event: DroneEvent) {
 }
 
 fn handle_packet_sent(data_ref: Arc<Mutex<SimulationData>>, p: Packet) {
-    let drone_id = p.routing_header.hops[p.routing_header.hop_index - 1];
+    let drone_id = get_drone_id(&p);
     let mut data = data_ref.lock().unwrap();
 
     // add log
@@ -51,4 +52,22 @@ fn handle_packet_sent(data_ref: Arc<Mutex<SimulationData>>, p: Packet) {
     data.stats.get_mut(&drone_id).unwrap().packets_forwarded[index] += 1;
 
     data.ctx.request_repaint();
+}
+
+fn handle_packet_dropped(data_ref: Arc<Mutex<SimulationData>>, p: Packet) {
+    let drone_id = get_drone_id(&p);
+    let mut data = data_ref.lock().unwrap();
+
+    // add log
+    data.logs.get_mut(&drone_id).unwrap()
+        .push("Packet dropped!".to_string());
+
+    // increment stat
+    data.stats.get_mut(&drone_id).unwrap().fragments_dropped += 1;
+
+    data.ctx.request_repaint();
+}
+
+fn get_drone_id(p: &Packet) -> NodeId {
+    p.routing_header.hops[p.routing_header.hop_index - 1]
 }
