@@ -1,10 +1,10 @@
 mod simulation_controller_ui;
 
-use std::fs;
 use eframe::egui;
+use std::fs;
 
-use drone_networks::network::*;
 use controller_internal::app::SimulationControllerUI;
+use drone_networks::network::*;
 
 fn main() -> eframe::Result {
     // read config file and get a SimulationController

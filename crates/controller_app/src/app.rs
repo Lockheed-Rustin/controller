@@ -203,7 +203,6 @@ impl SimulationControllerUI {
                     ui.add_space(5.0);
                     ui.separator();
 
-
                     // logs
                     Self::spawn_logs(ui, Arc::clone(&self.simulation_data_ref), id);
                     ui.add_space(5.0);
