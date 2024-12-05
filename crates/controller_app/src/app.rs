@@ -237,7 +237,7 @@ impl SimulationControllerUI {
                     ui.add_space(5.0);
 
                     ui.horizontal(|ui| {
-                        ui.monospace("PDR: ");
+                        ui.monospace("PDR:");
                         let response = ui.add(Slider::new(
                             self.drone_pdrs.get_mut(&id).unwrap(),
                             0.0..=1.0,
@@ -250,7 +250,7 @@ impl SimulationControllerUI {
                                     Self::push_log(
                                         Arc::clone(&self.simulation_data_ref),
                                         id,
-                                        format!("changed PDR to {}", new_pdr),
+                                        format!("Changed PDR to {}", new_pdr),
                                     );
                                 }
                                 None => {
