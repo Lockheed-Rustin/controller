@@ -1,10 +1,7 @@
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
 
-use eframe::egui::{
-    vec2, CentralPanel, Context, CursorIcon, Direction, Grid, Key, Label, Layout, ScrollArea,
-    Sense, SidePanel, TextEdit, TextStyle, Ui, Window,
-};
+use eframe::egui::{vec2, CentralPanel, Color32, Context, CursorIcon, Direction, Grid, Key, Label, Layout, RichText, ScrollArea, Sense, SidePanel, TextEdit, TextStyle, Ui, Window};
 use eframe::CreationContext;
 
 use drone_networks::controller::SimulationController;
@@ -64,6 +61,7 @@ impl SimulationControllerUI {
         }
         let mut stats = HashMap::new();
         for id in sc.get_drone_ids() {
+            println!("Insert Drone id: {}", id);
             stats.insert(id, DroneStats::default());
         }
 
@@ -253,6 +251,8 @@ impl SimulationControllerUI {
     }
 
     fn spawn_drone_stats(ui: &mut Ui, m: Arc<Mutex<SimulationData>>, id: NodeId) {
+        let data = m.lock().unwrap();
+        let stats = data.stats.get(&id).unwrap();
         Grid::new("done_stats").striped(true).show(ui, |ui| {
             // First row
             for header in [
@@ -266,7 +266,10 @@ impl SimulationControllerUI {
                 ui.with_layout(
                     Layout::centered_and_justified(Direction::LeftToRight),
                     |ui| {
-                        ui.monospace(header);
+                        let bold_monospace_text = RichText::new(header)
+                            .monospace()
+                            .color(Color32::WHITE);
+                        ui.label(bold_monospace_text);
                     },
                 );
             }
@@ -276,11 +279,12 @@ impl SimulationControllerUI {
             ui.with_layout(
                 Layout::centered_and_justified(Direction::LeftToRight),
                 |ui| {
-                    ui.monospace("Forwarded  ");
+                    let bold_monospace_text = RichText::new("Forwarded")
+                        .monospace()
+                        .color(Color32::WHITE);
+                    ui.label(bold_monospace_text);
                 },
             );
-            let tmp = m.lock().unwrap();
-            let stats = tmp.stats.get(&id).unwrap();
             for n in stats.packets_forwarded {
                 ui.with_layout(
                     Layout::centered_and_justified(Direction::LeftToRight),
@@ -291,6 +295,11 @@ impl SimulationControllerUI {
             }
             ui.end_row();
         });
+
+        ui.add_space(5.0);
+
+        ui.monospace(format!("Fragments dropped: {}", stats.fragments_dropped));
+
     }
 
     fn spawn_node_list_element(&mut self, ui: &mut Ui, id: NodeId, s: &'static str) {
