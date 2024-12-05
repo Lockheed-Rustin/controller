@@ -47,8 +47,8 @@ fn handle_packet_sent(data_ref: Arc<Mutex<SimulationData>>, p: Packet) {
     // increment stat
     let index = match p.pack_type {
         PacketType::MsgFragment(_) => 0,
-        PacketType::Nack(_) => 1,
-        PacketType::Ack(_) => 2,
+        PacketType::Ack(_) => 1,
+        PacketType::Nack(_) => 2,
         PacketType::FloodRequest(_) => 3,
         PacketType::FloodResponse(_) => 4,
     };
