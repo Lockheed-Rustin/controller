@@ -36,13 +36,15 @@ fn handle_drone_event(data_ref: Arc<Mutex<SimulationData>>, event: DroneEvent) {
 
 fn handle_packet_sent(data_ref: Arc<Mutex<SimulationData>>, p: Packet) {
     let drone_id = p.routing_header.hops[p.routing_header.hop_index - 1];
+    let destination_id = p.routing_header.hops[p.routing_header.hop_index - 1];
     let mut data = data_ref.lock().unwrap();
 
     // add log
-    data.logs
-        .get_mut(&drone_id)
-        .unwrap()
-        .push("Packet sent!".to_string());
+    data.logs.get_mut(&drone_id).unwrap().push(format!(
+        "{} sent to node #{}",
+        get_packet_type_str(p.pack_type.clone()),
+        destination_id
+    ));
 
     // increment stat
     let index = match p.pack_type {
@@ -72,4 +74,14 @@ fn handle_packet_dropped(data_ref: Arc<Mutex<SimulationData>>, p: Packet) {
     data.stats.get_mut(&drone_id).unwrap().fragments_dropped += 1;
 
     data.ctx.request_repaint();
+}
+
+fn get_packet_type_str(t: PacketType) -> &'static str {
+    match t {
+        PacketType::MsgFragment(_) => "Fragment",
+        PacketType::Ack(_) => "Ack",
+        PacketType::Nack(_) => "Nack",
+        PacketType::FloodRequest(_) => "Flood request",
+        PacketType::FloodResponse(_) => "Flood response",
+    }
 }

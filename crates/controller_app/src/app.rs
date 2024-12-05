@@ -1,7 +1,10 @@
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
 
-use eframe::egui::{vec2, CentralPanel, Color32, Context, CursorIcon, Direction, Grid, Key, Label, Layout, RichText, ScrollArea, Sense, SidePanel, TextEdit, TextStyle, Ui, Window};
+use eframe::egui::{
+    vec2, CentralPanel, Color32, Context, CursorIcon, Direction, Grid, Key, Label, Layout,
+    RichText, ScrollArea, Sense, SidePanel, Slider, TextEdit, TextStyle, Ui, Window,
+};
 use eframe::CreationContext;
 
 use drone_networks::controller::SimulationController;
@@ -15,6 +18,7 @@ pub struct SimulationControllerUI {
     simulation_data_ref: Arc<Mutex<SimulationData>>,
     open_windows: HashMap<NodeId, bool>,
     client_command_lines: HashMap<NodeId, String>,
+    drone_pdrs: HashMap<NodeId, f32>,
 }
 
 impl eframe::App for SimulationControllerUI {
@@ -50,19 +54,25 @@ impl SimulationControllerUI {
             ids.insert(server_id);
         }
 
-        // create hashmaps
+        // create node hashmaps
         let mut logs = HashMap::new();
-        let mut client_command_lines = HashMap::new();
         let mut open_windows = HashMap::new();
         for id in ids.clone() {
             logs.insert(id, vec![]);
-            client_command_lines.insert(id, "".to_string());
+
             open_windows.insert(id, false);
         }
+        // create drone hashmaps
         let mut stats = HashMap::new();
+        let mut drone_pdrs = HashMap::new();
         for id in sc.get_drone_ids() {
-            println!("Insert Drone id: {}", id);
             stats.insert(id, DroneStats::default());
+            drone_pdrs.insert(id, 0.0);
+        }
+        // create client hashmaps
+        let mut client_command_lines = HashMap::new();
+        for id in sc.get_drone_ids() {
+            client_command_lines.insert(id, "".to_string());
         }
 
         // create shared data
@@ -85,6 +95,7 @@ impl SimulationControllerUI {
             simulation_data_ref: data_ref,
             open_windows,
             client_command_lines,
+            drone_pdrs,
         }
     }
 
@@ -185,16 +196,20 @@ impl SimulationControllerUI {
         Window::new(format!("Drone #{}", id))
             .open(open)
             .fixed_size(vec2(400.0, 300.0))
-            //.min_size(vec2(500.0, 300.0))
-            //.max_size(vec2(500.0, 300.0))
             .show(ctx, |ui| {
                 ui.vertical(|ui| {
                     //stats
                     Self::spawn_drone_stats(ui, Arc::clone(&self.simulation_data_ref), id);
                     ui.add_space(5.0);
+                    ui.separator();
+
 
                     // logs
                     Self::spawn_logs(ui, Arc::clone(&self.simulation_data_ref), id);
+                    ui.add_space(5.0);
+                    ui.separator();
+
+                    ui.heading("Actions");
                     ui.add_space(5.0);
 
                     // actions
@@ -218,17 +233,35 @@ impl SimulationControllerUI {
                             //     }
                             // }
                         }
-                        if ui.button("Change PDR").clicked() {
-                            // TODO: change message
-                            // let tmp = 69.69;
-                            // match sender.send(DroneCommand::SetPacketDropRate(tmp)) {
-                            //     Ok(_) => {
-                            //         log.push_str(&format!("changed PDR to {}\n", tmp));
-                            //     }
-                            //     Err(e) => {
-                            //         log.push_str(&format!("ERROR: {}\n", e));
-                            //     }
-                            // }
+                    });
+
+                    ui.add_space(5.0);
+
+                    ui.horizontal(|ui| {
+                        ui.monospace("PDR: ");
+                        let response = ui.add(Slider::new(
+                            self.drone_pdrs.get_mut(&id).unwrap(),
+                            0.0..=1.0,
+                        ));
+                        if response.drag_stopped() {
+                            //println!("Slider value changed to: {}", self.drone_pdrs.get_mut(&id).unwrap());
+                            let new_pdr: f32 = *self.drone_pdrs.get(&id).unwrap();
+                            match self.sc.set_pdr(id, new_pdr) {
+                                Some(_) => {
+                                    Self::push_log(
+                                        Arc::clone(&self.simulation_data_ref),
+                                        id,
+                                        format!("changed PDR to {}", new_pdr),
+                                    );
+                                }
+                                None => {
+                                    Self::push_log(
+                                        Arc::clone(&self.simulation_data_ref),
+                                        id,
+                                        "Failed to change PDR".to_string(),
+                                    );
+                                }
+                            }
                         }
                     });
                 });
@@ -236,6 +269,8 @@ impl SimulationControllerUI {
     }
 
     fn spawn_logs(ui: &mut Ui, m: Arc<Mutex<SimulationData>>, id: NodeId) {
+        ui.heading("History");
+        ui.add_space(5.0);
         ui.group(|ui| {
             ScrollArea::vertical()
                 .stick_to_bottom(true)
@@ -250,9 +285,16 @@ impl SimulationControllerUI {
         });
     }
 
+    fn push_log(m: Arc<Mutex<SimulationData>>, id: NodeId, line: String) {
+        let mut data = m.lock().unwrap();
+        let v = data.logs.get_mut(&id).unwrap();
+        v.push(line);
+    }
+
     fn spawn_drone_stats(ui: &mut Ui, m: Arc<Mutex<SimulationData>>, id: NodeId) {
         let data = m.lock().unwrap();
         let stats = data.stats.get(&id).unwrap();
+        ui.heading("Stats");
         Grid::new("done_stats").striped(true).show(ui, |ui| {
             // First row
             for header in [
@@ -266,9 +308,8 @@ impl SimulationControllerUI {
                 ui.with_layout(
                     Layout::centered_and_justified(Direction::LeftToRight),
                     |ui| {
-                        let bold_monospace_text = RichText::new(header)
-                            .monospace()
-                            .color(Color32::WHITE);
+                        let bold_monospace_text =
+                            RichText::new(header).monospace().color(Color32::WHITE);
                         ui.label(bold_monospace_text);
                     },
                 );
@@ -279,9 +320,8 @@ impl SimulationControllerUI {
             ui.with_layout(
                 Layout::centered_and_justified(Direction::LeftToRight),
                 |ui| {
-                    let bold_monospace_text = RichText::new("Forwarded")
-                        .monospace()
-                        .color(Color32::WHITE);
+                    let bold_monospace_text =
+                        RichText::new("Forwarded").monospace().color(Color32::WHITE);
                     ui.label(bold_monospace_text);
                 },
             );
@@ -299,7 +339,6 @@ impl SimulationControllerUI {
         ui.add_space(5.0);
 
         ui.monospace(format!("Fragments dropped: {}", stats.fragments_dropped));
-
     }
 
     fn spawn_node_list_element(&mut self, ui: &mut Ui, id: NodeId, s: &'static str) {
