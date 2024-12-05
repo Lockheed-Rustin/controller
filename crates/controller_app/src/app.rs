@@ -243,24 +243,17 @@ impl SimulationControllerUI {
                             0.0..=1.0,
                         ));
                         if response.drag_stopped() {
-                            //println!("Slider value changed to: {}", self.drone_pdrs.get_mut(&id).unwrap());
                             let new_pdr: f32 = *self.drone_pdrs.get(&id).unwrap();
-                            match self.sc.set_pdr(id, new_pdr) {
-                                Some(_) => {
-                                    Self::push_log(
-                                        Arc::clone(&self.simulation_data_ref),
-                                        id,
-                                        format!("Changed PDR to {}", new_pdr),
-                                    );
-                                }
-                                None => {
-                                    Self::push_log(
-                                        Arc::clone(&self.simulation_data_ref),
-                                        id,
-                                        "Failed to change PDR".to_string(),
-                                    );
-                                }
-                            }
+                            let log_line = match self.sc.set_pdr(id, new_pdr) {
+                                Some(_) => format!("Changed PDR to {}", new_pdr),
+                                None => "Failed to change PDR".to_string(),
+                            };
+                            Self::push_log(
+                                Arc::clone(&self.simulation_data_ref),
+                                id,
+                                log_line
+                            );
+
                         }
                     });
                 });
