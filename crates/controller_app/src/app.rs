@@ -152,6 +152,30 @@ impl SimulationControllerUI {
                     ui.add_space(5.0);
 
                     ui.horizontal(|ui| {
+                        if ui.button("Send Fragment").clicked() {
+                            let log_line = match self.sc.send_fragment_fair(id) {
+                                Some(_) => "Fragment sent".to_string(),
+                                None => "Failed to send fragment".to_string(),
+                            };
+                            Self::push_log(
+                                Arc::clone(&self.simulation_data_ref),
+                                id,
+                                log_line
+                            );
+                        }
+                        if ui.button("Send FloodRequest").clicked() {
+                            let log_line = match self.sc.send_fragment_fair(id) {
+                                Some(_) => "Flood request sent".to_string(),
+                                None => "Failed to send flood request".to_string(),
+                            };
+                            Self::push_log(
+                                Arc::clone(&self.simulation_data_ref),
+                                id,
+                                log_line
+                            );
+                        }
+
+                        /* command line
                         let line = self.client_command_lines.get_mut(&id).unwrap();
                         let command_line_response = ui.add(
                             TextEdit::singleline(line)
@@ -165,6 +189,7 @@ impl SimulationControllerUI {
                             line.clear();
                             command_line_response.request_focus();
                         }
+                        */
                     });
                 });
             });
@@ -208,29 +233,32 @@ impl SimulationControllerUI {
                     ui.add_space(5.0);
                     ui.separator();
 
-                    ui.heading("Actions");
+                    Self::spawn_white_heading(ui, "Actions");
                     ui.add_space(5.0);
 
                     // actions
                     ui.horizontal(|ui| {
                         if ui.button("Crash").clicked() {
-                            // match sender.send(DroneCommand::Crash) {
-                            //     Ok(_) => {
-                            //         log.push_str("drone crashed successfully\n");
-                            //     }
-                            //     Err(_) => log.push_str("ERROR: drone already crashed\n"),
-                            // }
+                            let log_line = match self.sc.crash_drone(id) {
+                                Some(_) => "Drone crashed".to_string(),
+                                None => "Failed to crash".to_string(),
+                            };
+                            Self::push_log(
+                                Arc::clone(&self.simulation_data_ref),
+                                id,
+                                log_line
+                            );
                         }
                         if ui.button("Add link").clicked() {
-                            // TODO: change message
-                            // match sender.send(DroneCommand::SetPacketDropRate(69.69)) {
-                            //     Ok(_) => {
-                            //         log.push_str(&format!("added link with node #{}\n", id));
-                            //     }
-                            //     Err(e) => {
-                            //         log.push_str(&format!("ERROR: {}\n", e));
-                            //     }
-                            // }
+                            // let log_line = match self.sc.add_edge(id, ???) {
+                            //     Some(_) => format!("Link added with node {}", ???),
+                            //     None => format!("Failed to add link with node {}", ???),
+                            // };
+                            // Self::push_log(
+                            //     Arc::clone(&self.simulation_data_ref),
+                            //     id,
+                            //     log_line
+                            // );
                         }
                     });
 
@@ -261,7 +289,7 @@ impl SimulationControllerUI {
     }
 
     fn spawn_logs(ui: &mut Ui, m: Arc<Mutex<SimulationData>>, id: NodeId) {
-        ui.heading("History");
+        Self::spawn_white_heading(ui, "History");
         ui.add_space(5.0);
         ui.group(|ui| {
             ScrollArea::vertical()
@@ -286,7 +314,7 @@ impl SimulationControllerUI {
     fn spawn_drone_stats(ui: &mut Ui, m: Arc<Mutex<SimulationData>>, id: NodeId) {
         let data = m.lock().unwrap();
         let stats = data.stats.get(&id).unwrap();
-        ui.heading("Stats");
+        Self::spawn_white_heading(ui, "Statistics");
         Grid::new("done_stats").striped(true).show(ui, |ui| {
             // First row
             for header in [
@@ -300,9 +328,10 @@ impl SimulationControllerUI {
                 ui.with_layout(
                     Layout::centered_and_justified(Direction::LeftToRight),
                     |ui| {
-                        let bold_monospace_text =
-                            RichText::new(header).monospace().color(Color32::WHITE);
-                        ui.label(bold_monospace_text);
+                        // let bold_monospace_text =
+                        //     RichText::new(header).monospace().color(Color32::WHITE);
+                        // ui.label(bold_monospace_text);
+                        ui.monospace(header);
                     },
                 );
             }
@@ -312,9 +341,10 @@ impl SimulationControllerUI {
             ui.with_layout(
                 Layout::centered_and_justified(Direction::LeftToRight),
                 |ui| {
-                    let bold_monospace_text =
-                        RichText::new("Forwarded").monospace().color(Color32::WHITE);
-                    ui.label(bold_monospace_text);
+                    // let bold_monospace_text =
+                    //     RichText::new("Forwarded").monospace().color(Color32::WHITE);
+                    // ui.label(bold_monospace_text);
+                    ui.monospace("Forwarded");
                 },
             );
             for n in stats.packets_forwarded {
@@ -347,5 +377,11 @@ impl SimulationControllerUI {
         };
 
         ui.add_space(5.0);
+    }
+
+    fn spawn_white_heading(ui: &mut Ui, str: &'static str) {
+        let text =
+            RichText::new(str).monospace().color(Color32::WHITE);
+        ui.heading(text);
     }
 }
