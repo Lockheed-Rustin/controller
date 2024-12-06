@@ -164,7 +164,7 @@ impl SimulationControllerUI {
                             );
                         }
                         if ui.button("Send FloodRequest").clicked() {
-                            let log_line = match self.sc.send_fragment_fair(id) {
+                            let log_line = match self.sc.send_flood_request_fair(id) {
                                 Some(_) => "Flood request sent".to_string(),
                                 None => "Failed to send flood request".to_string(),
                             };
