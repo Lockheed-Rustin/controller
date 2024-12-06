@@ -11,7 +11,7 @@ use drone_networks::controller::SimulationController;
 use wg_2024::network::NodeId;
 
 use controller_data::{DroneStats, SimulationData};
-use controller_receiver_thread::receiver_loop;
+use controller_receiver_threads::{drone_receiver_loop, client_receiver_loop, server_receiver_loop};
 
 pub struct SimulationControllerUI {
     sc: SimulationController,
@@ -82,11 +82,23 @@ impl SimulationControllerUI {
             cc.egui_ctx.clone(),
         )));
 
-        // spawn thread
-        let data_ref_clone = Arc::clone(&data_ref);
-        let sc_receiver_clone = sc.get_receiver();
+        // spawn threads
+        let drone_receiver = sc.get_drone_recv();
+        let client_receiver = sc.get_client_recv();
+        let server_receiver = sc.get_server_recv();
+        let tmp_clone = Arc::clone(&data_ref);
         std::thread::spawn(move || {
-            receiver_loop(data_ref_clone, sc_receiver_clone);
+            drone_receiver_loop(tmp_clone, drone_receiver);
+        });
+        let tmp_clone = Arc::clone(&data_ref);
+
+        std::thread::spawn(move || {
+            client_receiver_loop(tmp_clone, client_receiver);
+        });
+        let tmp_clone = Arc::clone(&data_ref);
+
+        std::thread::spawn(move || {
+            server_receiver_loop(tmp_clone, server_receiver);
         });
 
         // return
@@ -153,26 +165,10 @@ impl SimulationControllerUI {
 
                     ui.horizontal(|ui| {
                         if ui.button("Send Fragment").clicked() {
-                            let log_line = match self.sc.send_fragment_fair(id) {
-                                Some(_) => "Fragment sent".to_string(),
-                                None => "Failed to send fragment".to_string(),
-                            };
-                            Self::push_log(
-                                Arc::clone(&self.simulation_data_ref),
-                                id,
-                                log_line
-                            );
+                            self.sc.send_fragment_fair(id);
                         }
                         if ui.button("Send FloodRequest").clicked() {
-                            let log_line = match self.sc.send_flood_request_fair(id) {
-                                Some(_) => "Flood request sent".to_string(),
-                                None => "Failed to send flood request".to_string(),
-                            };
-                            Self::push_log(
-                                Arc::clone(&self.simulation_data_ref),
-                                id,
-                                log_line
-                            );
+                            self.sc.send_flood_request_fair(id);
                         }
 
                         /* command line

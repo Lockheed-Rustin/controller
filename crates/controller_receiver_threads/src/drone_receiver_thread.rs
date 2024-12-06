@@ -7,7 +7,8 @@ use wg_2024::packet::{Packet, PacketType};
 
 use controller_data::SimulationData;
 
-pub fn receiver_loop(data_ref: Arc<Mutex<SimulationData>>, rec: Receiver<DroneEvent>) {
+
+pub fn drone_receiver_loop(data_ref: Arc<Mutex<SimulationData>>, rec: Receiver<DroneEvent>) {
     loop {
         select! {
             recv(rec) -> packet => {
