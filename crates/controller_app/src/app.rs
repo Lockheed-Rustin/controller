@@ -64,10 +64,8 @@ impl SimulationControllerUI {
         }
         // create drone hashmaps
         let mut stats = HashMap::new();
-        let mut drone_pdrs = HashMap::new();
         for id in sc.get_drone_ids() {
             stats.insert(id, DroneStats::default());
-            drone_pdrs.insert(id, 0.0);
         }
         // create client hashmaps
         let mut client_command_lines = HashMap::new();
@@ -103,12 +101,12 @@ impl SimulationControllerUI {
 
         // return
         Self {
-            sc,
             simulation_data_ref: data_ref,
             open_windows,
             client_command_lines,
-            drone_pdrs,
+            drone_pdrs: sc.start_pdr.clone(),
             add_link_selected_ids,
+            sc,
         }
     }
 
