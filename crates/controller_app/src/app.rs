@@ -1,10 +1,7 @@
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
 
-use eframe::egui::{
-    vec2, CentralPanel, Color32, Context, CursorIcon, Direction, Grid, Key, Label, Layout,
-    RichText, ScrollArea, Sense, SidePanel, Slider, TextEdit, TextStyle, Ui, Window,
-};
+use eframe::egui::{vec2, CentralPanel, Color32, ComboBox, Context, CursorIcon, Direction, Grid, Key, Label, Layout, RichText, ScrollArea, Sense, SidePanel, Slider, TextEdit, TextStyle, Ui, Window};
 use eframe::CreationContext;
 
 use drone_networks::controller::SimulationController;
@@ -16,9 +13,11 @@ use controller_receiver_threads::{drone_receiver_loop, client_receiver_loop, ser
 pub struct SimulationControllerUI {
     sc: SimulationController,
     simulation_data_ref: Arc<Mutex<SimulationData>>,
+
     open_windows: HashMap<NodeId, bool>,
     client_command_lines: HashMap<NodeId, String>,
     drone_pdrs: HashMap<NodeId, f32>,
+    add_link_selected_ids: HashMap<NodeId, Option<NodeId>>,
 }
 
 impl eframe::App for SimulationControllerUI {
@@ -57,10 +56,11 @@ impl SimulationControllerUI {
         // create node hashmaps
         let mut logs = HashMap::new();
         let mut open_windows = HashMap::new();
+        let mut add_link_selected_ids = HashMap::new();
         for id in ids.clone() {
             logs.insert(id, vec![]);
-
             open_windows.insert(id, false);
+            add_link_selected_ids.insert(id, None);
         }
         // create drone hashmaps
         let mut stats = HashMap::new();
@@ -108,6 +108,7 @@ impl SimulationControllerUI {
             open_windows,
             client_command_lines,
             drone_pdrs,
+            add_link_selected_ids,
         }
     }
 
@@ -219,46 +220,71 @@ impl SimulationControllerUI {
             .fixed_size(vec2(400.0, 300.0))
             .show(ctx, |ui| {
                 ui.vertical(|ui| {
-                    //stats
+                    // ----- stats -----
                     Self::spawn_drone_stats(ui, Arc::clone(&self.simulation_data_ref), id);
                     ui.add_space(5.0);
-                    ui.separator();
 
-                    // logs
+                    // ----- logs -----
                     Self::spawn_logs(ui, Arc::clone(&self.simulation_data_ref), id);
                     ui.add_space(5.0);
-                    ui.separator();
 
                     Self::spawn_white_heading(ui, "Actions");
                     ui.add_space(5.0);
 
-                    // actions
+                    // ----- actions -----
+
+                    // TODO: show only not neighbor nodes
+                    let mut node_ids = self.sc.get_drone_ids();
+                    node_ids.append(&mut self.sc.get_client_ids());
+                    node_ids.append(&mut self.sc.get_server_ids());
+                    node_ids.sort();
+                    let selected_id = self.add_link_selected_ids.get_mut(&id).unwrap();
+
                     ui.horizontal(|ui| {
-                        if ui.button("Crash").clicked() {
-                            let log_line = match self.sc.crash_drone(id) {
-                                Some(_) => "Drone crashed".to_string(),
-                                None => "Failed to crash".to_string(),
-                            };
+                        ui.monospace("Add link with:");
+                        ComboBox::from_label("")
+                            .width(50.0)
+                            .selected_text(
+                                selected_id
+                                    .map(|num| num.to_string())
+                                    .unwrap_or_else(|| "-".to_string()),
+                            )
+                            .show_ui(ui, |ui| {
+                                for &number in &node_ids {
+                                    ui.selectable_value(selected_id, Some(number), number.to_string());
+                                }
+                            });
+                        if ui.button("Add").clicked() {
+                            let mut log_line = String::new();
+                            match selected_id {
+                                None => {
+                                    log_line = "Error: id not selected".to_string()
+                                }
+                                Some(sid) => {
+                                    log_line = match self.sc.add_edge(id, *sid) {
+                                        Some(_) => {
+                                            // push log to other node as well
+                                            Self::push_log(
+                                                Arc::clone(&self.simulation_data_ref),
+                                                *sid,
+                                                format!("Link added with node {}", id),
+                                            );
+                                            format!("Link added with node {}", *sid)
+                                        }
+                                        None => format!("Failed to add link with node {}", *sid),
+                                    };
+                                }
+                            }
+
                             Self::push_log(
                                 Arc::clone(&self.simulation_data_ref),
                                 id,
                                 log_line
                             );
                         }
-                        if ui.button("Add link").clicked() {
-                            // let log_line = match self.sc.add_edge(id, ???) {
-                            //     Some(_) => format!("Link added with node {}", ???),
-                            //     None => format!("Failed to add link with node {}", ???),
-                            // };
-                            // Self::push_log(
-                            //     Arc::clone(&self.simulation_data_ref),
-                            //     id,
-                            //     log_line
-                            // );
-                        }
                     });
 
-                    ui.add_space(5.0);
+                    ui.add_space(3.0);
 
                     ui.horizontal(|ui| {
                         ui.monospace("PDR:");
@@ -278,6 +304,25 @@ impl SimulationControllerUI {
                                 log_line
                             );
 
+                        }
+                    });
+
+                    ui.add_space(3.0);
+
+                    ui.horizontal(|ui| {
+                        if ui.button("Crash").clicked() {
+                            if let None = self.sc.crash_drone(id) {
+                                Self::push_log(
+                                    Arc::clone(&self.simulation_data_ref),
+                                    id,
+                                    "Failed to crash".to_string()
+                                );
+                            };
+                        }
+                        if ui.button("Clear log").clicked() {
+                            let mut data = self.simulation_data_ref.lock().unwrap();
+                            let v = data.logs.get_mut(&id).unwrap();
+                            v.clear();
                         }
                     });
                 });
