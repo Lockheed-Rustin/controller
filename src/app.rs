@@ -26,7 +26,7 @@ pub struct SimulationControllerUI {
     simulation_data_ref: Arc<Mutex<SimulationData>>,
     // nodes
     types: HashMap<NodeId, NodeType>,
-    //open_windows: RefCell<HashMap<NodeId, bool>>,
+    open_windows: HashMap<NodeId, bool>,
     // clients
     client_command_lines: HashMap<NodeId, String>,
     // drones
@@ -79,7 +79,7 @@ impl SimulationControllerUI {
             open_windows.insert(id, false);
             add_link_selected_ids.insert(id, None);
         }
-        let open_windows = RefCell::new(open_windows);
+        // let open_windows = RefCell::new(open_windows);
         // create drone hashmaps
         let mut stats = HashMap::new();
         for id in sc.get_drone_ids() {
@@ -128,14 +128,14 @@ impl SimulationControllerUI {
         Self {
             types,
             simulation_data_ref: data_ref,
-            //open_windows,
+            open_windows,
             client_command_lines,
             drone_pdr_sliders,
             add_link_selected_ids,
         }
     }
 
-    pub fn sidebar(&self, ctx: &Context) {
+    pub fn sidebar(&mut self, ctx: &Context) {
         SidePanel::left("left").show(ctx, |ui| {
             ui.heading("Nodes");
             ui.separator();
@@ -174,12 +174,13 @@ impl SimulationControllerUI {
         });
     }
 
-    pub fn client_window(&self, ctx: &Context, id: NodeId) {
+    pub fn client_window(&mut self, ctx: &Context, id: NodeId) {
         let mutex = self.simulation_data_ref.lock().unwrap();
         // let mut binding = self.open_windows.borrow_mut();
         // let open = binding.get_mut(&id).unwrap();
+        let open = self.open_windows.get_mut(&id).unwrap();
         Window::new(format!("Client #{}", id))
-            .open(&mut true)
+            .open(open)
             .min_size(vec2(200.0, 300.0))
             .max_size(vec2(500.0, 300.0))
             .show(ctx, |ui| {
@@ -224,8 +225,9 @@ impl SimulationControllerUI {
         let mutex = self.simulation_data_ref.lock().unwrap();
         // let mut binding = self.open_windows.borrow_mut();
         // let open = binding.get_mut(&id).unwrap();
+        let open = self.open_windows.get_mut(&id).unwrap();
         Window::new(format!("Server #{}", id))
-            .open(&mut true)
+            .open(open)
             //.default_open(false)
             .min_size(vec2(200.0, 300.0))
             .max_size(vec2(500.0, 300.0))
@@ -247,8 +249,9 @@ impl SimulationControllerUI {
         let mut mutex = self.simulation_data_ref.lock().unwrap();
         // let mut binding = self.open_windows.borrow_mut();
         // let open = binding.get_mut(&id).unwrap();
+        let open = self.open_windows.get_mut(&id).unwrap();
         Window::new(format!("Drone #{}", id))
-            .open(&mut true)
+            .open(open)
             .fixed_size(vec2(400.0, 300.0))
             .show(ctx, |ui| {
                 ui.vertical(|ui| {
@@ -422,7 +425,7 @@ impl SimulationControllerUI {
         ui.monospace(format!("Fragments dropped: {}", stats.fragments_dropped));
     }
 
-    fn spawn_node_list_element(&self, ui: &mut Ui, id: NodeId, s: &'static str) {
+    fn spawn_node_list_element(&mut self, ui: &mut Ui, id: NodeId, s: &'static str) {
         ui.add_space(5.0);
 
         let response = ui.add(Label::new(format!("{} #{}", s, id)).sense(Sense::click()));
@@ -432,7 +435,7 @@ impl SimulationControllerUI {
         }
 
         if response.clicked() {
-            //self.open_windows.borrow_mut().insert(id, true);
+            self.open_windows.insert(id, true);
         };
 
         ui.add_space(5.0);
@@ -470,4 +473,3 @@ impl SimulationControllerUI {
         }
     }
 }
-
