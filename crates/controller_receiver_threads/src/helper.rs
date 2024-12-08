@@ -15,7 +15,7 @@ pub fn get_from_and_to_packet_send(p: &Packet) -> (NodeId, Option<NodeId>) {
     } else {
         p.routing_header.hops[p.routing_header.hop_index - 1]
     };
-    let to_id = if let PacketType::FloodRequest(fr) = &p.pack_type {
+    let to_id = if let PacketType::FloodRequest(_) = &p.pack_type {
         None
     } else {
         Some(p.routing_header.hops[p.routing_header.hop_index])

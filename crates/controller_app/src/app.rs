@@ -2,8 +2,8 @@ use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
 
 use eframe::egui::{
-    vec2, CentralPanel, Color32, ComboBox, Context, CursorIcon, Direction, Grid, Key, Label,
-    Layout, RichText, ScrollArea, Sense, SidePanel, Slider, TextEdit, TextStyle, Ui, Window,
+    vec2, CentralPanel, Color32, ComboBox, Context, CursorIcon, Direction, Grid, Label, Layout,
+    RichText, ScrollArea, Sense, SidePanel, Slider, Ui, Window,
 };
 use eframe::CreationContext;
 
@@ -276,11 +276,10 @@ impl SimulationControllerUI {
                                 }
                             });
                         if ui.button("Add").clicked() {
-                            let mut log_line = String::new();
-                            match selected_id {
-                                None => log_line = "Error: id not selected".to_string(),
+                            let log_line = match selected_id {
+                                None => "Error: id not selected".to_string(),
                                 Some(sid) => {
-                                    log_line = match self.sc.add_edge(id, *sid) {
+                                    match self.sc.add_edge(id, *sid) {
                                         Some(_) => {
                                             // push log to other node as well
                                             Self::push_log(
@@ -291,9 +290,9 @@ impl SimulationControllerUI {
                                             format!("Link added with node {}", *sid)
                                         }
                                         None => format!("Failed to add link with node {}", *sid),
-                                    };
+                                    }
                                 }
-                            }
+                            };
 
                             Self::push_log(Arc::clone(&self.simulation_data_ref), id, log_line);
                         }
