@@ -36,7 +36,11 @@ pub fn get_from_packet_received(p: &Packet) -> NodeId {
     let from_id = if let PacketType::FloodRequest(fr) = &p.pack_type {
         fr.path_trace.last().unwrap().0
     } else {
-        p.routing_header.hops[p.routing_header.hop_index - 1]
+        if p.routing_header.hop_index < p.routing_header.hops.len() - 1 { // sent by controller
+            p.routing_header.hops[p.routing_header.hop_index]
+        } else {
+            p.routing_header.hops[p.routing_header.hop_index - 1]
+        }
     };
     from_id
 }

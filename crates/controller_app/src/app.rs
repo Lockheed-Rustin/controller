@@ -185,6 +185,9 @@ impl SimulationControllerUI {
                         if ui.button("Send Fragment").clicked() {
                             self.sc.send_fragment_fair(id);
                         }
+                        if ui.button("Send Ack").clicked() {
+                            self.sc.send_ack_fair(id);
+                        }
                         if ui.button("Send FloodRequest").clicked() {
                             self.sc.send_flood_request_fair(id);
                         }
