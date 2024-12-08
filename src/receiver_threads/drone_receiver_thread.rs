@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 use crossbeam_channel::{select, Receiver, Sender};
@@ -9,28 +8,21 @@ use wg_2024::packet::{Packet, PacketType};
 
 use super::helper;
 use crate::data::SimulationData;
+use crate::receiver_threads::helper::get_packet_type_str;
 
-pub fn receiver_loop(
-    data_ref: Arc<Mutex<SimulationData>>,
-    rec: Receiver<DroneEvent>,
-    packet_senders: HashMap<NodeId, Sender<Packet>>,
-) {
+pub fn receiver_loop(data_ref: Arc<Mutex<SimulationData>>, rec: Receiver<DroneEvent>) {
     loop {
         select! {
             recv(rec) -> packet => {
                 if let Ok(event) = packet {
-                    handle_event(Arc::clone(&data_ref), event, &packet_senders);
+                    handle_event(Arc::clone(&data_ref), event);
                 }
             }
         }
     }
 }
 
-fn handle_event(
-    data_ref: Arc<Mutex<SimulationData>>,
-    event: DroneEvent,
-    packet_senders: &HashMap<NodeId, Sender<Packet>>,
-) {
+fn handle_event(data_ref: Arc<Mutex<SimulationData>>, event: DroneEvent) {
     match event {
         DroneEvent::PacketSent(p) => {
             handle_packet_sent(data_ref, &p);
@@ -39,7 +31,7 @@ fn handle_event(
             handle_packet_dropped(data_ref, &p);
         }
         DroneEvent::ControllerShortcut(p) => {
-            handle_controller_shortcut(data_ref, p, packet_senders);
+            handle_controller_shortcut(data_ref, p);
         }
     }
 }
@@ -67,32 +59,18 @@ fn handle_packet_sent(data_ref: Arc<Mutex<SimulationData>>, p: &Packet) {
     update_data_packet_sent(data_ref, &p.pack_type, &from_id, log_line);
 }
 
-fn handle_controller_shortcut(
-    data_ref: Arc<Mutex<SimulationData>>,
-    p: Packet,
-    packet_senders: &HashMap<NodeId, Sender<Packet>>,
-) {
-    let dest_id = if let Some(&i) = p.routing_header.hops.last() {
-        i
-    } else {
-        return;
-    };
-    let sender = if let Some(s) = packet_senders.get(&dest_id) {
-        s
-    } else {
-        return;
-    };
+fn handle_controller_shortcut(data_ref: Arc<Mutex<SimulationData>>, p: Packet) {
+    let from_id = p.routing_header.hops[p.routing_header.hop_index];
+    let to_id = *p.routing_header.hops.last().unwrap();
+    let log_line = format!("{} sent to Simulation Controller, recipient: node #{}", get_packet_type_str(&p.pack_type), to_id);
+    let stat_index = helper::get_packet_stat_index(&p.pack_type);
 
-    match sender.send(p.clone()) {
-        Ok(_) => {
-            let drone_id = &p.routing_header.hops[p.routing_header.hop_index];
-            let log_line = format!(
-                "{} sent to Simulation Controller",
-                helper::get_packet_type_str(&p.pack_type)
-            );
-            update_data_packet_sent(data_ref, &p.pack_type, drone_id, log_line)
-        }
-        Err(_) => {}
+    let mut data = data_ref.lock().unwrap();
+    if let Some(_) = data.sc.shortcut(p.clone()) {
+        data.logs.get_mut(&from_id).unwrap().push(log_line);
+        data.stats.get_mut(&from_id).unwrap().packets_forwarded[stat_index] += 1;
+
+        data.ctx.request_repaint();
     }
 }
 

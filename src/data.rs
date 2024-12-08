@@ -1,11 +1,14 @@
 use std::collections::HashMap;
-
 use eframe::egui::Context;
 
 use wg_2024::network::NodeId;
 use wg_2024::packet::PacketType;
 
+use drone_networks::controller::SimulationController;
+
+
 pub struct SimulationData {
+    pub sc: SimulationController,
     pub logs: HashMap<NodeId, Vec<String>>,
     pub stats: HashMap<NodeId, DroneStats>,
     pub ctx: Context,
@@ -13,11 +16,12 @@ pub struct SimulationData {
 
 impl SimulationData {
     pub fn new(
+        sc: SimulationController,
         logs: HashMap<NodeId, Vec<String>>,
         stats: HashMap<NodeId, DroneStats>,
         ctx: Context,
     ) -> Self {
-        Self { logs, stats, ctx }
+        Self { sc, logs, stats, ctx }
     }
 }
 
