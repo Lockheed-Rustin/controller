@@ -10,9 +10,9 @@ use eframe::CreationContext;
 use drone_networks::controller::SimulationController;
 use wg_2024::network::NodeId;
 
-use controller_data::{DroneStats, SimulationData};
-use controller_receiver_threads::{
-    client_receiver_loop, drone_receiver_loop, server_receiver_loop,
+use crate::data::{DroneStats, SimulationData};
+use crate::receiver_threads::{
+    client_receiver_thread, drone_receiver_thread, server_receiver_thread,
 };
 
 pub struct SimulationControllerUI {
@@ -105,17 +105,17 @@ impl SimulationControllerUI {
 
         let tmp_clone = Arc::clone(&data_ref);
         std::thread::spawn(move || {
-            drone_receiver_loop(tmp_clone, drone_receiver, host_senders);
+            drone_receiver_thread::receiver_loop(tmp_clone, drone_receiver, host_senders);
         });
 
         let tmp_clone = Arc::clone(&data_ref);
         std::thread::spawn(move || {
-            client_receiver_loop(tmp_clone, client_receiver);
+            client_receiver_thread::receiver_loop(tmp_clone, client_receiver);
         });
 
         let tmp_clone = Arc::clone(&data_ref);
         std::thread::spawn(move || {
-            server_receiver_loop(tmp_clone, server_receiver);
+            server_receiver_thread::receiver_loop(tmp_clone, server_receiver);
         });
 
         // return

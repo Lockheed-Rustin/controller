@@ -7,12 +7,10 @@ use wg_2024::controller::DroneEvent;
 use wg_2024::network::NodeId;
 use wg_2024::packet::{Packet, PacketType};
 
-use controller_data::SimulationData;
+use super::helper;
+use crate::data::SimulationData;
 
-use crate::helper;
-use crate::helper::get_packet_type_str;
-
-pub fn drone_receiver_loop(
+pub fn receiver_loop(
     data_ref: Arc<Mutex<SimulationData>>,
     rec: Receiver<DroneEvent>,
     packet_senders: HashMap<NodeId, Sender<Packet>>,
@@ -90,7 +88,7 @@ fn handle_controller_shortcut(
             let drone_id = &p.routing_header.hops[p.routing_header.hop_index];
             let log_line = format!(
                 "{} sent to Simulation Controller",
-                get_packet_type_str(&p.pack_type)
+                helper::get_packet_type_str(&p.pack_type)
             );
             update_data_packet_sent(data_ref, &p.pack_type, drone_id, log_line)
         }

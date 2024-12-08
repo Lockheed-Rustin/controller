@@ -1,9 +1,0 @@
-[package]
-name = "controller_data"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-eframe = "0.29.1"
-drone-networks = { git = "https://github.com/Lockheed-Rustin/drone-network.git", branch = "client-server-fair" }
-wg_2024 =  { git = "https://github.com/WGL-2024/WGL_repo_2024.git", features = ["serialize"] }

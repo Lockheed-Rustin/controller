@@ -1,10 +1,10 @@
-mod simulation_controller_ui;
-
+use drone_networks::network::*;
 use eframe::egui;
 use std::fs;
 
-use controller_internal::app::SimulationControllerUI;
-use drone_networks::network::*;
+mod app;
+pub mod data;
+mod receiver_threads;
 
 fn main() -> eframe::Result {
     // read config file and get a SimulationController
@@ -22,6 +22,6 @@ fn main() -> eframe::Result {
     eframe::run_native(
         "Simulation Controller",
         native_options,
-        Box::new(|cc| Ok(Box::new(SimulationControllerUI::new(cc, sc)))),
+        Box::new(|cc| Ok(Box::new(app::SimulationControllerUI::new(cc, sc)))),
     )
 }
