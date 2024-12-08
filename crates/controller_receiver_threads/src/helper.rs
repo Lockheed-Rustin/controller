@@ -1,9 +1,5 @@
-use std::sync::{Arc, Mutex};
-
 use wg_2024::network::NodeId;
 use wg_2024::packet::{Packet, PacketType};
-
-use controller_data::SimulationData;
 
 // all nodes
 pub fn get_log_line_packet_sent(p: &Packet, to_id: Option<NodeId>) -> String {

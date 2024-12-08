@@ -6,6 +6,6 @@ edition = "2021"
 [dependencies]
 eframe = "0.29.1"
 crossbeam-channel = "0.5.13"
-drone-networks = { git = "https://github.com/Lockheed-Rustin/drone-network.git" }
+drone-networks = { git = "https://github.com/Lockheed-Rustin/drone-network.git", branch = "test-sound", feature = ["sounds"]}
 wg_2024 =  { git = "https://github.com/WGL-2024/WGL_repo_2024.git", features = ["serialize"] }
 controller_data = { path = "../controller_data" }
