@@ -1,11 +1,21 @@
 use wg_2024::network::NodeId;
-use wg_2024::packet::{Packet, PacketType};
+use wg_2024::packet::{NodeType, Packet, PacketType};
 
 // all nodes
 pub fn get_log_line_packet_sent(p: &Packet, to_id: Option<NodeId>) -> String {
     match to_id {
         None => format!("{} broadcasted", get_packet_type_str(&p.pack_type)),
-        Some(id) => format!("{} sent to node #{}", get_packet_type_str(&p.pack_type), id),
+        Some(id) => match &p.pack_type {
+            PacketType::FloodResponse(f) => {
+                format!(
+                    "{} sent to node #{}\npath trace = {}",
+                    get_packet_type_str(&p.pack_type),
+                    id,
+                    format_path_trace(&f.path_trace),
+                )
+            }
+            _ => format!("{} sent to node #{}", get_packet_type_str(&p.pack_type), id),
+        },
     }
 }
 
@@ -25,11 +35,23 @@ pub fn get_from_and_to_packet_send(p: &Packet) -> (NodeId, Option<NodeId>) {
 
 // clients and servers
 pub fn get_log_line_packet_received(p: &Packet, from_id: NodeId) -> String {
-    format!(
-        "Received {} from node #{}",
-        get_packet_type_str(&p.pack_type),
-        from_id
-    )
+    match &p.pack_type {
+        PacketType::FloodResponse(f) => {
+            format!(
+                "Received {} from node #{},\npath trace = {}",
+                get_packet_type_str(&p.pack_type),
+                from_id,
+                format_path_trace(&f.path_trace),
+            )
+        }
+        _ => {
+            format!(
+                "Received {} from node #{}",
+                get_packet_type_str(&p.pack_type),
+                from_id
+            )
+        }
+    }
 }
 
 pub fn get_from_packet_received(p: &Packet) -> NodeId {
@@ -64,4 +86,19 @@ pub fn get_packet_type_str(t: &PacketType) -> &'static str {
         PacketType::FloodRequest(_) => "Flood request",
         PacketType::FloodResponse(_) => "Flood response",
     }
+}
+
+fn format_path_trace(pt: &Vec<(NodeId, NodeType)>) -> String {
+    let mut res = "[ ".to_string();
+    for (id, t) in pt {
+        res.push(match t {
+            NodeType::Client => 'C',
+            NodeType::Drone => 'D',
+            NodeType::Server => 'S'
+        });
+        res.push_str(&format!("{} ", id));
+    }
+    res.push(']');
+    res
+
 }

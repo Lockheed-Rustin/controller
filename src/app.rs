@@ -175,7 +175,7 @@ impl SimulationControllerUI {
     }
 
     pub fn client_window(&mut self, ctx: &Context, id: NodeId) {
-        let mutex = self.simulation_data_ref.lock().unwrap();
+        let mut mutex = self.simulation_data_ref.lock().unwrap();
         // let mut binding = self.open_windows.borrow_mut();
         // let open = binding.get_mut(&id).unwrap();
         let open = self.open_windows.get_mut(&id).unwrap();
@@ -190,6 +190,9 @@ impl SimulationControllerUI {
 
                     ui.add_space(5.0);
 
+                    Self::spawn_white_heading(ui, "Actions");
+                    ui.add_space(5.0);
+
                     ui.horizontal(|ui| {
                         if ui.button("Send Fragment").clicked() {
                             mutex.sc.send_fragment_fair(id);
@@ -199,6 +202,10 @@ impl SimulationControllerUI {
                         }
                         if ui.button("Send FloodRequest").clicked() {
                             mutex.sc.send_flood_request_fair(id);
+                        }
+                        if ui.button("Clear log").clicked() {
+                            let v = mutex.logs.get_mut(&id).unwrap();
+                            v.clear();
                         }
 
                         /* command line
@@ -222,7 +229,7 @@ impl SimulationControllerUI {
     }
 
     pub fn server_window(&mut self, ctx: &Context, id: NodeId) {
-        let mutex = self.simulation_data_ref.lock().unwrap();
+        let mut mutex = self.simulation_data_ref.lock().unwrap();
         // let mut binding = self.open_windows.borrow_mut();
         // let open = binding.get_mut(&id).unwrap();
         let open = self.open_windows.get_mut(&id).unwrap();
@@ -232,9 +239,6 @@ impl SimulationControllerUI {
             .min_size(vec2(200.0, 300.0))
             .max_size(vec2(500.0, 300.0))
             .show(ctx, |ui| {
-                ui.horizontal(|ui| {
-                    ui.label("Stats about the server");
-                });
 
                 ui.add_space(5.0);
 
@@ -242,6 +246,14 @@ impl SimulationControllerUI {
                     // logs
                     Self::spawn_logs(ui, &mutex, id);
                 });
+
+                Self::spawn_white_heading(ui, "Actions");
+                ui.add_space(5.0);
+
+                if ui.button("Clear log").clicked() {
+                    let v = mutex.logs.get_mut(&id).unwrap();
+                    v.clear();
+                }
             });
     }
 
