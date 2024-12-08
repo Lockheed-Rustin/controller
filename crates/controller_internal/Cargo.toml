@@ -1,9 +1,0 @@
-[package]
-name = "controller_internal"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-controller_app = { path = "../controller_app" }
-controller_data = { path = "../controller_data" }
-controller_receiver_threads = { path = "../controller_receiver_threads" }
