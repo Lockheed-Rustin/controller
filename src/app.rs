@@ -26,7 +26,7 @@ pub struct SimulationControllerUI {
     simulation_data_ref: Arc<Mutex<SimulationData>>,
     // nodes
     types: HashMap<NodeId, NodeType>,
-    open_windows: RefCell<HashMap<NodeId, bool>>,
+    //open_windows: RefCell<HashMap<NodeId, bool>>,
     // clients
     client_command_lines: HashMap<NodeId, String>,
     // drones
@@ -37,7 +37,7 @@ pub struct SimulationControllerUI {
 impl eframe::App for SimulationControllerUI {
     fn update(&mut self, ctx: &Context, _frame: &mut eframe::Frame) {
 
-
+        self.update_id_list();
 
         // sidebar
         self.sidebar(ctx);
@@ -59,8 +59,16 @@ impl eframe::App for SimulationControllerUI {
 impl SimulationControllerUI {
     pub fn new(cc: &CreationContext<'_>, sc: SimulationController) -> Self {
         // get all node ids
-        let types = HashMap::new();
-
+        let mut types = HashMap::new();
+        for id in sc.get_drone_ids() {
+            types.insert(id, NodeType::Drone);
+        }
+        for id in sc.get_client_ids() {
+            types.insert(id, NodeType::Client);
+        }
+        for id in sc.get_server_ids() {
+            types.insert(id, NodeType::Server);
+        }
 
         // create node hashmaps
         let mut logs = HashMap::new();
@@ -120,7 +128,7 @@ impl SimulationControllerUI {
         Self {
             types,
             simulation_data_ref: data_ref,
-            open_windows,
+            //open_windows,
             client_command_lines,
             drone_pdr_sliders,
             add_link_selected_ids,
@@ -128,7 +136,6 @@ impl SimulationControllerUI {
     }
 
     pub fn sidebar(&self, ctx: &Context) {
-        let mutex = self.simulation_data_ref.lock().unwrap();
         SidePanel::left("left").show(ctx, |ui| {
             ui.heading("Nodes");
             ui.separator();
@@ -136,7 +143,7 @@ impl SimulationControllerUI {
             ui.label("Clients");
             ui.indent("clients", |ui| {
                 // For every item, show its name as a clickable label.
-                for id in mutex.sc.get_client_ids() {
+                for id in self.get_ids(NodeType::Client) {
                     self.spawn_node_list_element(ui, id, "Client");
                 }
             });
@@ -145,7 +152,7 @@ impl SimulationControllerUI {
             ui.label("Servers");
             ui.indent("servers", |ui| {
                 // For every item, show its name as a clickable label.
-                for id in mutex.sc.get_server_ids() {
+                for id in self.get_ids(NodeType::Server) {
                     self.spawn_node_list_element(ui, id, "Server");
                 }
             });
@@ -154,7 +161,7 @@ impl SimulationControllerUI {
             ui.label("Drones");
             ui.indent("drones", |ui| {
                 // clickable labels
-                for id in mutex.sc.get_drone_ids() {
+                for id in self.get_ids(NodeType::Drone) {
                     self.spawn_node_list_element(ui, id, "Drone");
                 }
             });
@@ -169,10 +176,10 @@ impl SimulationControllerUI {
 
     pub fn client_window(&self, ctx: &Context, id: NodeId) {
         let mutex = self.simulation_data_ref.lock().unwrap();
-        let mut binding = self.open_windows.borrow_mut();
-        let open = binding.get_mut(&id).unwrap();
+        // let mut binding = self.open_windows.borrow_mut();
+        // let open = binding.get_mut(&id).unwrap();
         Window::new(format!("Client #{}", id))
-            .open(open)
+            .open(&mut true)
             .min_size(vec2(200.0, 300.0))
             .max_size(vec2(500.0, 300.0))
             .show(ctx, |ui| {
@@ -215,10 +222,10 @@ impl SimulationControllerUI {
 
     pub fn server_window(&mut self, ctx: &Context, id: NodeId) {
         let mutex = self.simulation_data_ref.lock().unwrap();
-        let mut binding = self.open_windows.borrow_mut();
-        let open = binding.get_mut(&id).unwrap();
+        // let mut binding = self.open_windows.borrow_mut();
+        // let open = binding.get_mut(&id).unwrap();
         Window::new(format!("Server #{}", id))
-            .open(open)
+            .open(&mut true)
             //.default_open(false)
             .min_size(vec2(200.0, 300.0))
             .max_size(vec2(500.0, 300.0))
@@ -238,10 +245,10 @@ impl SimulationControllerUI {
 
     pub fn drone_window(&mut self, ctx: &Context, id: NodeId) {
         let mut mutex = self.simulation_data_ref.lock().unwrap();
-        let mut binding = self.open_windows.borrow_mut();
-        let open = binding.get_mut(&id).unwrap();
+        // let mut binding = self.open_windows.borrow_mut();
+        // let open = binding.get_mut(&id).unwrap();
         Window::new(format!("Drone #{}", id))
-            .open(open)
+            .open(&mut true)
             .fixed_size(vec2(400.0, 300.0))
             .show(ctx, |ui| {
                 ui.vertical(|ui| {
@@ -335,8 +342,7 @@ impl SimulationControllerUI {
                             };
                         }
                         if ui.button("Clear log").clicked() {
-                            let mut data = self.simulation_data_ref.lock().unwrap();
-                            let v = data.logs.get_mut(&id).unwrap();
+                            let v = mutex.logs.get_mut(&id).unwrap();
                             v.clear();
                         }
                     });
@@ -426,7 +432,7 @@ impl SimulationControllerUI {
         }
 
         if response.clicked() {
-            self.open_windows.borrow_mut().insert(id, true);
+            //self.open_windows.borrow_mut().insert(id, true);
         };
 
         ui.add_space(5.0);
@@ -448,6 +454,20 @@ impl SimulationControllerUI {
         self.types.iter()
             .map(|(x, _)| *x)
             .collect()
+    }
+
+    fn update_id_list(&mut self) {
+        self.types.clear();
+        let mutex = self.simulation_data_ref.lock().unwrap();
+        for id in mutex.sc.get_drone_ids() {
+            self.types.insert(id, NodeType::Drone);
+        }
+        for id in mutex.sc.get_client_ids() {
+            self.types.insert(id, NodeType::Client);
+        }
+        for id in mutex.sc.get_server_ids() {
+            self.types.insert(id, NodeType::Server);
+        }
     }
 }
 
