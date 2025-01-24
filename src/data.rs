@@ -1,11 +1,13 @@
 use std::collections::HashMap;
-
 use eframe::egui::Context;
 
 use wg_2024::network::NodeId;
-use wg_2024::packet::PacketType;
+
+use drone_networks::controller::SimulationController;
+
 
 pub struct SimulationData {
+    pub sc: SimulationController,
     pub logs: HashMap<NodeId, Vec<String>>,
     pub stats: HashMap<NodeId, DroneStats>,
     pub ctx: Context,
@@ -13,11 +15,12 @@ pub struct SimulationData {
 
 impl SimulationData {
     pub fn new(
+        sc: SimulationController,
         logs: HashMap<NodeId, Vec<String>>,
         stats: HashMap<NodeId, DroneStats>,
         ctx: Context,
     ) -> Self {
-        Self { logs, stats, ctx }
+        Self { sc, logs, stats, ctx }
     }
 }
 
@@ -28,6 +31,7 @@ pub struct DroneStats {
     pub fragments_dropped: u32,
 }
 
+/* TODO: add stats to client and servers
 #[derive(Default)]
 pub struct ClientStats {
     packets_sent: HashMap<PacketType, u32>,
@@ -39,3 +43,4 @@ pub struct ServerStats {
     packets_sent: HashMap<PacketType, u32>,
     packets_received: HashMap<PacketType, u32>,
 }
+*/
