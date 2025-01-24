@@ -55,6 +55,12 @@ impl eframe::App for SimulationControllerUI {
 }
 
 impl SimulationControllerUI {
+    fn method(&self) {
+        println!("lol");
+    }
+    fn mut_method(&mut self) {
+        println!("lmao");
+    }
     pub fn new(cc: &CreationContext<'_>, sc: SimulationController) -> Self {
         // get all node ids
         let mut types = HashMap::new();
@@ -165,7 +171,7 @@ impl SimulationControllerUI {
             });
             ui.separator();
 
-            // Quit button, will close all windows
+            // Quit button
             if ui.button("Quit").clicked() {
                 std::process::exit(0);
             }
@@ -253,9 +259,12 @@ impl SimulationControllerUI {
     }
 
     pub fn drone_window(&mut self, ctx: &Context, id: NodeId) {
+        // TODO: show only not neighbor nodes
+        let mut node_ids: Vec<NodeId> = self.get_all_ids();
+        node_ids.sort();
+
         let mut mutex = self.simulation_data_ref.lock().unwrap();
-        // let mut binding = self.open_windows.borrow_mut();
-        // let open = binding.get_mut(&id).unwrap();
+
         let open = self.open_windows.get_mut(&id).unwrap();
         Window::new(format!("Drone #{}", id))
             .open(open)
@@ -274,15 +283,11 @@ impl SimulationControllerUI {
                     ui.add_space(5.0);
 
                     // ----- actions -----
-
-                    // TODO: show only not neighbor nodes
-                    let mut node_ids: Vec<NodeId> = self.types.keys().copied().collect();
-                    node_ids.sort();
                     let selected_id = self.add_link_selected_ids.get_mut(&id).unwrap();
 
                     ui.horizontal(|ui| {
                         ui.monospace("Add link with:");
-                        ComboBox::from_label("")
+                        ComboBox::from_id_salt("combobox")
                             .width(50.0)
                             .selected_text(
                                 selected_id
@@ -290,7 +295,7 @@ impl SimulationControllerUI {
                                     .unwrap_or_else(|| "-".to_string()),
                             )
                             .show_ui(ui, |ui| {
-                                for &number in &node_ids {
+                                for number in node_ids {
                                     ui.selectable_value(
                                         selected_id,
                                         Some(number),
@@ -458,11 +463,11 @@ impl SimulationControllerUI {
             .collect()
     }
 
-    // fn get_all_ids(&self) -> Vec<NodeId> {
-    //     self.types.iter()
-    //         .map(|(x, _)| *x)
-    //         .collect()
-    // }
+    fn get_all_ids(&self) -> Vec<NodeId> {
+        self.types.iter()
+            .map(|(x, _)| *x)
+            .collect()
+    }
 
     fn update_id_list(&mut self) {
         self.types.clear();
