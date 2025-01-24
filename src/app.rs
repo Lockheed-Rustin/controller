@@ -1,4 +1,4 @@
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::sync::{Arc, Mutex, MutexGuard};
 
 use eframe::egui::{
@@ -7,12 +7,12 @@ use eframe::egui::{
 };
 use eframe::CreationContext;
 
-use drone_networks::controller::SimulationController;
-use wg_2024::network::NodeId;
 use crate::data::{DroneStats, SimulationData};
 use crate::receiver_threads::{
     client_receiver_thread, drone_receiver_thread, server_receiver_thread,
 };
+use drone_networks::controller::SimulationController;
+use wg_2024::network::NodeId;
 
 #[derive(PartialEq, Clone, Copy)]
 enum NodeType {
@@ -35,7 +35,6 @@ pub struct SimulationControllerUI {
 
 impl eframe::App for SimulationControllerUI {
     fn update(&mut self, ctx: &Context, _frame: &mut eframe::Frame) {
-
         self.update_id_list();
 
         // sidebar
@@ -236,7 +235,6 @@ impl SimulationControllerUI {
             .min_size(vec2(200.0, 300.0))
             .max_size(vec2(500.0, 300.0))
             .show(ctx, |ui| {
-
                 ui.add_space(5.0);
 
                 ui.vertical(|ui| {
@@ -347,11 +345,7 @@ impl SimulationControllerUI {
                     ui.horizontal(|ui| {
                         if ui.button("Crash").clicked() {
                             if let None = mutex.sc.crash_drone(id) {
-                                Self::push_log(
-                                    &mut mutex,
-                                    id,
-                                    "Failed to crash".to_string(),
-                                );
+                                Self::push_log(&mut mutex, id, "Failed to crash".to_string());
                             };
                         }
                         if ui.button("Clear log").clicked() {
@@ -457,7 +451,8 @@ impl SimulationControllerUI {
     }
 
     fn get_ids(&self, node_type: NodeType) -> Vec<NodeId> {
-        self.types.iter()
+        self.types
+            .iter()
             .filter(|(_, &t)| t == node_type)
             .map(|(x, _)| *x)
             .collect()

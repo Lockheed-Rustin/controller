@@ -58,8 +58,8 @@ pub fn get_from_packet_received(p: &Packet) -> NodeId {
     let from_id = if let PacketType::FloodRequest(fr) = &p.pack_type {
         fr.path_trace.last().unwrap().0
     } else if p.routing_header.hop_index < p.routing_header.hops.len() - 1 {
-            // sent by controller
-            p.routing_header.hops[p.routing_header.hop_index]
+        // sent by controller
+        p.routing_header.hops[p.routing_header.hop_index]
     } else {
         p.routing_header.hops[p.routing_header.hop_index - 1]
     };
@@ -92,11 +92,10 @@ fn format_path_trace(pt: &Vec<(NodeId, NodeType)>) -> String {
         res.push(match t {
             NodeType::Client => 'C',
             NodeType::Drone => 'D',
-            NodeType::Server => 'S'
+            NodeType::Server => 'S',
         });
         res.push_str(&format!("{} ", id));
     }
     res.push(']');
     res
-
 }

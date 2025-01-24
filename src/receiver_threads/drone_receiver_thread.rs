@@ -62,7 +62,11 @@ fn handle_packet_sent(data_ref: Arc<Mutex<SimulationData>>, p: &Packet) {
 fn handle_controller_shortcut(data_ref: Arc<Mutex<SimulationData>>, p: Packet) {
     let from_id = p.routing_header.hops[p.routing_header.hop_index];
     let to_id = *p.routing_header.hops.last().unwrap();
-    let log_line = format!("{} sent to Simulation Controller, recipient: node #{}", get_packet_type_str(&p.pack_type), to_id);
+    let log_line = format!(
+        "{} sent to Simulation Controller, recipient: node #{}",
+        get_packet_type_str(&p.pack_type),
+        to_id
+    );
     let stat_index = helper::get_packet_stat_index(&p.pack_type);
 
     let mut data = data_ref.lock().unwrap();
