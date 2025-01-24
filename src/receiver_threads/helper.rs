@@ -57,13 +57,11 @@ pub fn get_log_line_packet_received(p: &Packet, from_id: NodeId) -> String {
 pub fn get_from_packet_received(p: &Packet) -> NodeId {
     let from_id = if let PacketType::FloodRequest(fr) = &p.pack_type {
         fr.path_trace.last().unwrap().0
-    } else {
-        if p.routing_header.hop_index < p.routing_header.hops.len() - 1 {
+    } else if p.routing_header.hop_index < p.routing_header.hops.len() - 1 {
             // sent by controller
             p.routing_header.hops[p.routing_header.hop_index]
-        } else {
-            p.routing_header.hops[p.routing_header.hop_index - 1]
-        }
+    } else {
+        p.routing_header.hops[p.routing_header.hop_index - 1]
     };
     from_id
 }

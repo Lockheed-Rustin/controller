@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex};
 
-use crossbeam_channel::{select, Receiver, Sender};
+use crossbeam_channel::{select, Receiver};
 
 use wg_2024::controller::DroneEvent;
 use wg_2024::network::NodeId;

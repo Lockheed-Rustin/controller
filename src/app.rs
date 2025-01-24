@@ -1,4 +1,3 @@
-use std::cell::RefCell;
 use std::collections::{HashMap};
 use std::sync::{Arc, Mutex, MutexGuard};
 
@@ -28,7 +27,7 @@ pub struct SimulationControllerUI {
     types: HashMap<NodeId, NodeType>,
     open_windows: HashMap<NodeId, bool>,
     // clients
-    client_command_lines: HashMap<NodeId, String>,
+    // client_command_lines: HashMap<NodeId, String>,
     // drones
     drone_pdr_sliders: HashMap<NodeId, f32>,
     add_link_selected_ids: HashMap<NodeId, Option<NodeId>>,
@@ -92,10 +91,10 @@ impl SimulationControllerUI {
             }
         }
         // create client hashmaps
-        let mut client_command_lines = HashMap::new();
-        for id in sc.get_drone_ids() {
-            client_command_lines.insert(id, "".to_string());
-        }
+        // let mut client_command_lines = HashMap::new();
+        // for id in sc.get_drone_ids() {
+        //     client_command_lines.insert(id, "".to_string());
+        // }
 
         // create shared data and spawn threads
         let drone_receiver = sc.get_drone_recv();
@@ -129,7 +128,7 @@ impl SimulationControllerUI {
             types,
             simulation_data_ref: data_ref,
             open_windows,
-            client_command_lines,
+            // client_command_lines,
             drone_pdr_sliders,
             add_link_selected_ids,
         }
@@ -176,8 +175,6 @@ impl SimulationControllerUI {
 
     pub fn client_window(&mut self, ctx: &Context, id: NodeId) {
         let mut mutex = self.simulation_data_ref.lock().unwrap();
-        // let mut binding = self.open_windows.borrow_mut();
-        // let open = binding.get_mut(&id).unwrap();
         let open = self.open_windows.get_mut(&id).unwrap();
         Window::new(format!("Client #{}", id))
             .open(open)
@@ -281,7 +278,7 @@ impl SimulationControllerUI {
                     // ----- actions -----
 
                     // TODO: show only not neighbor nodes
-                    let mut node_ids: Vec<NodeId> = self.types.keys().map(|x| *x).collect();
+                    let mut node_ids: Vec<NodeId> = self.types.keys().copied().collect();
                     node_ids.sort();
                     let selected_id = self.add_link_selected_ids.get_mut(&id).unwrap();
 
@@ -307,6 +304,7 @@ impl SimulationControllerUI {
                             let log_line = match selected_id {
                                 None => "Error: id not selected".to_string(),
                                 Some(sid) => {
+                                    println!("trying add {} and {}", id, *sid);
                                     match mutex.sc.add_edge(id, *sid) {
                                         Some(_) => {
                                             // push log to other node as well
@@ -465,11 +463,11 @@ impl SimulationControllerUI {
             .collect()
     }
 
-    fn get_all_ids(&self) -> Vec<NodeId> {
-        self.types.iter()
-            .map(|(x, _)| *x)
-            .collect()
-    }
+    // fn get_all_ids(&self) -> Vec<NodeId> {
+    //     self.types.iter()
+    //         .map(|(x, _)| *x)
+    //         .collect()
+    // }
 
     fn update_id_list(&mut self) {
         self.types.clear();
