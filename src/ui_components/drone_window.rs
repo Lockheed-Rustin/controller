@@ -1,8 +1,11 @@
+use std::sync::MutexGuard;
+
+use eframe::egui::{vec2, ComboBox, Context, Slider, Window};
+
+use wg_2024::network::NodeId;
+
 use crate::data::SimulationData;
 use crate::ui_components;
-use eframe::egui::{vec2, ComboBox, Context, Slider, Window};
-use std::sync::MutexGuard;
-use wg_2024::network::NodeId;
 
 pub fn spawn_drone_window(
     ctx: &Context,
@@ -30,8 +33,6 @@ pub fn spawn_drone_window(
                 ui.add_space(5.0);
 
                 // ----- actions -----
-                //let selected_id = self.add_link_selected_ids.get_mut(&id).unwrap();
-
                 ui.horizontal(|ui| {
                     ui.monospace("Add link with:");
                     ComboBox::from_id_salt("combobox")

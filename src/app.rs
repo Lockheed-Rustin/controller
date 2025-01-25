@@ -4,8 +4,8 @@ use std::sync::{Arc, Mutex};
 use eframe::egui::{CentralPanel, Context, CursorIcon, Label, Sense, SidePanel, Ui};
 use eframe::CreationContext;
 
-use drone_networks::controller::SimulationController;
 use wg_2024::network::NodeId;
+use drone_networks::controller::SimulationController;
 
 use crate::data::{DroneStats, SimulationData};
 use crate::receiver_threads;

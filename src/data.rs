@@ -1,8 +1,8 @@
-use eframe::egui::Context;
 use std::collections::HashMap;
 
-use wg_2024::network::NodeId;
+use eframe::egui::Context;
 
+use wg_2024::network::NodeId;
 use drone_networks::controller::SimulationController;
 
 pub struct SimulationData {
