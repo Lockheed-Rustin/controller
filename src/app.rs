@@ -2,15 +2,14 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex, MutexGuard};
 
 use eframe::egui::{
-    vec2, CentralPanel, Color32, ComboBox, Context, CursorIcon, Direction, Grid, Label, Layout,
-    RichText, ScrollArea, Sense, SidePanel, Slider, Ui, Window,
+    vec2, CentralPanel, ComboBox, Context, CursorIcon, Label
+    , Sense, SidePanel, Slider, Ui, Window,
 };
 use eframe::CreationContext;
 
 use crate::data::{DroneStats, SimulationData};
-use crate::receiver_threads::{
-    client_receiver_thread, drone_receiver_thread, server_receiver_thread,
-};
+use crate::receiver_threads;
+use crate::ui_components;
 use drone_networks::controller::SimulationController;
 use wg_2024::network::NodeId;
 
@@ -55,6 +54,8 @@ impl eframe::App for SimulationControllerUI {
 }
 
 impl SimulationControllerUI {
+
+    // TODO: remove these
     fn method(&self) {
         println!("lol");
     }
@@ -83,7 +84,6 @@ impl SimulationControllerUI {
             open_windows.insert(id, false);
             add_link_selected_ids.insert(id, None);
         }
-        // let open_windows = RefCell::new(open_windows);
         // create drone hashmaps
         let mut stats = HashMap::new();
         for id in sc.get_drone_ids() {
@@ -115,17 +115,17 @@ impl SimulationControllerUI {
 
         let tmp_clone = Arc::clone(&data_ref);
         std::thread::spawn(move || {
-            drone_receiver_thread::receiver_loop(tmp_clone, drone_receiver);
+            receiver_threads::drone_receiver_loop(tmp_clone, drone_receiver);
         });
 
         let tmp_clone = Arc::clone(&data_ref);
         std::thread::spawn(move || {
-            client_receiver_thread::receiver_loop(tmp_clone, client_receiver);
+            receiver_threads::client_receiver_loop(tmp_clone, client_receiver);
         });
 
         let tmp_clone = Arc::clone(&data_ref);
         std::thread::spawn(move || {
-            server_receiver_thread::receiver_loop(tmp_clone, server_receiver);
+            receiver_threads::server_receiver_loop(tmp_clone, server_receiver);
         });
 
         // return
@@ -188,11 +188,11 @@ impl SimulationControllerUI {
             .show(ctx, |ui| {
                 ui.vertical(|ui| {
                     // logs
-                    Self::spawn_logs(ui, &mutex, id);
+                    ui_components::logs::spawn_logs(ui, &mutex, id);
 
                     ui.add_space(5.0);
 
-                    Self::spawn_white_heading(ui, "Actions");
+                    ui_components::text::spawn_white_heading(ui, "Actions");
                     ui.add_space(5.0);
 
                     ui.horizontal(|ui| {
@@ -245,10 +245,10 @@ impl SimulationControllerUI {
 
                 ui.vertical(|ui| {
                     // logs
-                    Self::spawn_logs(ui, &mutex, id);
+                    ui_components::logs::spawn_logs(ui, &mutex, id);
                 });
 
-                Self::spawn_white_heading(ui, "Actions");
+                ui_components::text::spawn_white_heading(ui, "Actions");
                 ui.add_space(5.0);
 
                 if ui.button("Clear log").clicked() {
@@ -272,14 +272,14 @@ impl SimulationControllerUI {
             .show(ctx, |ui| {
                 ui.vertical(|ui| {
                     // ----- stats -----
-                    Self::spawn_drone_stats(ui, &mutex, id);
+                    ui_components::stats::spawn_drone_stats(ui, &mutex, id);
                     ui.add_space(5.0);
 
                     // ----- logs -----
-                    Self::spawn_logs(ui, &mutex, id);
+                    ui_components::logs::spawn_logs(ui, &mutex, id);
                     ui.add_space(5.0);
 
-                    Self::spawn_white_heading(ui, "Actions");
+                    ui_components::text::spawn_white_heading(ui, "Actions");
                     ui.add_space(5.0);
 
                     // ----- actions -----
@@ -362,77 +362,14 @@ impl SimulationControllerUI {
             });
     }
 
-    fn spawn_logs(ui: &mut Ui, mutex: &MutexGuard<SimulationData>, id: NodeId) {
-        Self::spawn_white_heading(ui, "History");
-        ui.add_space(5.0);
-        ui.group(|ui| {
-            ScrollArea::vertical()
-                .stick_to_bottom(true)
-                .auto_shrink([false, false])
-                .show(ui, |ui| {
-                    let v = mutex.logs.get(&id).unwrap();
-                    for line in v {
-                        ui.monospace(line);
-                    }
-                });
-        });
-    }
+
 
     fn push_log(mutex: &mut MutexGuard<SimulationData>, id: NodeId, line: String) {
         let v = mutex.logs.get_mut(&id).unwrap();
         v.push(line);
     }
 
-    fn spawn_drone_stats(ui: &mut Ui, mutex: &MutexGuard<SimulationData>, id: NodeId) {
-        let stats = mutex.stats.get(&id).unwrap();
-        Self::spawn_white_heading(ui, "Statistics");
-        Grid::new("done_stats").striped(true).show(ui, |ui| {
-            // First row
-            for header in [
-                "Packet type ",
-                "Fragment",
-                "Ack",
-                "Nack",
-                "Flood Req.",
-                "Flood Resp.",
-            ] {
-                ui.with_layout(
-                    Layout::centered_and_justified(Direction::LeftToRight),
-                    |ui| {
-                        // let bold_monospace_text =
-                        //     RichText::new(header).monospace().color(Color32::WHITE);
-                        // ui.label(bold_monospace_text);
-                        ui.monospace(header);
-                    },
-                );
-            }
-            ui.end_row();
 
-            // Second row
-            ui.with_layout(
-                Layout::centered_and_justified(Direction::LeftToRight),
-                |ui| {
-                    // let bold_monospace_text =
-                    //     RichText::new("Forwarded").monospace().color(Color32::WHITE);
-                    // ui.label(bold_monospace_text);
-                    ui.monospace("Forwarded");
-                },
-            );
-            for n in stats.packets_forwarded {
-                ui.with_layout(
-                    Layout::centered_and_justified(Direction::LeftToRight),
-                    |ui| {
-                        ui.monospace(n.to_string());
-                    },
-                );
-            }
-            ui.end_row();
-        });
-
-        ui.add_space(5.0);
-
-        ui.monospace(format!("Fragments dropped: {}", stats.fragments_dropped));
-    }
 
     fn spawn_node_list_element(&mut self, ui: &mut Ui, id: NodeId, s: &'static str) {
         ui.add_space(5.0);
@@ -450,10 +387,6 @@ impl SimulationControllerUI {
         ui.add_space(5.0);
     }
 
-    fn spawn_white_heading(ui: &mut Ui, str: &'static str) {
-        let text = RichText::new(str).monospace().color(Color32::WHITE);
-        ui.heading(text);
-    }
 
     fn get_ids(&self, node_type: NodeType) -> Vec<NodeId> {
         self.types
@@ -470,16 +403,13 @@ impl SimulationControllerUI {
     }
 
     fn update_id_list(&mut self) {
-        self.types.clear();
         let mutex = self.simulation_data_ref.lock().unwrap();
-        for id in mutex.sc.get_drone_ids() {
-            self.types.insert(id, NodeType::Drone);
-        }
-        for id in mutex.sc.get_client_ids() {
-            self.types.insert(id, NodeType::Client);
-        }
-        for id in mutex.sc.get_server_ids() {
-            self.types.insert(id, NodeType::Server);
+        let sc_drone_ids = mutex.sc.get_drone_ids();
+        // delete crashed drones
+        for id in self.get_ids(NodeType::Drone) {
+            if !sc_drone_ids.contains(&id) {
+                self.types.remove(&id);
+            }
         }
     }
 }

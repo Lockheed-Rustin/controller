@@ -5,6 +5,7 @@ use std::fs;
 mod app;
 pub mod data;
 mod receiver_threads;
+mod ui_components;
 
 fn main() -> eframe::Result {
     // read config file and get a SimulationController
