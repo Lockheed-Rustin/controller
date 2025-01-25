@@ -20,8 +20,3 @@ pub fn spawn_logs(ui: &mut Ui, mutex: &MutexGuard<SimulationData>, id: NodeId) {
             });
     });
 }
-
-pub fn push_log(mutex: &mut MutexGuard<SimulationData>, id: NodeId, line: String) {
-    let v = mutex.logs.get_mut(&id).unwrap();
-    v.push(line);
-}

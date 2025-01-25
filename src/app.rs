@@ -1,13 +1,11 @@
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex, MutexGuard};
+use std::sync::{Arc, Mutex};
 
-use eframe::egui::{
-    CentralPanel, Context, CursorIcon, Label, Sense, SidePanel, Ui,
-};
+use eframe::egui::{CentralPanel, Context, CursorIcon, Label, Sense, SidePanel, Ui};
 use eframe::CreationContext;
 
-use wg_2024::network::NodeId;
 use drone_networks::controller::SimulationController;
+use wg_2024::network::NodeId;
 
 use crate::data::{DroneStats, SimulationData};
 use crate::receiver_threads;
@@ -40,13 +38,13 @@ impl eframe::App for SimulationControllerUI {
         // node windows
         CentralPanel::default().show(ctx, |_ui| {
             for id in self.get_ids(NodeType::Drone) {
-                self.drone_window(ctx, id);
+                self.spawn_drone_window(ctx, id);
             }
             for id in self.get_ids(NodeType::Server) {
-                self.server_window(ctx, id);
+                self.spawn_server_window(ctx, id);
             }
             for id in self.get_ids(NodeType::Client) {
-                self.client_window(ctx, id);
+                self.spawn_client_window(ctx, id);
             }
         });
     }
@@ -219,7 +217,7 @@ impl SimulationControllerUI {
     }
 
     fn get_all_ids(&self) -> Vec<NodeId> {
-        self.types.iter().map(|(x, _)| *x).collect()
+        self.types.keys().copied().collect()
     }
 
     fn update_id_list(&mut self) {

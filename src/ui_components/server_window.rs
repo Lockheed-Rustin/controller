@@ -1,10 +1,15 @@
-use std::sync::MutexGuard;
-use eframe::egui::{vec2, Context, Window};
-use wg_2024::network::NodeId;
 use crate::data::SimulationData;
 use crate::ui_components;
+use eframe::egui::{vec2, Context, Window};
+use std::sync::MutexGuard;
+use wg_2024::network::NodeId;
 
-pub fn spawn_server_window(ctx: &Context, mut mutex: MutexGuard<SimulationData>, open: &mut bool, id: NodeId) {
+pub fn spawn_server_window(
+    ctx: &Context,
+    mut mutex: MutexGuard<SimulationData>,
+    open: &mut bool,
+    id: NodeId,
+) {
     Window::new(format!("Server #{}", id))
         .open(open)
         .fixed_size(vec2(400.0, 300.0))
