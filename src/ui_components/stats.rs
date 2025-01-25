@@ -1,5 +1,5 @@
-use std::sync::MutexGuard;
 use eframe::egui::{Direction, Grid, Layout, Ui};
+use std::sync::MutexGuard;
 use wg_2024::network::NodeId;
 
 use crate::data::SimulationData;
