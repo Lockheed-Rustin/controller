@@ -1,10 +1,9 @@
 use std::collections::HashMap;
+
 use eframe::egui::Context;
 
-use wg_2024::network::NodeId;
-
 use drone_networks::controller::SimulationController;
-
+use wg_2024::network::NodeId;
 
 pub struct SimulationData {
     pub sc: SimulationController,
@@ -20,7 +19,12 @@ impl SimulationData {
         stats: HashMap<NodeId, DroneStats>,
         ctx: Context,
     ) -> Self {
-        Self { sc, logs, stats, ctx }
+        Self {
+            sc,
+            logs,
+            stats,
+            ctx,
+        }
     }
 }
 
