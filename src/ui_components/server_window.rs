@@ -19,10 +19,8 @@ pub fn spawn_server_window(
         .show(ctx, |ui| {
             ui.add_space(5.0);
 
-            ui.vertical(|ui| {
-                // logs
-                ui_components::logs::spawn_logs(ui, &mutex, id);
-            });
+            // logs
+            ui_components::logs::spawn_logs(ui, &mutex, id);
 
             ui_components::text::spawn_white_heading(ui, "Actions");
             ui.add_space(5.0);
