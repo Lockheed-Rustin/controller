@@ -21,6 +21,7 @@ pub fn spawn_client_window(
             ui_components::logs::spawn_logs(ui, &mutex, id);
             ui.add_space(5.0);
 
+            // actions
             ui_components::text::spawn_white_heading(ui, "Actions");
             ui.add_space(5.0);
 
