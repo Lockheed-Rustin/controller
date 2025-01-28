@@ -1,7 +1,11 @@
+use std::cmp::PartialEq;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-use eframe::egui::{CentralPanel, Context, CursorIcon, Label, Sense, SidePanel, Ui};
+use eframe::egui::{
+    CentralPanel, Color32, Context, CursorIcon, Frame, Label, RichText, Sense, SidePanel,
+    TopBottomPanel, Ui, Vec2,
+};
 use eframe::CreationContext;
 
 use drone_networks::controller::SimulationController;
@@ -17,8 +21,15 @@ enum NodeType {
     Drone,
     Server,
 }
+#[derive(PartialEq, Clone, Copy)]
+
+enum Section {
+    Nodes,
+    Topology,
+}
 
 pub struct SimulationControllerUI {
+    section: Section,
     simulation_data_ref: Arc<Mutex<SimulationData>>,
     // nodes
     types: HashMap<NodeId, NodeType>,
@@ -33,20 +44,15 @@ pub struct SimulationControllerUI {
 impl eframe::App for SimulationControllerUI {
     fn update(&mut self, ctx: &Context, _frame: &mut eframe::Frame) {
         self.update_id_list();
-        // sidebar
-        self.sidebar(ctx);
-        // node windows
-        CentralPanel::default().show(ctx, |_ui| {
-            for id in self.get_ids(NodeType::Drone) {
-                self.spawn_drone_window(ctx, id);
+        self.menu_bar(ctx);
+        match self.section {
+            Section::Nodes => {
+                self.nodes_section(ctx);
             }
-            for id in self.get_ids(NodeType::Server) {
-                self.spawn_server_window(ctx, id);
+            Section::Topology => {
+                self.topology_section(ctx);
             }
-            for id in self.get_ids(NodeType::Client) {
-                self.spawn_client_window(ctx, id);
-            }
-        });
+        }
     }
 }
 
@@ -119,6 +125,7 @@ impl SimulationControllerUI {
 
         // return
         Self {
+            section: Section::Nodes,
             types,
             simulation_data_ref: data_ref,
             open_windows,
@@ -128,7 +135,59 @@ impl SimulationControllerUI {
         }
     }
 
-    pub fn sidebar(&mut self, ctx: &Context) {
+    fn nodes_section(&mut self, ctx: &Context) {
+        // sidebar
+        self.sidebar(ctx);
+        // node windows
+        CentralPanel::default().show(ctx, |_ui| {
+            for id in self.get_ids(NodeType::Drone) {
+                self.spawn_drone_window(ctx, id);
+            }
+            for id in self.get_ids(NodeType::Server) {
+                self.spawn_server_window(ctx, id);
+            }
+            for id in self.get_ids(NodeType::Client) {
+                self.spawn_client_window(ctx, id);
+            }
+        });
+    }
+
+    fn topology_section(&mut self, ctx: &Context) {
+        CentralPanel::default().show(ctx, |ui| ui.label("Topology section"));
+    }
+
+    fn menu_bar(&mut self, ctx: &Context) {
+        TopBottomPanel::top("menu")
+            .frame(
+                Frame::default()
+                    .fill(Color32::from_rgb(50, 50, 50))
+                    .inner_margin(Vec2::new(8.0, 8.0)),
+            )
+            .show(ctx, |ui| {
+                ui.horizontal(|ui| {
+                    self.spawn_menu_element(ui, "Nodes", Section::Nodes);
+                    self.spawn_menu_element(ui, "Topology", Section::Topology);
+                });
+            });
+    }
+
+    fn spawn_menu_element(&mut self, ui: &mut Ui, str: &'static str, section: Section) {
+        let text = if self.section == section {
+            RichText::new(str).strong().underline().size(20.0)
+        } else {
+            RichText::new(str).size(20.0)
+        };
+        let response = ui.add(Label::new(text).sense(Sense::click()));
+        if response.hovered() {
+            ui.ctx().set_cursor_icon(CursorIcon::PointingHand);
+        }
+        if response.clicked() {
+            self.section = section;
+        };
+        ui.add_space(10.0);
+    }
+
+    fn sidebar(&mut self, ctx: &Context) {
         SidePanel::left("left").show(ctx, |ui| {
             ui.heading("Nodes");
             ui.separator();
@@ -165,19 +224,19 @@ impl SimulationControllerUI {
         });
     }
 
-    pub fn spawn_client_window(&mut self, ctx: &Context, id: NodeId) {
+    fn spawn_client_window(&mut self, ctx: &Context, id: NodeId) {
         let open = self.open_windows.get_mut(&id).unwrap();
         let mutex = self.simulation_data_ref.lock().unwrap();
         ui_components::client_window::spawn_client_window(ctx, mutex, open, id);
     }
 
-    pub fn spawn_server_window(&mut self, ctx: &Context, id: NodeId) {
+    fn spawn_server_window(&mut self, ctx: &Context, id: NodeId) {
         let open = self.open_windows.get_mut(&id).unwrap();
         let mutex = self.simulation_data_ref.lock().unwrap();
         ui_components::server_window::spawn_server_window(ctx, mutex, open, id);
     }
 
-    pub fn spawn_drone_window(&mut self, ctx: &Context, id: NodeId) {
+    fn spawn_drone_window(&mut self, ctx: &Context, id: NodeId) {
         let mut node_ids: Vec<NodeId> = self.get_all_ids();
         node_ids.sort();
         let open = self.open_windows.get_mut(&id).unwrap();
