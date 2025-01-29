@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 
-use crossbeam_channel::{select, Receiver};
-
+use crossbeam_channel::{select, select_biased, Receiver};
+use drone_networks::controller::ClientEvent;
 use wg_2024::controller::DroneEvent;
 use wg_2024::network::NodeId;
 use wg_2024::packet::{Packet, PacketType};
@@ -10,10 +10,15 @@ use super::helper;
 use crate::data::SimulationData;
 use crate::receiver_threads::helper::get_packet_type_str;
 
-pub fn receiver_loop(data_ref: Arc<Mutex<SimulationData>>, rec: Receiver<DroneEvent>) {
+pub fn receiver_loop(data_ref: Arc<Mutex<SimulationData>>, rec_client: Receiver<DroneEvent>, rec_kill: Receiver<()>) {
     loop {
-        select! {
-            recv(rec) -> packet => {
+        select_biased! {
+            recv(rec_kill) -> packet => {
+                if let Ok(_) = packet {
+                    return;
+                }
+            }
+            recv(rec_client) -> packet => {
                 if let Ok(event) = packet {
                     handle_event(Arc::clone(&data_ref), event);
                 }
