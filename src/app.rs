@@ -9,6 +9,13 @@ use eframe::egui::{
 use eframe::CreationContext;
 
 use drone_networks::controller::SimulationController;
+use egui_graphs::{
+    GraphView, LayoutRandom, LayoutStateRandom, SettingsInteraction, SettingsNavigation,
+    SettingsStyle,
+};
+use petgraph::prelude::UnGraphMap;
+use petgraph::stable_graph::StableUnGraph;
+use petgraph::Undirected;
 use wg_2024::network::NodeId;
 
 use crate::data::{DroneStats, SimulationData};
@@ -39,6 +46,7 @@ pub struct SimulationControllerUI {
     // drones
     drone_pdr_sliders: HashMap<NodeId, f32>,
     add_link_selected_ids: HashMap<NodeId, Option<NodeId>>,
+    g: egui_graphs::Graph<NodeId, (), Undirected>,
 }
 
 impl eframe::App for SimulationControllerUI {
@@ -123,6 +131,41 @@ impl SimulationControllerUI {
             receiver_threads::server_receiver_loop(tmp_clone, server_receiver);
         });
 
+        // ui graph init ------------
+        // fake sc graph
+        let mut sc_graph: UnGraphMap<NodeId, ()> = UnGraphMap::new();
+        sc_graph.add_node(12);
+        sc_graph.add_node(34);
+        sc_graph.add_node(56);
+        sc_graph.add_edge(12, 34, ());
+        sc_graph.add_edge(56, 34, ());
+
+        let mut sg = StableUnGraph::default();
+
+        // Insert nodes into the StableUnGraph
+        let mut node_map = HashMap::new();
+        for node in sc_graph.nodes() {
+            let node_index = sg.add_node(node.clone());
+            node_map.insert(node, node_index); // Map from old node to new node index
+        }
+
+        // Insert edges into the StableUnGraph
+        for (source, target, _weight) in sc_graph.all_edges() {
+            let source_index = node_map[&source];
+            let target_index = node_map[&target];
+            sg.add_edge(source_index, target_index, ());
+        }
+
+        // delete shitty labels
+        let mut g = egui_graphs::Graph::from(&sg);
+        let mut v = vec![];
+        for (i, _) in g.edges_iter() {
+            v.push(i);
+        }
+        for i in v {
+            g.edge_mut(i).unwrap().set_label("".to_string());
+        }
+
         // return
         Self {
             section: Section::Nodes,
@@ -132,6 +175,7 @@ impl SimulationControllerUI {
             // client_command_lines,
             drone_pdr_sliders,
             add_link_selected_ids,
+            g,
         }
     }
 
@@ -153,7 +197,24 @@ impl SimulationControllerUI {
     }
 
     fn topology_section(&mut self, ctx: &Context) {
-        CentralPanel::default().show(ctx, |ui| ui.label("Topology section"));
+        CentralPanel::default()
+            .frame(
+                Frame::default()
+                    .fill(Color32::from_rgb(27, 27, 27))
+                    .inner_margin(Vec2::new(8.0, 8.0)),
+            )
+            .show(ctx, |ui| {
+                ui.add(
+                    &mut GraphView::<_, _, _, _, _, _, LayoutStateRandom, LayoutRandom>::new(
+                        &mut self.g,
+                    )
+                    .with_styles(&SettingsStyle::default().with_labels_always(true))
+                    .with_interactions(&SettingsInteraction::default().with_dragging_enabled(true))
+                    .with_navigations(
+                        &SettingsNavigation::default().with_fit_to_screen_enabled(false),
+                    ),
+                );
+            });
     }
 
     fn menu_bar(&mut self, ctx: &Context) {
