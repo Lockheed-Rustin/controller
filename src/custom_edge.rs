@@ -2,7 +2,8 @@ use eframe::egui::{Color32, Pos2, Shape, Stroke};
 use egui_graphs::{DefaultEdgeShape, DisplayEdge, DisplayNode, DrawContext, EdgeProps, Node};
 use petgraph::{stable_graph::IndexType, EdgeType};
 
-const COLOR: Color32 = Color32::from_rgb(70,70,70);
+const COLOR: Color32 = Color32::from_rgb(70, 70, 70);
+const WIDTH: f32 = 3.0;
 
 #[derive(Clone)]
 pub struct CustomEdgeShape {
@@ -18,7 +19,7 @@ impl<E: Clone> From<EdgeProps<E>> for CustomEdgeShape {
 }
 
 impl<N: Clone, E: Clone, Ty: EdgeType, Ix: IndexType, D: DisplayNode<N, E, Ty, Ix>>
-DisplayEdge<N, E, Ty, Ix, D> for CustomEdgeShape
+    DisplayEdge<N, E, Ty, Ix, D> for CustomEdgeShape
 {
     fn shapes(
         &mut self,
@@ -29,11 +30,14 @@ DisplayEdge<N, E, Ty, Ix, D> for CustomEdgeShape
         let mut res = vec![];
         let (start, end) = (start.location(), end.location());
 
-        let mut stroke = Stroke::new(self.default_impl.width, COLOR);
+        let mut stroke = Stroke::new(WIDTH, COLOR);
 
         stroke.width = ctx.meta.canvas_to_screen_size(stroke.width);
         res.push(Shape::line_segment(
-            [ctx.meta.canvas_to_screen_pos(start), ctx.meta.canvas_to_screen_pos(end)],
+            [
+                ctx.meta.canvas_to_screen_pos(start),
+                ctx.meta.canvas_to_screen_pos(end),
+            ],
             stroke,
         ));
 

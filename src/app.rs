@@ -10,18 +10,22 @@ use eframe::egui::{
     TopBottomPanel, Ui, Vec2,
 };
 use eframe::CreationContext;
-use egui_graphs::{DefaultNodeShape, GraphView, LayoutRandom, LayoutStateRandom, SettingsInteraction, SettingsNavigation, SettingsStyle};
+use egui_graphs::{
+    GraphView, LayoutRandom, LayoutStateRandom, SettingsInteraction, SettingsNavigation,
+    SettingsStyle,
+};
 use petgraph::prelude::UnGraphMap;
 use petgraph::stable_graph::StableUnGraph;
 use petgraph::Undirected;
 
-use drone_networks::network::init_network;
-use wg_2024::config::Config;
-use wg_2024::network::NodeId;
 use crate::custom_edge::CustomEdgeShape;
+use crate::custom_node::CustomNodeShape;
 use crate::data::{DroneStats, SimulationData};
 use crate::receiver_threads;
 use crate::ui_components;
+use drone_networks::network::init_network;
+use wg_2024::config::Config;
+use wg_2024::network::NodeId;
 
 #[derive(PartialEq, Clone, Copy)]
 enum NodeType {
@@ -53,7 +57,7 @@ pub struct SimulationControllerUI {
     // drones ui
     drone_pdr_sliders: HashMap<NodeId, f32>,
     add_link_selected_ids: HashMap<NodeId, Option<NodeId>>,
-    g: egui_graphs::Graph<NodeId, (), Undirected, u32, DefaultNodeShape, CustomEdgeShape>,
+    g: egui_graphs::Graph<NodeId, (), Undirected, u32, CustomNodeShape, CustomEdgeShape>,
 }
 
 impl eframe::App for SimulationControllerUI {
@@ -217,15 +221,16 @@ impl SimulationControllerUI {
             sg.add_edge(source_index, target_index, ());
         }
 
-        // delete shitty labels
         self.g = egui_graphs::Graph::from(&sg);
-        let mut v = vec![];
-        for (i, _) in self.g.edges_iter() {
-            v.push(i);
-        }
-        for i in v {
-            self.g.edge_mut(i).unwrap().set_label("".to_string());
-        }
+
+        // TODO: change node labels
+        // let mut v = vec![];
+        // for (i, _) in self.g.nodes_iter() {
+        //     v.push(i);
+        // }
+        // for i in v.iter() {
+        //     self.g.node_mut(*i).unwrap().set_label("AAAAAA".to_string());
+        // }
     }
 
     fn control_section(&mut self, ctx: &Context) {
@@ -254,13 +259,18 @@ impl SimulationControllerUI {
             )
             .show(ctx, |ui| {
                 ui.add(
-                    &mut GraphView::<_, _, _, _, _, CustomEdgeShape, LayoutStateRandom, LayoutRandom>::new(
-                        &mut self.g,
-                    )
+                    &mut GraphView::<
+                        _,
+                        _,
+                        _,
+                        _,
+                        CustomNodeShape,
+                        CustomEdgeShape,
+                        LayoutStateRandom,
+                        LayoutRandom,
+                    >::new(&mut self.g)
                     .with_styles(&SettingsStyle::default().with_labels_always(true))
-                    .with_interactions(&SettingsInteraction::default()
-                        .with_dragging_enabled(true)
-                    )
+                    .with_interactions(&SettingsInteraction::default().with_dragging_enabled(true))
                     .with_navigations(
                         &SettingsNavigation::default()
                             .with_fit_to_screen_enabled(false)

@@ -1,10 +1,11 @@
 use eframe::egui;
 
 mod app;
+mod custom_edge;
+mod custom_node;
 pub mod data;
 mod receiver_threads;
 mod ui_components;
-mod custom_edge;
 
 fn main() -> eframe::Result {
     // window options
