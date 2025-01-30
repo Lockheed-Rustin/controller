@@ -105,13 +105,13 @@ impl SimulationControllerUI {
 
         // create drone hashmaps
         let mut stats = HashMap::new();
-        for id in sc.get_drone_ids() {
-            stats.insert(id, DroneStats::default());
-        }
         self.drone_pdr_sliders.clear();
         for drone_id in sc.get_drone_ids() {
+            stats.insert(drone_id, DroneStats::default());
             if let Some(pdr) = sc.get_pdr(drone_id) {
                 self.drone_pdr_sliders.insert(drone_id, pdr);
+            } else {
+                unreachable!();
             }
         }
         // create client hashmaps
@@ -120,13 +120,13 @@ impl SimulationControllerUI {
         //     client_command_lines.insert(id, "".to_string());
         // }
 
-        // kill threads
+        // kill receiving threads
         for s in self.kill_senders.iter() {
-            s.send(()).expect("ERROR IN KILLING");
+            s.send(()).expect("Error in sending kill message to receiving threads");
         }
         let handles = take(&mut self.handles);
         for h in handles {
-            h.join().expect("ERROR IN JOIN");
+            h.join().expect("Error in joining receiving threads");
         }
         self.handles.clear();
         self.kill_senders.clear();
@@ -202,7 +202,6 @@ impl SimulationControllerUI {
             if ui.button("Reset").clicked() {
                 self.reset();
             }
-            // Quit button
             if ui.button("Quit").clicked() {
                 std::process::exit(0);
             }
