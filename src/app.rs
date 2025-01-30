@@ -10,8 +10,6 @@ use eframe::egui::{
     TopBottomPanel, Ui, Vec2,
 };
 use eframe::CreationContext;
-
-use drone_networks::network::init_network;
 use egui_graphs::{
     GraphView, LayoutRandom, LayoutStateRandom, SettingsInteraction, SettingsNavigation,
     SettingsStyle,
@@ -19,6 +17,9 @@ use egui_graphs::{
 use petgraph::prelude::UnGraphMap;
 use petgraph::stable_graph::StableUnGraph;
 use petgraph::Undirected;
+
+use drone_networks::network::init_network;
+use wg_2024::config::Config;
 use wg_2024::network::NodeId;
 
 use crate::data::{DroneStats, SimulationData};
@@ -34,7 +35,7 @@ enum NodeType {
 #[derive(PartialEq, Clone, Copy)]
 
 enum Section {
-    Nodes,
+    Control,
     Topology,
 }
 
@@ -63,8 +64,8 @@ impl eframe::App for SimulationControllerUI {
         self.update_id_list();
         self.menu_bar(ctx);
         match self.section {
-            Section::Nodes => {
-                self.nodes_section(ctx);
+            Section::Control => {
+                self.control_section(ctx);
             }
             Section::Topology => {
                 self.topology_section(ctx);
@@ -76,7 +77,7 @@ impl eframe::App for SimulationControllerUI {
 impl SimulationControllerUI {
     pub fn new(cc: &CreationContext<'_>) -> Self {
         let mut res = Self {
-            section: Section::Nodes,
+            section: Section::Control,
             ctx: cc.egui_ctx.clone(),
             handles: Default::default(),
             kill_senders: Default::default(),
@@ -85,7 +86,7 @@ impl SimulationControllerUI {
             open_windows: Default::default(),
             drone_pdr_sliders: Default::default(),
             add_link_selected_ids: Default::default(),
-            g: Default::default(),
+            g: egui_graphs::Graph::from(&StableUnGraph::default()),
         };
         res.reset();
         res
@@ -94,7 +95,7 @@ impl SimulationControllerUI {
     pub fn reset(&mut self) {
         // read config file and get a SimulationController
         let file_str = fs::read_to_string("config.toml").unwrap();
-        let config = toml::from_str(&file_str).unwrap();
+        let config: Config = toml::from_str(&file_str).unwrap();
         let sc = init_network(&config).unwrap();
 
         // get all node ids
@@ -111,18 +112,18 @@ impl SimulationControllerUI {
 
         // create node hashmaps
         self.open_windows.clear();
-        self.add_link_selected_ids.clear();
         let mut logs = HashMap::new();
         for &id in self.types.keys() {
             self.open_windows.insert(id, false);
-            self.add_link_selected_ids.insert(id, None);
             logs.insert(id, vec![]);
         }
 
         // create drone hashmaps
         let mut stats = HashMap::new();
         self.drone_pdr_sliders.clear();
+        self.add_link_selected_ids.clear();
         for drone_id in sc.get_drone_ids() {
+            self.add_link_selected_ids.insert(drone_id, None);
             stats.insert(drone_id, DroneStats::default());
             if let Some(pdr) = sc.get_pdr(drone_id) {
                 self.drone_pdr_sliders.insert(drone_id, pdr);
@@ -136,9 +137,17 @@ impl SimulationControllerUI {
         //     client_command_lines.insert(id, "".to_string());
         // }
 
-        // kill receiving threads
+        // kill old receiving threads
         for s in self.kill_senders.iter() {
-            s.send(()).expect("Error in sending kill message to receiving threads");
+            //s.send(()).expect("Error in sending kill message to receiving threads");
+            match s.send(()) {
+                Ok(_) => {
+                    println!("HOW????")
+                }
+                Err(_) => {
+                    println!("Ok il thread non c'è, giusto")
+                }
+            }
         }
         let handles = take(&mut self.handles);
         for h in handles {
@@ -147,7 +156,7 @@ impl SimulationControllerUI {
         self.handles.clear();
         self.kill_senders.clear();
 
-        // create shared data and spawn threads
+        // create channels
         let drone_receiver = sc.get_drone_recv();
         let client_receiver = sc.get_client_recv();
         let server_receiver = sc.get_server_recv();
@@ -159,6 +168,7 @@ impl SimulationControllerUI {
         self.kill_senders.push(kill_server_send);
         self.kill_senders.push(kill_drone_send);
 
+        // create shared data
         self.simulation_data_ref = Some(Arc::new(Mutex::new(SimulationData::new(
             sc,
             logs,
@@ -166,21 +176,22 @@ impl SimulationControllerUI {
             self.ctx.clone(),
         ))));
 
-        let tmp_clone = self.simulation_data_ref.clone().unwrap();
+        // spawn receiving threads
+        let arc_clone = self.simulation_data_ref.clone().unwrap();
         let handle = std::thread::spawn(move || {
-            receiver_threads::drone_receiver_loop(tmp_clone, drone_receiver, kill_drone_recv);
+            receiver_threads::drone_receiver_loop(arc_clone, drone_receiver, kill_drone_recv);
         });
         self.handles.push(handle);
 
-        let tmp_clone = self.simulation_data_ref.clone().unwrap();
+        let arc_clone = self.simulation_data_ref.clone().unwrap();
         let handle = std::thread::spawn(move || {
-            receiver_threads::client_receiver_loop(tmp_clone, client_receiver, kill_client_recv);
+            receiver_threads::client_receiver_loop(arc_clone, client_receiver, kill_client_recv);
         });
         self.handles.push(handle);
 
-        let tmp_clone = self.simulation_data_ref.clone().unwrap();
+        let arc_clone = self.simulation_data_ref.clone().unwrap();
         let handle = std::thread::spawn(move || {
-            receiver_threads::server_receiver_loop(tmp_clone, server_receiver, kill_server_recv);
+            receiver_threads::server_receiver_loop(arc_clone, server_receiver, kill_server_recv);
         });
         self.handles.push(handle);
 
@@ -198,7 +209,7 @@ impl SimulationControllerUI {
         // Insert nodes into the StableUnGraph
         let mut node_map = HashMap::new();
         for node in sc_graph.nodes() {
-            let node_index = sg.add_node(node.clone());
+            let node_index = sg.add_node(node);
             node_map.insert(node, node_index); // Map from old node to new node index
         }
 
@@ -220,7 +231,7 @@ impl SimulationControllerUI {
         }
     }
 
-    fn nodes_section(&mut self, ctx: &Context) {
+    fn control_section(&mut self, ctx: &Context) {
         // sidebar
         self.sidebar(ctx);
         // node windows
@@ -267,7 +278,7 @@ impl SimulationControllerUI {
             )
             .show(ctx, |ui| {
                 ui.horizontal(|ui| {
-                    self.spawn_menu_element(ui, "Nodes", Section::Nodes);
+                    self.spawn_menu_element(ui, "Control", Section::Control);
                     self.spawn_menu_element(ui, "Topology", Section::Topology);
                 });
             });
