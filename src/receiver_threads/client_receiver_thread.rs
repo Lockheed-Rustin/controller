@@ -1,21 +1,24 @@
 use std::sync::{Arc, Mutex};
 
-use crossbeam_channel::{select, select_biased, Receiver};
-
-use wg_2024::network::NodeId;
-use wg_2024::packet::Packet;
+use crossbeam_channel::{select_biased, Receiver};
 
 use drone_networks::controller::ClientEvent;
+use wg_2024::network::NodeId;
+use wg_2024::packet::Packet;
 
 use super::helper;
 use crate::data::SimulationData;
 
 // ----- Client -----
-pub fn receiver_loop(data_ref: Arc<Mutex<SimulationData>>, rec_client: Receiver<ClientEvent>, rec_kill: Receiver<()>) {
+pub fn receiver_loop(
+    data_ref: Arc<Mutex<SimulationData>>,
+    rec_client: Receiver<ClientEvent>,
+    rec_kill: Receiver<()>,
+) {
     loop {
         select_biased! {
             recv(rec_kill) -> packet => {
-                if let Ok(_) = packet {
+                if packet.is_ok() {
                     return;
                 }
             }

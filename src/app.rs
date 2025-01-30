@@ -3,11 +3,11 @@ use std::fs;
 use std::mem::take;
 use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
+
 use crossbeam_channel::{unbounded, Sender};
 use eframe::egui::{CentralPanel, Context, CursorIcon, Label, Sense, SidePanel, Ui};
 use eframe::CreationContext;
 
-use drone_networks::controller::SimulationController;
 use drone_networks::network::init_network;
 use wg_2024::network::NodeId;
 
@@ -24,15 +24,17 @@ enum NodeType {
 
 pub struct SimulationControllerUI {
     ctx: Context,
+    // handling receiver threads
     handles: Vec<JoinHandle<()>>,
     kill_senders: Vec<Sender<()>>,
+    // shared data
     simulation_data_ref: Option<Arc<Mutex<SimulationData>>>,
-    // nodes
+    // nodes ui
     types: HashMap<NodeId, NodeType>,
     open_windows: HashMap<NodeId, bool>,
-    // clients
+    // clients ui
     // client_command_lines: HashMap<NodeId, String>,
-    // drones
+    // drones ui
     drone_pdr_sliders: HashMap<NodeId, f32>,
     add_link_selected_ids: HashMap<NodeId, Option<NodeId>>,
 }
