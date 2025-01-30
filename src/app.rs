@@ -10,10 +10,7 @@ use eframe::egui::{
     TopBottomPanel, Ui, Vec2,
 };
 use eframe::CreationContext;
-use egui_graphs::{
-    GraphView, LayoutRandom, LayoutStateRandom, SettingsInteraction, SettingsNavigation,
-    SettingsStyle,
-};
+use egui_graphs::{DefaultNodeShape, GraphView, LayoutRandom, LayoutStateRandom, SettingsInteraction, SettingsNavigation, SettingsStyle};
 use petgraph::prelude::UnGraphMap;
 use petgraph::stable_graph::StableUnGraph;
 use petgraph::Undirected;
@@ -21,7 +18,7 @@ use petgraph::Undirected;
 use drone_networks::network::init_network;
 use wg_2024::config::Config;
 use wg_2024::network::NodeId;
-
+use crate::custom_edge::CustomEdgeShape;
 use crate::data::{DroneStats, SimulationData};
 use crate::receiver_threads;
 use crate::ui_components;
@@ -56,7 +53,7 @@ pub struct SimulationControllerUI {
     // drones ui
     drone_pdr_sliders: HashMap<NodeId, f32>,
     add_link_selected_ids: HashMap<NodeId, Option<NodeId>>,
-    g: egui_graphs::Graph<NodeId, (), Undirected>,
+    g: egui_graphs::Graph<NodeId, (), Undirected, u32, DefaultNodeShape, CustomEdgeShape>,
 }
 
 impl eframe::App for SimulationControllerUI {
@@ -257,13 +254,17 @@ impl SimulationControllerUI {
             )
             .show(ctx, |ui| {
                 ui.add(
-                    &mut GraphView::<_, _, _, _, _, _, LayoutStateRandom, LayoutRandom>::new(
+                    &mut GraphView::<_, _, _, _, _, CustomEdgeShape, LayoutStateRandom, LayoutRandom>::new(
                         &mut self.g,
                     )
                     .with_styles(&SettingsStyle::default().with_labels_always(true))
-                    .with_interactions(&SettingsInteraction::default().with_dragging_enabled(true))
+                    .with_interactions(&SettingsInteraction::default()
+                        .with_dragging_enabled(true)
+                    )
                     .with_navigations(
-                        &SettingsNavigation::default().with_fit_to_screen_enabled(false),
+                        &SettingsNavigation::default()
+                            .with_fit_to_screen_enabled(false)
+                            .with_zoom_and_pan_enabled(true),
                     ),
                 );
             });

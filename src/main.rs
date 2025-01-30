@@ -4,6 +4,7 @@ mod app;
 pub mod data;
 mod receiver_threads;
 mod ui_components;
+mod custom_edge;
 
 fn main() -> eframe::Result {
     // window options
