@@ -1,8 +1,9 @@
-use eframe::egui::{epaint::TextShape, FontFamily, FontId, Pos2, Shape, Vec2};
+use eframe::egui::{epaint::TextShape, Color32, FontFamily, FontId, Pos2, Shape, Vec2};
 use egui_graphs::{DisplayNode, NodeProps};
 use petgraph::{stable_graph::IndexType, EdgeType};
 
 const RADIUS: f32 = 5.0;
+const COLOR: Color32 = Color32::WHITE;
 
 #[derive(Clone)]
 pub struct CustomNodeShape {
@@ -34,14 +35,14 @@ impl<N: Clone, E: Clone, Ty: EdgeType, Ix: IndexType> DisplayNode<N, E, Ty, Ix>
         // relative to screen
         let center = ctx.meta.canvas_to_screen_pos(self.loc);
         let radius = ctx.meta.canvas_to_screen_size(RADIUS);
-        let color = ctx.ctx.style().visuals.text_color();
+        // let color = ctx.ctx.style().visuals.text_color();
 
         // create label
         let galley = ctx.ctx.fonts(|f| {
             f.layout_no_wrap(
                 self.label.clone(),
                 FontId::new(ctx.meta.canvas_to_screen_size(7.0), FontFamily::Monospace),
-                color,
+                COLOR,
             )
         });
 
@@ -51,9 +52,9 @@ impl<N: Clone, E: Clone, Ty: EdgeType, Ix: IndexType> DisplayNode<N, E, Ty, Ix>
         );
 
         // create the shapes
-        let shape_label = TextShape::new(center + label_offset, galley, color);
+        let shape_label = TextShape::new(center + label_offset, galley, COLOR);
         // let shape_circle = Shape::circle_stroke(center, radius, Stroke::new(2.0, color));
-        let shape_circle = Shape::circle_filled(center, radius, color);
+        let shape_circle = Shape::circle_filled(center, radius, COLOR);
 
         vec![shape_circle, shape_label.into()]
     }
