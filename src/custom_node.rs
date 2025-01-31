@@ -2,9 +2,8 @@ use eframe::egui::{epaint::TextShape, Color32, FontFamily, FontId, Pos2, Shape, 
 use egui_graphs::{DisplayNode, NodeProps};
 use petgraph::{stable_graph::IndexType, EdgeType};
 
-
-use wg_2024::network::NodeId;
 use crate::app::NodeType;
+use wg_2024::network::NodeId;
 
 const RADIUS: f32 = 5.0;
 const COLOR: Color32 = Color32::WHITE;

@@ -28,7 +28,6 @@ use crate::data::{DroneStats, SimulationData};
 use crate::receiver_threads;
 use crate::ui_components;
 
-
 #[derive(PartialEq, Clone, Copy)]
 pub enum NodeType {
     Client,
@@ -59,7 +58,14 @@ pub struct SimulationControllerUI {
     // drones ui
     drone_pdr_sliders: HashMap<NodeId, f32>,
     add_link_selected_ids: HashMap<NodeId, Option<NodeId>>,
-    g: egui_graphs::Graph<(NodeId, NodeType), (), Undirected, u32, CustomNodeShape, CustomEdgeShape>,
+    g: egui_graphs::Graph<
+        (NodeId, NodeType),
+        (),
+        Undirected,
+        u32,
+        CustomNodeShape,
+        CustomEdgeShape,
+    >,
 }
 
 impl eframe::App for SimulationControllerUI {
