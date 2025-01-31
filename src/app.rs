@@ -18,17 +18,19 @@ use petgraph::prelude::UnGraphMap;
 use petgraph::stable_graph::StableUnGraph;
 use petgraph::Undirected;
 
+use drone_networks::network::init_network;
+use wg_2024::config::Config;
+use wg_2024::network::NodeId;
+
 use crate::custom_edge::CustomEdgeShape;
 use crate::custom_node::CustomNodeShape;
 use crate::data::{DroneStats, SimulationData};
 use crate::receiver_threads;
 use crate::ui_components;
-use drone_networks::network::init_network;
-use wg_2024::config::Config;
-use wg_2024::network::NodeId;
+
 
 #[derive(PartialEq, Clone, Copy)]
-enum NodeType {
+pub enum NodeType {
     Client,
     Drone,
     Server,
@@ -57,7 +59,7 @@ pub struct SimulationControllerUI {
     // drones ui
     drone_pdr_sliders: HashMap<NodeId, f32>,
     add_link_selected_ids: HashMap<NodeId, Option<NodeId>>,
-    g: egui_graphs::Graph<NodeId, (), Undirected, u32, CustomNodeShape, CustomEdgeShape>,
+    g: egui_graphs::Graph<(NodeId, NodeType), (), Undirected, u32, CustomNodeShape, CustomEdgeShape>,
 }
 
 impl eframe::App for SimulationControllerUI {
@@ -209,9 +211,9 @@ impl SimulationControllerUI {
 
         // Insert nodes into the StableUnGraph
         let mut node_map = HashMap::new();
-        for node in sc_graph.nodes() {
-            let node_index = sg.add_node(node);
-            node_map.insert(node, node_index); // Map from old node to new node index
+        for id in sc_graph.nodes() {
+            let node_index = sg.add_node((id, NodeType::Server));
+            node_map.insert(id, node_index); // Map from old node to new node index
         }
 
         // Insert edges into the StableUnGraph
@@ -260,7 +262,7 @@ impl SimulationControllerUI {
             .show(ctx, |ui| {
                 ui.add(
                     &mut GraphView::<
-                        _,
+                        (NodeId, NodeType),
                         _,
                         _,
                         _,

@@ -1,6 +1,10 @@
-use eframe::egui::{epaint::TextShape, Color32, FontFamily, FontId, Pos2, Shape, Vec2};
+use eframe::egui::{epaint::TextShape, Color32, FontFamily, FontId, Pos2, Shape, TextBuffer, Vec2};
 use egui_graphs::{DisplayNode, NodeProps};
 use petgraph::{stable_graph::IndexType, EdgeType};
+
+
+use wg_2024::network::NodeId;
+use crate::app::NodeType;
 
 const RADIUS: f32 = 5.0;
 const COLOR: Color32 = Color32::WHITE;
@@ -11,16 +15,22 @@ pub struct CustomNodeShape {
     loc: Pos2,
 }
 
-impl<N: Clone> From<NodeProps<N>> for CustomNodeShape {
-    fn from(node_props: NodeProps<N>) -> Self {
+impl From<NodeProps<(NodeId, NodeType)>> for CustomNodeShape {
+    fn from(node_props: NodeProps<(NodeId, NodeType)>) -> Self {
+        let mut label = match node_props.payload.1 {
+            NodeType::Client => "Client #".to_string(),
+            NodeType::Drone => "Drone #".to_string(),
+            NodeType::Server => "Server #".to_string(),
+        };
+        label.push_str(&node_props.payload.0.to_string());
         Self {
-            label: node_props.label.clone(),
+            label,
             loc: node_props.location(),
         }
     }
 }
 
-impl<N: Clone, E: Clone, Ty: EdgeType, Ix: IndexType> DisplayNode<N, E, Ty, Ix>
+impl<E: Clone, Ty: EdgeType, Ix: IndexType> DisplayNode<(NodeId, NodeType), E, Ty, Ix>
     for CustomNodeShape
 {
     fn is_inside(&self, pos: Pos2) -> bool {
@@ -53,14 +63,12 @@ impl<N: Clone, E: Clone, Ty: EdgeType, Ix: IndexType> DisplayNode<N, E, Ty, Ix>
 
         // create the shapes
         let shape_label = TextShape::new(center + label_offset, galley, COLOR);
-        // let shape_circle = Shape::circle_stroke(center, radius, Stroke::new(2.0, color));
         let shape_circle = Shape::circle_filled(center, radius, COLOR);
 
         vec![shape_circle, shape_label.into()]
     }
 
-    fn update(&mut self, state: &NodeProps<N>) {
-        self.label = state.label.clone();
+    fn update(&mut self, state: &NodeProps<(NodeId, NodeType)>) {
         self.loc = state.location();
     }
 }
