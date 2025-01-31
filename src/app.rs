@@ -148,15 +148,8 @@ impl SimulationControllerUI {
 
         // kill old receiving threads
         for s in self.kill_senders.iter() {
-            //s.send(()).expect("Error in sending kill message to receiving threads");
-            match s.send(()) {
-                Ok(_) => {
-                    println!("HOW????")
-                }
-                Err(_) => {
-                    println!("Ok il thread non c'è, giusto")
-                }
-            }
+            s.send(())
+                .expect("Error in sending kill message to receiving threads");
         }
         let handles = take(&mut self.handles);
         for h in handles {
@@ -208,17 +201,23 @@ impl SimulationControllerUI {
         // fake sc graph
         let mut sc_graph: UnGraphMap<NodeId, ()> = UnGraphMap::new();
         sc_graph.add_node(12);
+        sc_graph.add_node(23);
         sc_graph.add_node(34);
+        sc_graph.add_node(45);
         sc_graph.add_node(56);
+        sc_graph.add_node(67);
         sc_graph.add_edge(12, 34, ());
-        sc_graph.add_edge(56, 34, ());
+        sc_graph.add_edge(23, 34, ());
+        sc_graph.add_edge(34, 45, ());
+        sc_graph.add_edge(56, 45, ());
+        sc_graph.add_edge(67, 45, ());
 
         let mut sg = StableUnGraph::default();
 
         // Insert nodes into the StableUnGraph
         let mut node_map = HashMap::new();
         for id in sc_graph.nodes() {
-            let node_index = sg.add_node((id, NodeType::Server));
+            let node_index = sg.add_node((id, NodeType::Drone));
             node_map.insert(id, node_index); // Map from old node to new node index
         }
 
@@ -230,15 +229,6 @@ impl SimulationControllerUI {
         }
 
         self.g = egui_graphs::Graph::from(&sg);
-
-        // TODO: change node labels
-        // let mut v = vec![];
-        // for (i, _) in self.g.nodes_iter() {
-        //     v.push(i);
-        // }
-        // for i in v.iter() {
-        //     self.g.node_mut(*i).unwrap().set_label("AAAAAA".to_string());
-        // }
     }
 
     fn control_section(&mut self, ctx: &Context) {
@@ -260,11 +250,7 @@ impl SimulationControllerUI {
 
     fn topology_section(&mut self, ctx: &Context) {
         CentralPanel::default()
-            .frame(
-                Frame::default()
-                    .fill(Color32::from_rgb(27, 27, 27))
-                    .inner_margin(Vec2::new(8.0, 8.0)),
-            )
+            .frame(Frame::default().fill(Color32::from_rgb(27, 27, 27)))
             .show(ctx, |ui| {
                 ui.add(
                     &mut GraphView::<
@@ -376,7 +362,7 @@ impl SimulationControllerUI {
         let mut node_ids: Vec<NodeId> = self.get_all_ids();
         node_ids.sort();
         let open = self.open_windows.get_mut(&id).unwrap();
-        // TODO: show only not neighbor nodes
+        // TODO: show only not neighbor nodes?
         let selected_id = self.add_link_selected_ids.get_mut(&id).unwrap();
         let pdr_slider = self.drone_pdr_sliders.get_mut(&id).unwrap();
         let binding = self.simulation_data_ref.clone().unwrap();
