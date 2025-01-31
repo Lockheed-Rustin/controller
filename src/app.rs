@@ -14,6 +14,7 @@ use wg_2024::network::NodeId;
 use crate::data::{DroneStats, SimulationData};
 use crate::receiver_threads;
 use crate::ui_components;
+use crate::ui_components::client_window::{CommunicationChoice, ContentChoice, MessageChoice};
 
 #[derive(PartialEq, Clone, Copy)]
 enum NodeType {
@@ -32,9 +33,12 @@ pub struct SimulationControllerUI {
     // nodes ui
     types: HashMap<NodeId, NodeType>,
     open_windows: HashMap<NodeId, bool>,
-    // clients ui
+    // client windows
+    message_choice: MessageChoice,
+    content_choice: ContentChoice,
+    communication_choice: CommunicationChoice,
     // client_command_lines: HashMap<NodeId, String>,
-    // drones ui
+    // drone windows
     drone_pdr_sliders: HashMap<NodeId, f32>,
     add_link_selected_ids: HashMap<NodeId, Option<NodeId>>,
 }
@@ -68,6 +72,9 @@ impl SimulationControllerUI {
             simulation_data_ref: None,
             types: Default::default(),
             open_windows: Default::default(),
+            message_choice: MessageChoice::NotChosen,
+            content_choice: ContentChoice::NotChosen,
+            communication_choice: CommunicationChoice::NotChosen,
             drone_pdr_sliders: Default::default(),
             add_link_selected_ids: Default::default(),
         };
@@ -122,7 +129,8 @@ impl SimulationControllerUI {
 
         // kill receiving threads
         for s in self.kill_senders.iter() {
-            s.send(()).expect("Error in sending kill message to receiving threads");
+            s.send(())
+                .expect("Error in sending kill message to receiving threads");
         }
         let handles = take(&mut self.handles);
         for h in handles {
@@ -212,7 +220,15 @@ impl SimulationControllerUI {
         let open = self.open_windows.get_mut(&id).unwrap();
         let binding = self.simulation_data_ref.clone().unwrap();
         let mutex = binding.lock().unwrap();
-        ui_components::client_window::spawn_client_window(ctx, mutex, open, id);
+        ui_components::client_window::spawn_client_window(
+            ctx,
+            mutex,
+            open,
+            id,
+            &mut self.message_choice,
+            &mut self.content_choice,
+            &mut self.communication_choice,
+        );
     }
 
     pub fn spawn_server_window(&mut self, ctx: &Context, id: NodeId) {
