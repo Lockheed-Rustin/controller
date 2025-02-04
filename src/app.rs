@@ -34,13 +34,13 @@ pub struct SimulationControllerUI {
     types: HashMap<NodeId, NodeType>,
     open_windows: HashMap<NodeId, bool>,
     // client windows
-    message_choice: MessageChoice,
-    content_choice: ContentChoice,
-    communication_choice: CommunicationChoice,
-    // client_command_lines: HashMap<NodeId, String>,
+    client_message_choices: HashMap<NodeId, MessageChoice>,
+    client_content_choices: HashMap<NodeId, ContentChoice>,
+    client_communication_choices: HashMap<NodeId, CommunicationChoice>,
+    client_text_inputs: HashMap<NodeId, String>,
     // drone windows
     drone_pdr_sliders: HashMap<NodeId, f32>,
-    add_link_selected_ids: HashMap<NodeId, Option<NodeId>>,
+    drone_add_link_selected_ids: HashMap<NodeId, Option<NodeId>>,
 }
 
 impl eframe::App for SimulationControllerUI {
@@ -72,11 +72,12 @@ impl SimulationControllerUI {
             simulation_data_ref: None,
             types: Default::default(),
             open_windows: Default::default(),
-            message_choice: MessageChoice::NotChosen,
-            content_choice: ContentChoice::NotChosen,
-            communication_choice: CommunicationChoice::NotChosen,
+            client_message_choices: Default::default(),
+            client_content_choices: Default::default(),
+            client_communication_choices: Default::default(),
+            client_text_inputs: Default::default(),
             drone_pdr_sliders: Default::default(),
-            add_link_selected_ids: Default::default(),
+            drone_add_link_selected_ids: Default::default(),
         };
         res.reset();
         res
@@ -102,11 +103,11 @@ impl SimulationControllerUI {
 
         // create node hashmaps
         self.open_windows.clear();
-        self.add_link_selected_ids.clear();
+        self.drone_add_link_selected_ids.clear();
         let mut logs = HashMap::new();
         for &id in self.types.keys() {
             self.open_windows.insert(id, false);
-            self.add_link_selected_ids.insert(id, None);
+            self.drone_add_link_selected_ids.insert(id, None);
             logs.insert(id, vec![]);
         }
 
@@ -121,11 +122,18 @@ impl SimulationControllerUI {
                 unreachable!();
             }
         }
+
         // create client hashmaps
-        // let mut client_command_lines = HashMap::new();
-        // for id in sc.get_drone_ids() {
-        //     client_command_lines.insert(id, "".to_string());
-        // }
+        self.client_message_choices.clear();
+        self.client_content_choices.clear();
+        self.client_communication_choices.clear();
+        self.client_text_inputs.clear();
+        for id in sc.get_client_ids() {
+            self.client_message_choices.insert(id, MessageChoice::NotChosen);
+            self.client_content_choices.insert(id, ContentChoice::NotChosen);
+            self.client_communication_choices.insert(id, CommunicationChoice::NotChosen);
+            self.client_text_inputs.insert(id, "".to_string());
+        }
 
         // kill receiving threads
         for s in self.kill_senders.iter() {
@@ -220,14 +228,12 @@ impl SimulationControllerUI {
         let open = self.open_windows.get_mut(&id).unwrap();
         let binding = self.simulation_data_ref.clone().unwrap();
         let mutex = binding.lock().unwrap();
+        let msg_ch = self.client_message_choices.get_mut(&id).unwrap();
+        let cnt_ch = self.client_content_choices.get_mut(&id).unwrap();
+        let cmn_ch = self.client_communication_choices.get_mut(&id).unwrap();
+        let txt_in = self.client_text_inputs.get_mut(&id).unwrap();
         ui_components::client_window::spawn_client_window(
-            ctx,
-            mutex,
-            open,
-            id,
-            &mut self.message_choice,
-            &mut self.content_choice,
-            &mut self.communication_choice,
+            ctx, mutex, open, id, msg_ch, cnt_ch, cmn_ch, txt_in,
         );
     }
 
@@ -243,7 +249,7 @@ impl SimulationControllerUI {
         node_ids.sort();
         let open = self.open_windows.get_mut(&id).unwrap();
         // TODO: show only not neighbor nodes
-        let selected_id = self.add_link_selected_ids.get_mut(&id).unwrap();
+        let selected_id = self.drone_add_link_selected_ids.get_mut(&id).unwrap();
         let pdr_slider = self.drone_pdr_sliders.get_mut(&id).unwrap();
         let binding = self.simulation_data_ref.clone().unwrap();
         let mutex = binding.lock().unwrap();

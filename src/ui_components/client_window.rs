@@ -8,7 +8,7 @@ use wg_2024::network::NodeId;
 use crate::data::SimulationData;
 use crate::ui_components;
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Copy, Clone, Debug)]
 pub enum MessageChoice {
     NotChosen,
     ReqServerType,
@@ -16,14 +16,14 @@ pub enum MessageChoice {
     Communication,
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Copy, Clone)]
 pub enum ContentChoice {
     NotChosen,
     ReqFilesList,
     ReqFile,
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Copy, Clone)]
 pub enum CommunicationChoice {
     NotChosen,
     ReqRegistrationToChat,
@@ -39,6 +39,7 @@ pub fn spawn_client_window(
     message_choice: &mut MessageChoice,
     content_choice: &mut ContentChoice,
     communication_choice: &mut CommunicationChoice,
+    text_input: &mut String,
 ) {
     Window::new(format!("Client #{}", id))
         .open(open)
@@ -86,22 +87,9 @@ fn spawn_message_combobox(
         .width(210.0)
         .selected_text(format!("{}", message_choice))
         .show_ui(ui, |ui| {
-            // TODO: create generic function for these
-            ui.selectable_value(
-                message_choice,
-                MessageChoice::ReqServerType,
-                format!("{}", MessageChoice::ReqServerType),
-            );
-            ui.selectable_value(
-                message_choice,
-                MessageChoice::Content,
-                format!("{}", MessageChoice::Content),
-            );
-            ui.selectable_value(
-                message_choice,
-                MessageChoice::Communication,
-                format!("{}", MessageChoice::Communication),
-            );
+            spawn_choice(ui, message_choice, MessageChoice::ReqServerType);
+            spawn_choice(ui, message_choice, MessageChoice::Content);
+            spawn_choice(ui, message_choice, MessageChoice::Communication);
         });
     match message_choice {
         MessageChoice::NotChosen => {}
@@ -122,16 +110,8 @@ fn spawn_content_combobox(ui: &mut Ui, content_choice: &mut ContentChoice) {
         .width(210.0)
         .selected_text(format!("{}", content_choice))
         .show_ui(ui, |ui| {
-            ui.selectable_value(
-                content_choice,
-                ContentChoice::ReqFile,
-                format!("{}", ContentChoice::ReqFile),
-            );
-            ui.selectable_value(
-                content_choice,
-                ContentChoice::ReqFilesList,
-                format!("{}", ContentChoice::ReqFilesList),
-            );
+            spawn_choice(ui, content_choice, ContentChoice::ReqFile);
+            spawn_choice(ui, content_choice, ContentChoice::ReqFilesList);
         });
 }
 
@@ -140,26 +120,30 @@ fn spawn_communication_combobox(ui: &mut Ui, communication_choice: &mut Communic
         .width(210.0)
         .selected_text(format!("{}", communication_choice))
         .show_ui(ui, |ui| {
-            ui.selectable_value(
-                communication_choice,
-                CommunicationChoice::MessageSend,
-                format!("{}", CommunicationChoice::MessageSend),
-            );
-            ui.selectable_value(
-                communication_choice,
-                CommunicationChoice::ReqClientsList,
-                format!("{}", CommunicationChoice::ReqClientsList),
-            );
-            ui.selectable_value(
+            spawn_choice(
+                ui,
                 communication_choice,
                 CommunicationChoice::ReqRegistrationToChat,
-                format!("{}", CommunicationChoice::ReqRegistrationToChat),
             );
+            spawn_choice(
+                ui,
+                communication_choice,
+                CommunicationChoice::ReqClientsList,
+            );
+            spawn_choice(ui, communication_choice, CommunicationChoice::MessageSend);
         });
 }
 
+pub fn spawn_choice<V: PartialEq + Display + Copy>(
+    ui: &mut Ui,
+    current_value: &mut V,
+    selected_value: V,
+) {
+    ui.selectable_value(current_value, selected_value, format!("{}", selected_value));
+}
+
 impl Display for MessageChoice {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let str = match self {
             MessageChoice::NotChosen => "Choose request type",
             MessageChoice::ReqServerType => "Request server type",
