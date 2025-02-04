@@ -19,6 +19,7 @@ use petgraph::stable_graph::StableUnGraph;
 use petgraph::Undirected;
 
 use drone_networks::network::init_network;
+use petgraph::graph::NodeIndex;
 use wg_2024::config::Config;
 use wg_2024::network::NodeId;
 
@@ -74,19 +75,19 @@ pub struct SimulationControllerUI {
     /// shared data
     simulation_data_ref: Option<Arc<Mutex<SimulationData>>>,
     nodes: HashMap<NodeId, NodeWindowState>,
-    g: egui_graphs::Graph<
+    graph: egui_graphs::Graph<
         (NodeId, NodeType),
         (),
         Undirected,
-        u32,
+        usize,
         CustomNodeShape,
         CustomEdgeShape,
     >,
+    graph_index_map: HashMap<NodeId, usize>,
 }
 
 impl eframe::App for SimulationControllerUI {
     fn update(&mut self, ctx: &Context, _frame: &mut eframe::Frame) {
-        self.update_id_list();
         self.menu_bar(ctx);
         match self.section {
             Section::Control => {
@@ -108,13 +109,26 @@ impl SimulationControllerUI {
             kill_senders: Default::default(),
             simulation_data_ref: None,
             nodes: Default::default(),
-            g: egui_graphs::Graph::from(&StableUnGraph::default()),
+            graph: egui_graphs::Graph::from(&StableUnGraph::default()),
+            graph_index_map: Default::default(),
         };
         res.reset();
         res
     }
 
     pub fn reset(&mut self) {
+        // kill old receiving threads
+        for s in self.kill_senders.iter() {
+            s.send(())
+                .expect("Error in sending kill message to receiving threads");
+        }
+        let handles = take(&mut self.handles);
+        for h in handles {
+            h.join().expect("Error in joining receiving threads");
+        }
+        self.handles.clear();
+        self.kill_senders.clear();
+
         // read config file and get a SimulationController
         let file_str = fs::read_to_string("config.toml").unwrap();
         let config: Config = toml::from_str(&file_str).unwrap();
@@ -150,17 +164,34 @@ impl SimulationControllerUI {
             stats.insert(drone_id, DroneStats::default());
         }
 
-        // kill old receiving threads
-        for s in self.kill_senders.iter() {
-            s.send(())
-                .expect("Error in sending kill message to receiving threads");
+        // graph
+        let sc_graph: &UnGraphMap<NodeId, ()> = sc.get_topology();
+
+        let mut sg = StableUnGraph::default();
+
+        // Insert nodes into the StableUnGraph
+        self.graph_index_map.clear();
+        for id in self.get_ids(NodeType::Drone) {
+            let node_index = sg.add_node((id, NodeType::Drone));
+            self.graph_index_map.insert(id, node_index.index()); // Map from old node to new node index
         }
-        let handles = take(&mut self.handles);
-        for h in handles {
-            h.join().expect("Error in joining receiving threads");
+        for id in self.get_ids(NodeType::Client) {
+            let node_index = sg.add_node((id, NodeType::Client));
+            self.graph_index_map.insert(id, node_index.index()); // Map from old node to new node index
         }
-        self.handles.clear();
-        self.kill_senders.clear();
+        for id in self.get_ids(NodeType::Server) {
+            let node_index = sg.add_node((id, NodeType::Server));
+            self.graph_index_map.insert(id, node_index.index()); // Map from old node to new node index
+        }
+
+        // Insert edges into the StableUnGraph
+        for (source, target, _weight) in sc_graph.all_edges() {
+            let source_index = self.graph_index_map[&source];
+            let target_index = self.graph_index_map[&target];
+            sg.add_edge(NodeIndex::from(source_index), NodeIndex::from(target_index), ());
+        }
+
+        self.graph = egui_graphs::Graph::from(&sg);
 
         // create channels
         let drone_receiver = sc.get_drone_recv();
@@ -200,42 +231,10 @@ impl SimulationControllerUI {
             receiver_threads::server_receiver_loop(arc_clone, server_receiver, kill_server_recv);
         });
         self.handles.push(handle);
-
-        // ui graph init ------------
-        // fake sc graph
-        let mut sc_graph: UnGraphMap<NodeId, ()> = UnGraphMap::new();
-        sc_graph.add_node(12);
-        sc_graph.add_node(23);
-        sc_graph.add_node(34);
-        sc_graph.add_node(45);
-        sc_graph.add_node(56);
-        sc_graph.add_node(67);
-        sc_graph.add_edge(12, 34, ());
-        sc_graph.add_edge(23, 34, ());
-        sc_graph.add_edge(34, 45, ());
-        sc_graph.add_edge(56, 45, ());
-        sc_graph.add_edge(67, 45, ());
-
-        let mut sg = StableUnGraph::default();
-
-        // Insert nodes into the StableUnGraph
-        let mut node_map = HashMap::new();
-        for id in sc_graph.nodes() {
-            let node_index = sg.add_node((id, NodeType::Drone));
-            node_map.insert(id, node_index); // Map from old node to new node index
-        }
-
-        // Insert edges into the StableUnGraph
-        for (source, target, _weight) in sc_graph.all_edges() {
-            let source_index = node_map[&source];
-            let target_index = node_map[&target];
-            sg.add_edge(source_index, target_index, ());
-        }
-
-        self.g = egui_graphs::Graph::from(&sg);
     }
 
     fn control_section(&mut self, ctx: &Context) {
+        self.update_id_list();
         // sidebar
         self.sidebar(ctx);
         // node windows
@@ -247,6 +246,7 @@ impl SimulationControllerUI {
     }
 
     fn topology_section(&mut self, ctx: &Context) {
+        self.update_graph();
         CentralPanel::default()
             .frame(Frame::default().fill(Color32::from_rgb(27, 27, 27)))
             .show(ctx, |ui| {
@@ -260,7 +260,7 @@ impl SimulationControllerUI {
                         CustomEdgeShape,
                         LayoutStateRandom,
                         LayoutRandom,
-                    >::new(&mut self.g)
+                    >::new(&mut self.graph)
                     .with_styles(&SettingsStyle::default().with_labels_always(true))
                     .with_interactions(&SettingsInteraction::default().with_dragging_enabled(true))
                     .with_navigations(
@@ -418,5 +418,35 @@ impl SimulationControllerUI {
                 self.nodes.remove(&id);
             }
         }
+    }
+
+    fn update_graph(&mut self) {
+        self.update_id_list();
+        // delete crashed drones
+        let current_drone_ids = self.get_ids(NodeType::Drone);
+        let graph_nodes: Vec<(NodeIndex<usize>, NodeId, NodeType)> = self.graph.nodes_iter()
+            .map(|(x, y)| (x, y.payload().0, y.payload().1)).collect();
+        for (index, node_id, node_type) in graph_nodes {
+            if node_type == NodeType::Drone && !current_drone_ids.contains(&node_id) {
+                self.graph.remove_node(index);
+                self.graph_index_map.remove(&node_id);
+            }
+        }
+        // add new edges
+        let binding = self.simulation_data_ref.clone().unwrap();
+        let mutex = binding.lock().unwrap();
+        let current_edges: Vec<(NodeId, NodeId, _)>= mutex.sc.get_topology().all_edges().collect();
+
+        for (id1, id2, _) in current_edges {
+            let i1 = NodeIndex::from(*self.graph_index_map.get(&id1).unwrap());
+            let i2 = NodeIndex::from(*self.graph_index_map.get(&id2).unwrap());
+            let are_connected = self.graph.edges_connecting(i1, i2).count() > 0;
+            if !are_connected {
+                self.graph.add_edge(i1, i2, ());
+            }
+
+        }
+
+
     }
 }

@@ -34,8 +34,8 @@ pub fn receiver_loop(
 fn handle_event(data_ref: Arc<Mutex<SimulationData>>, event: ServerEvent) {
     match event {
         ServerEvent::PacketReceived(p, id) => handle_packet_received(data_ref, p, id),
-        ServerEvent::MessageAssembled(_) => {}
-        ServerEvent::MessageFragmented(_) => {}
+        ServerEvent::MessageAssembled{ .. } => {}
+        ServerEvent::MessageFragmented{ .. } => {}
         ServerEvent::PacketSent(p) => handle_packet_sent(data_ref, p),
     }
 }
