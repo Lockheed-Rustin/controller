@@ -190,7 +190,7 @@ fn spawn_send_form(
         if with_text_input {
             ui.add(
                 TextEdit::singleline(&mut state.text_input)
-                    .desired_width(210.0)
+                    .desired_width(215.0)
                     .font(TextStyle::Monospace),
             );
         }

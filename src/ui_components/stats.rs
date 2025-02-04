@@ -85,6 +85,9 @@ pub fn spawn_client_stats(ui: &mut Ui, mutex: &MutexGuard<SimulationData>, id: N
         "Fragmented messages: {}   Assembled messages: {}",
         stats.messages_fragmented, stats.messages_assembled
     ));
+
+    ui.add_space(2.0);
+    ui.separator();
 }
 
 fn spawn_packet_stats_table_header(ui: &mut Ui) {
