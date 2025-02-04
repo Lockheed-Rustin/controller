@@ -36,9 +36,11 @@ pub fn spawn_client_window(
     mut mutex: MutexGuard<SimulationData>,
     open: &mut bool,
     id: NodeId,
+    node_ids: Vec<NodeId>,
     message_choice: &mut MessageChoice,
     content_choice: &mut ContentChoice,
     communication_choice: &mut CommunicationChoice,
+    destination_id: &mut Option<NodeId>,
     text_input: &mut String,
 ) {
     Window::new(format!("Client #{}", id))
@@ -132,6 +134,27 @@ fn spawn_communication_combobox(ui: &mut Ui, communication_choice: &mut Communic
             );
             spawn_choice(ui, communication_choice, CommunicationChoice::MessageSend);
         });
+}
+
+fn spawn_send_form(ui: &mut Ui, destination_id: &mut Option<NodeId>, node_ids: Vec<NodeId>,) {
+    ui.horizontal(|ui| {
+        ui.label("Destination:");
+        ComboBox::from_id_salt("destination")
+            .width(50.0)
+            .selected_text(
+                destination_id
+                    .map(|num| num.to_string())
+                    .unwrap_or_else(|| "-".to_string()),
+            )
+            .show_ui(ui, |ui| {
+                for number in node_ids {
+                    ui.selectable_value(destination_id, Some(number), number.to_string());
+                }
+            });
+        if ui.button("Send").clicked() {
+
+        }
+    });
 }
 
 pub fn spawn_choice<V: PartialEq + Display + Copy>(

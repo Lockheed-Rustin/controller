@@ -37,6 +37,7 @@ pub struct SimulationControllerUI {
     client_message_choices: HashMap<NodeId, MessageChoice>,
     client_content_choices: HashMap<NodeId, ContentChoice>,
     client_communication_choices: HashMap<NodeId, CommunicationChoice>,
+    client_dest_ids: HashMap<NodeId, Option<NodeId>>,
     client_text_inputs: HashMap<NodeId, String>,
     // drone windows
     drone_pdr_sliders: HashMap<NodeId, f32>,
@@ -75,6 +76,7 @@ impl SimulationControllerUI {
             client_message_choices: Default::default(),
             client_content_choices: Default::default(),
             client_communication_choices: Default::default(),
+            client_dest_ids: Default::default(),
             client_text_inputs: Default::default(),
             drone_pdr_sliders: Default::default(),
             drone_add_link_selected_ids: Default::default(),
@@ -127,11 +129,13 @@ impl SimulationControllerUI {
         self.client_message_choices.clear();
         self.client_content_choices.clear();
         self.client_communication_choices.clear();
+        self.client_dest_ids.clear();
         self.client_text_inputs.clear();
         for id in sc.get_client_ids() {
             self.client_message_choices.insert(id, MessageChoice::NotChosen);
             self.client_content_choices.insert(id, ContentChoice::NotChosen);
             self.client_communication_choices.insert(id, CommunicationChoice::NotChosen);
+            self.client_dest_ids.insert(id, None);
             self.client_text_inputs.insert(id, "".to_string());
         }
 
@@ -225,15 +229,17 @@ impl SimulationControllerUI {
     }
 
     pub fn spawn_client_window(&mut self, ctx: &Context, id: NodeId) {
+        let ids = self.get_all_ids();
         let open = self.open_windows.get_mut(&id).unwrap();
         let binding = self.simulation_data_ref.clone().unwrap();
         let mutex = binding.lock().unwrap();
         let msg_ch = self.client_message_choices.get_mut(&id).unwrap();
         let cnt_ch = self.client_content_choices.get_mut(&id).unwrap();
+        let dst_id = self.client_dest_ids.get_mut(&id).unwrap();
         let cmn_ch = self.client_communication_choices.get_mut(&id).unwrap();
         let txt_in = self.client_text_inputs.get_mut(&id).unwrap();
         ui_components::client_window::spawn_client_window(
-            ctx, mutex, open, id, msg_ch, cnt_ch, cmn_ch, txt_in,
+            ctx, mutex, open, id, ids, msg_ch, cnt_ch, cmn_ch, dst_id, txt_in,
         );
     }
 
