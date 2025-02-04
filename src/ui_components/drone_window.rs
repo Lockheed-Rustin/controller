@@ -2,16 +2,16 @@ use std::sync::MutexGuard;
 
 use eframe::egui::{vec2, ComboBox, Context, Slider, Window};
 
-use wg_2024::network::NodeId;
 use crate::app::DroneWindowState;
 use crate::data::SimulationData;
 use crate::ui_components;
+use wg_2024::network::NodeId;
 
 pub fn spawn_drone_window(
     ctx: &Context,
-    mut mutex: MutexGuard<SimulationData>,
-    id: NodeId,                       // drone id
-    node_ids: Vec<NodeId>,            // all other nodes
+    mutex: &mut MutexGuard<SimulationData>,
+    id: NodeId,            // drone id
+    node_ids: Vec<NodeId>, // all other nodes
     open: &mut bool,
     state: &mut DroneWindowState,
 ) {
@@ -20,11 +20,11 @@ pub fn spawn_drone_window(
         .fixed_size(vec2(400.0, 300.0))
         .show(ctx, |ui| {
             // ----- stats -----
-            ui_components::stats::spawn_drone_stats(ui, &mutex, id);
+            ui_components::stats::spawn_drone_stats(ui, mutex, id);
             ui.add_space(5.0);
 
             // ----- logs -----
-            ui_components::logs::spawn_logs(ui, &mutex, id);
+            ui_components::logs::spawn_logs(ui, mutex, id);
             ui.add_space(5.0);
 
             ui_components::text::spawn_white_heading(ui, "Actions");
@@ -36,25 +36,29 @@ pub fn spawn_drone_window(
                 ComboBox::from_id_salt("combobox")
                     .width(50.0)
                     .selected_text(
-                        state.add_link_selected_id
+                        state
+                            .add_link_selected_id
                             .map(|num| num.to_string())
                             .unwrap_or_else(|| "-".to_string()),
                     )
                     .show_ui(ui, |ui| {
                         for number in node_ids {
-                            ui.selectable_value(&mut state.add_link_selected_id, Some(number), number.to_string());
+                            ui.selectable_value(
+                                &mut state.add_link_selected_id,
+                                Some(number),
+                                number.to_string(),
+                            );
                         }
                     });
                 if ui.button("Add").clicked() {
                     let log_line = match state.add_link_selected_id {
                         None => "Error: id not selected".to_string(),
                         Some(sid) => {
-                            println!("trying add {} and {}", id, sid);
                             match mutex.sc.add_edge(id, sid) {
                                 Some(_) => {
                                     // push log to other node as well
-                                    push_log(
-                                        &mut mutex,
+                                    ui_components::logs::push_log(
+                                        mutex,
                                         sid,
                                         format!("Link added with node {}", id),
                                     );
@@ -65,7 +69,7 @@ pub fn spawn_drone_window(
                         }
                     };
 
-                    push_log(&mut mutex, id, log_line);
+                    ui_components::logs::push_log(mutex, id, log_line);
                 }
             });
 
@@ -83,7 +87,7 @@ pub fn spawn_drone_window(
                         Some(_) => format!("Changed PDR to {}", state.pdr_slider),
                         None => "Failed to change PDR".to_string(),
                     };
-                    push_log(&mut mutex, id, log_line);
+                    ui_components::logs::push_log(mutex, id, log_line);
                 }
             });
 
@@ -91,7 +95,7 @@ pub fn spawn_drone_window(
 
             ui.horizontal(|ui| {
                 if ui.button("Crash").clicked() && mutex.sc.crash_drone(id).is_none() {
-                    push_log(&mut mutex, id, "Failed to crash".to_string());
+                    ui_components::logs::push_log(mutex, id, "Failed to crash".to_string());
                 }
                 if ui.button("Clear log").clicked() {
                     let v = mutex.logs.get_mut(&id).unwrap();
@@ -99,9 +103,4 @@ pub fn spawn_drone_window(
                 }
             });
         });
-}
-
-fn push_log(mutex: &mut MutexGuard<SimulationData>, id: NodeId, line: String) {
-    let v = mutex.logs.get_mut(&id).unwrap();
-    v.push(line);
 }

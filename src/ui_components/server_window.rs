@@ -9,7 +9,7 @@ use crate::ui_components;
 
 pub fn spawn_server_window(
     ctx: &Context,
-    mut mutex: MutexGuard<SimulationData>,
+    mutex: &mut MutexGuard<SimulationData>,
     open: &mut bool,
     id: NodeId,
 ) {
@@ -20,7 +20,7 @@ pub fn spawn_server_window(
             ui.add_space(5.0);
 
             // logs
-            ui_components::logs::spawn_logs(ui, &mutex, id);
+            ui_components::logs::spawn_logs(ui, mutex, id);
 
             ui_components::text::spawn_white_heading(ui, "Actions");
             ui.add_space(5.0);

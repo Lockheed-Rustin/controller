@@ -20,7 +20,7 @@ use crate::ui_components::client_window::{CommunicationChoice, ContentChoice, Me
 enum NodeWindowState {
     Drone(bool, DroneWindowState),
     Client(bool, ClientWindowState),
-    Server(bool)
+    Server(bool),
 }
 
 #[derive(Default, Debug)]
@@ -52,7 +52,7 @@ pub struct SimulationControllerUI {
     kill_senders: Vec<Sender<()>>,
     /// shared data
     simulation_data_ref: Option<Arc<Mutex<SimulationData>>>,
-    nodes: HashMap<NodeId, NodeWindowState>
+    nodes: HashMap<NodeId, NodeWindowState>,
 }
 
 impl eframe::App for SimulationControllerUI {
@@ -91,10 +91,16 @@ impl SimulationControllerUI {
         // get all node ids
         self.nodes.clear();
         for id in sc.get_drone_ids() {
-            self.nodes.insert(id, NodeWindowState::Drone(false, DroneWindowState::default()));
+            self.nodes.insert(
+                id,
+                NodeWindowState::Drone(false, DroneWindowState::default()),
+            );
         }
         for id in sc.get_client_ids() {
-            self.nodes.insert(id, NodeWindowState::Client(false, ClientWindowState::default()));
+            self.nodes.insert(
+                id,
+                NodeWindowState::Client(false, ClientWindowState::default()),
+            );
         }
         for id in sc.get_server_ids() {
             self.nodes.insert(id, NodeWindowState::Server(false));
@@ -205,23 +211,22 @@ impl SimulationControllerUI {
         let mut node_ids: Vec<NodeId> = self.get_all_ids();
         node_ids.sort();
         let binding = self.simulation_data_ref.clone().unwrap();
-        let mutex = binding.lock().unwrap();
+        let mut mutex = binding.lock().unwrap();
         match self.nodes.get_mut(&id).unwrap() {
-            NodeWindowState::Drone(mut open, ref mut state) => {
+            NodeWindowState::Drone(open, state) => {
                 ui_components::drone_window::spawn_drone_window(
-                    ctx, mutex, id, node_ids, &mut open, state,
+                    ctx, &mut mutex, id, node_ids, open, state,
                 );
             }
-            NodeWindowState::Client(mut open, ref mut state) => {
+            NodeWindowState::Client(open, state) => {
                 ui_components::client_window::spawn_client_window(
-                    ctx, mutex, id, node_ids, &mut open, state,
+                    ctx, &mut mutex, id, node_ids, open, state,
                 );
             }
             NodeWindowState::Server(open) => {
-                ui_components::server_window::spawn_server_window(ctx, mutex, open, id);
+                ui_components::server_window::spawn_server_window(ctx, &mut mutex, open, id);
             }
         }
-
     }
 
     fn spawn_node_list_element(&mut self, ui: &mut Ui, id: NodeId, s: &'static str) {
@@ -277,14 +282,6 @@ impl SimulationControllerUI {
             if !sc_drone_ids.contains(&id) {
                 self.nodes.remove(&id);
             }
-        }
-    }
-
-    fn get_open(&mut self, id: &NodeId) -> &mut bool {
-        match self.nodes.get_mut(id).unwrap() {
-            NodeWindowState::Drone(o, _) => o,
-            NodeWindowState::Client(o, _) => o,
-            NodeWindowState::Server(o) => o,
         }
     }
 }
