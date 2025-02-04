@@ -29,9 +29,6 @@ pub fn spawn_client_window(
                 if ui.button("Send Fragment").clicked() {
                     mutex.sc.send_fragment_fair(id);
                 }
-                if ui.button("Send Ack").clicked() {
-                    mutex.sc.send_ack_fair(id);
-                }
                 if ui.button("Send FloodRequest").clicked() {
                     mutex.sc.send_flood_request_fair(id);
                 }
