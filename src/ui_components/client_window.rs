@@ -193,23 +193,17 @@ fn spawn_send_form(
                     .font(TextStyle::Monospace),
             );
         }
-        // if command_line_response.lost_focus()
-        //     && ui.input(|i| i.key_pressed(Key::Enter))
-        // {
-        //     //log.push_str(format!("\n{}", line).as_str());
-        //     line.clear();
-        //     command_line_response.request_focus();
-        // }
+
         if ui.button("Send").clicked() {
             let log_line = match send(mutex, id, state) {
-                None => "error in sending message".to_string(),
+                None => "Error in sending command".to_string(),
                 Some(_) => {
                     state.message_choice = MessageChoice::NotChosen;
                     state.content_choice = ContentChoice::NotChosen;
                     state.communication_choice = CommunicationChoice::NotChosen;
-                    let dest_id = state.destination_id.take().unwrap();
+                    state.destination_id = None;
                     state.text_input.clear();
-                    format!("Message sent correctly to node #{}", dest_id)
+                    "Command sent correctly".to_string()
                 }
             };
             ui_components::logs::push_log(mutex, id, log_line);
