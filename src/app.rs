@@ -52,7 +52,7 @@ pub struct DroneWindowState {
 }
 
 #[derive(PartialEq, Clone, Copy, Debug)]
-enum NodeType {
+pub enum NodeType {
     Client,
     Drone,
     Server,
@@ -108,6 +108,7 @@ impl SimulationControllerUI {
             kill_senders: Default::default(),
             simulation_data_ref: None,
             nodes: Default::default(),
+            g: egui_graphs::Graph::from(&StableUnGraph::default()),
         };
         res.reset();
         res
