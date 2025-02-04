@@ -16,7 +16,29 @@ use crate::receiver_threads;
 use crate::ui_components;
 use crate::ui_components::client_window::{CommunicationChoice, ContentChoice, MessageChoice};
 
-#[derive(PartialEq, Clone, Copy)]
+#[derive(Debug)]
+enum NodeWindowState {
+    Drone(bool, DroneWindowState),
+    Client(bool, ClientWindowState),
+    Server(bool)
+}
+
+#[derive(Default, Debug)]
+pub struct ClientWindowState {
+    pub message_choice: MessageChoice,
+    pub content_choice: ContentChoice,
+    pub communication_choice: CommunicationChoice,
+    pub destination_id: Option<NodeId>,
+    pub text_input: String,
+}
+
+#[derive(Default, Debug)]
+pub struct DroneWindowState {
+    pub pdr_slider: f32,
+    pub add_link_selected_id: Option<NodeId>,
+}
+
+#[derive(PartialEq, Clone, Copy, Debug)]
 enum NodeType {
     Client,
     Drone,
@@ -25,23 +47,12 @@ enum NodeType {
 
 pub struct SimulationControllerUI {
     ctx: Context,
-    // handling receiver threads
+    /// handling receiver threads
     handles: Vec<JoinHandle<()>>,
     kill_senders: Vec<Sender<()>>,
-    // shared data
+    /// shared data
     simulation_data_ref: Option<Arc<Mutex<SimulationData>>>,
-    // nodes ui
-    types: HashMap<NodeId, NodeType>,
-    open_windows: HashMap<NodeId, bool>,
-    // client windows
-    client_message_choices: HashMap<NodeId, MessageChoice>,
-    client_content_choices: HashMap<NodeId, ContentChoice>,
-    client_communication_choices: HashMap<NodeId, CommunicationChoice>,
-    client_dest_ids: HashMap<NodeId, Option<NodeId>>,
-    client_text_inputs: HashMap<NodeId, String>,
-    // drone windows
-    drone_pdr_sliders: HashMap<NodeId, f32>,
-    drone_add_link_selected_ids: HashMap<NodeId, Option<NodeId>>,
+    nodes: HashMap<NodeId, NodeWindowState>
 }
 
 impl eframe::App for SimulationControllerUI {
@@ -51,14 +62,8 @@ impl eframe::App for SimulationControllerUI {
         self.sidebar(ctx);
         // node windows
         CentralPanel::default().show(ctx, |_ui| {
-            for id in self.get_ids(NodeType::Drone) {
-                self.spawn_drone_window(ctx, id);
-            }
-            for id in self.get_ids(NodeType::Server) {
-                self.spawn_server_window(ctx, id);
-            }
-            for id in self.get_ids(NodeType::Client) {
-                self.spawn_client_window(ctx, id);
+            for id in self.get_all_ids() {
+                self.spawn_node_window(ctx, id);
             }
         });
     }
@@ -71,15 +76,7 @@ impl SimulationControllerUI {
             handles: Default::default(),
             kill_senders: Default::default(),
             simulation_data_ref: None,
-            types: Default::default(),
-            open_windows: Default::default(),
-            client_message_choices: Default::default(),
-            client_content_choices: Default::default(),
-            client_communication_choices: Default::default(),
-            client_dest_ids: Default::default(),
-            client_text_inputs: Default::default(),
-            drone_pdr_sliders: Default::default(),
-            drone_add_link_selected_ids: Default::default(),
+            nodes: Default::default(),
         };
         res.reset();
         res
@@ -92,51 +89,27 @@ impl SimulationControllerUI {
         let sc = init_network(&config).unwrap();
 
         // get all node ids
-        self.types.clear();
+        self.nodes.clear();
         for id in sc.get_drone_ids() {
-            self.types.insert(id, NodeType::Drone);
+            self.nodes.insert(id, NodeWindowState::Drone(false, DroneWindowState::default()));
         }
         for id in sc.get_client_ids() {
-            self.types.insert(id, NodeType::Client);
+            self.nodes.insert(id, NodeWindowState::Client(false, ClientWindowState::default()));
         }
         for id in sc.get_server_ids() {
-            self.types.insert(id, NodeType::Server);
+            self.nodes.insert(id, NodeWindowState::Server(false));
         }
 
-        // create node hashmaps
-        self.open_windows.clear();
-        self.drone_add_link_selected_ids.clear();
+        // node logs
         let mut logs = HashMap::new();
-        for &id in self.types.keys() {
-            self.open_windows.insert(id, false);
-            self.drone_add_link_selected_ids.insert(id, None);
+        for &id in self.nodes.keys() {
             logs.insert(id, vec![]);
         }
 
-        // create drone hashmaps
+        // drone stats
         let mut stats = HashMap::new();
-        self.drone_pdr_sliders.clear();
         for drone_id in sc.get_drone_ids() {
             stats.insert(drone_id, DroneStats::default());
-            if let Some(pdr) = sc.get_pdr(drone_id) {
-                self.drone_pdr_sliders.insert(drone_id, pdr);
-            } else {
-                unreachable!();
-            }
-        }
-
-        // create client hashmaps
-        self.client_message_choices.clear();
-        self.client_content_choices.clear();
-        self.client_communication_choices.clear();
-        self.client_dest_ids.clear();
-        self.client_text_inputs.clear();
-        for id in sc.get_client_ids() {
-            self.client_message_choices.insert(id, MessageChoice::NotChosen);
-            self.client_content_choices.insert(id, ContentChoice::NotChosen);
-            self.client_communication_choices.insert(id, CommunicationChoice::NotChosen);
-            self.client_dest_ids.insert(id, None);
-            self.client_text_inputs.insert(id, "".to_string());
         }
 
         // kill receiving threads
@@ -228,46 +201,27 @@ impl SimulationControllerUI {
         });
     }
 
-    pub fn spawn_client_window(&mut self, ctx: &Context, id: NodeId) {
-        let ids = self.get_all_ids();
-        let open = self.open_windows.get_mut(&id).unwrap();
-        let binding = self.simulation_data_ref.clone().unwrap();
-        let mutex = binding.lock().unwrap();
-        let msg_ch = self.client_message_choices.get_mut(&id).unwrap();
-        let cnt_ch = self.client_content_choices.get_mut(&id).unwrap();
-        let dst_id = self.client_dest_ids.get_mut(&id).unwrap();
-        let cmn_ch = self.client_communication_choices.get_mut(&id).unwrap();
-        let txt_in = self.client_text_inputs.get_mut(&id).unwrap();
-        ui_components::client_window::spawn_client_window(
-            ctx, mutex, open, id, ids, msg_ch, cnt_ch, cmn_ch, dst_id, txt_in,
-        );
-    }
-
-    pub fn spawn_server_window(&mut self, ctx: &Context, id: NodeId) {
-        let open = self.open_windows.get_mut(&id).unwrap();
-        let binding = self.simulation_data_ref.clone().unwrap();
-        let mutex = binding.lock().unwrap();
-        ui_components::server_window::spawn_server_window(ctx, mutex, open, id);
-    }
-
-    pub fn spawn_drone_window(&mut self, ctx: &Context, id: NodeId) {
+    pub fn spawn_node_window(&mut self, ctx: &Context, id: NodeId) {
         let mut node_ids: Vec<NodeId> = self.get_all_ids();
         node_ids.sort();
-        let open = self.open_windows.get_mut(&id).unwrap();
-        // TODO: show only not neighbor nodes
-        let selected_id = self.drone_add_link_selected_ids.get_mut(&id).unwrap();
-        let pdr_slider = self.drone_pdr_sliders.get_mut(&id).unwrap();
         let binding = self.simulation_data_ref.clone().unwrap();
         let mutex = binding.lock().unwrap();
-        ui_components::drone_window::spawn_drone_window(
-            ctx,
-            mutex,
-            open,
-            id,
-            node_ids,
-            selected_id,
-            pdr_slider,
-        );
+        match self.nodes.get_mut(&id).unwrap() {
+            NodeWindowState::Drone(mut open, ref mut state) => {
+                ui_components::drone_window::spawn_drone_window(
+                    ctx, mutex, id, node_ids, &mut open, state,
+                );
+            }
+            NodeWindowState::Client(mut open, ref mut state) => {
+                ui_components::client_window::spawn_client_window(
+                    ctx, mutex, id, node_ids, &mut open, state,
+                );
+            }
+            NodeWindowState::Server(open) => {
+                ui_components::server_window::spawn_server_window(ctx, mutex, open, id);
+            }
+        }
+
     }
 
     fn spawn_node_list_element(&mut self, ui: &mut Ui, id: NodeId, s: &'static str) {
@@ -277,21 +231,41 @@ impl SimulationControllerUI {
             ui.ctx().set_cursor_icon(CursorIcon::PointingHand);
         }
         if response.clicked() {
-            self.open_windows.insert(id, true);
+            match self.nodes.get_mut(&id).unwrap() {
+                NodeWindowState::Drone(o, _) => *o = true,
+                NodeWindowState::Client(o, _) => *o = true,
+                NodeWindowState::Server(o) => *o = true,
+            }
         };
         ui.add_space(5.0);
     }
 
     fn get_ids(&self, node_type: NodeType) -> Vec<NodeId> {
-        self.types
-            .iter()
-            .filter(|(_, &t)| t == node_type)
-            .map(|(x, _)| *x)
-            .collect()
+        let mut res = vec![];
+        for (id, state) in self.nodes.iter() {
+            match state {
+                NodeWindowState::Drone(_, _) => {
+                    if node_type == NodeType::Drone {
+                        res.push(*id);
+                    }
+                }
+                NodeWindowState::Client(_, _) => {
+                    if node_type == NodeType::Client {
+                        res.push(*id);
+                    }
+                }
+                NodeWindowState::Server(_) => {
+                    if node_type == NodeType::Server {
+                        res.push(*id);
+                    }
+                }
+            }
+        }
+        res
     }
 
     fn get_all_ids(&self) -> Vec<NodeId> {
-        self.types.keys().copied().collect()
+        self.nodes.keys().copied().collect()
     }
 
     fn update_id_list(&mut self) {
@@ -301,8 +275,16 @@ impl SimulationControllerUI {
         let sc_drone_ids = mutex.sc.get_drone_ids();
         for id in self.get_ids(NodeType::Drone) {
             if !sc_drone_ids.contains(&id) {
-                self.types.remove(&id);
+                self.nodes.remove(&id);
             }
+        }
+    }
+
+    fn get_open(&mut self, id: &NodeId) -> &mut bool {
+        match self.nodes.get_mut(id).unwrap() {
+            NodeWindowState::Drone(o, _) => o,
+            NodeWindowState::Client(o, _) => o,
+            NodeWindowState::Server(o) => o,
         }
     }
 }

@@ -1,30 +1,33 @@
 use std::fmt::{Display, Formatter};
 use std::sync::MutexGuard;
 
-use eframe::egui::{vec2, ComboBox, Context, Ui, Window};
+use eframe::egui::{vec2, ComboBox, Context, Key, TextEdit, TextStyle, Ui, Window};
 
 use wg_2024::network::NodeId;
-
+use crate::app::ClientWindowState;
 use crate::data::SimulationData;
 use crate::ui_components;
 
-#[derive(PartialEq, Copy, Clone, Debug)]
+#[derive(PartialEq, Copy, Clone, Debug, Default)]
 pub enum MessageChoice {
+    #[default]
     NotChosen,
     ReqServerType,
     Content,
     Communication,
 }
 
-#[derive(PartialEq, Copy, Clone)]
+#[derive(PartialEq, Copy, Clone, Default, Debug)]
 pub enum ContentChoice {
+    #[default]
     NotChosen,
     ReqFilesList,
     ReqFile,
 }
 
-#[derive(PartialEq, Copy, Clone)]
+#[derive(PartialEq, Copy, Clone, Default, Debug)]
 pub enum CommunicationChoice {
+    #[default]
     NotChosen,
     ReqRegistrationToChat,
     MessageSend,
@@ -34,14 +37,10 @@ pub enum CommunicationChoice {
 pub fn spawn_client_window(
     ctx: &Context,
     mut mutex: MutexGuard<SimulationData>,
-    open: &mut bool,
     id: NodeId,
     node_ids: Vec<NodeId>,
-    message_choice: &mut MessageChoice,
-    content_choice: &mut ContentChoice,
-    communication_choice: &mut CommunicationChoice,
-    destination_id: &mut Option<NodeId>,
-    text_input: &mut String,
+    open: &mut bool,
+    state: &mut ClientWindowState,
 ) {
     Window::new(format!("Client #{}", id))
         .open(open)
@@ -59,100 +58,137 @@ pub fn spawn_client_window(
             ui_components::text::spawn_white_heading(ui, "Actions");
             ui.add_space(5.0);
 
-            spawn_message_combobox(ui, message_choice, content_choice, communication_choice);
+            spawn_message_combobox(ui, ctx, mutex, id, node_ids, state);
 
-            /* command line
-            let line = self.client_command_lines.get_mut(&id).unwrap();
-            let command_line_response = ui.add(
-                TextEdit::singleline(line)
-                    .desired_width(f32::INFINITY)
-                    .font(TextStyle::Monospace),
-            );
-            if command_line_response.lost_focus()
-                && ui.input(|i| i.key_pressed(Key::Enter))
-            {
-                //log.push_str(format!("\n{}", line).as_str());
-                line.clear();
-                command_line_response.request_focus();
-            }
-            */
         });
 }
 
 fn spawn_message_combobox(
     ui: &mut Ui,
-    message_choice: &mut MessageChoice,
-    content_choice: &mut ContentChoice,
-    communication_choice: &mut CommunicationChoice,
+    ctx: &Context,
+    mut mutex: MutexGuard<SimulationData>,
+    id: NodeId,
+    node_ids: Vec<NodeId>,
+    state: &mut ClientWindowState,
 ) {
     ComboBox::from_id_salt("message-choice")
         .width(210.0)
-        .selected_text(format!("{}", message_choice))
+        .selected_text(format!("{}", state.message_choice))
         .show_ui(ui, |ui| {
-            spawn_choice(ui, message_choice, MessageChoice::ReqServerType);
-            spawn_choice(ui, message_choice, MessageChoice::Content);
-            spawn_choice(ui, message_choice, MessageChoice::Communication);
+            spawn_choice(ui, &mut state.message_choice, MessageChoice::ReqServerType);
+            spawn_choice(ui, &mut state.message_choice, MessageChoice::Content);
+            spawn_choice(ui, &mut state.message_choice, MessageChoice::Communication);
         });
-    match message_choice {
+    match state.message_choice {
         MessageChoice::NotChosen => {}
         MessageChoice::ReqServerType => {}
         MessageChoice::Content => {
-            *communication_choice = CommunicationChoice::NotChosen;
-            spawn_content_combobox(ui, content_choice);
+            state.communication_choice = CommunicationChoice::NotChosen;
+            spawn_content_combobox(ui, ctx, mutex, id, node_ids, state);
         }
         MessageChoice::Communication => {
-            *content_choice = ContentChoice::NotChosen;
-            spawn_communication_combobox(ui, communication_choice);
+            state.content_choice = ContentChoice::NotChosen;
+            spawn_communication_combobox(ui, ctx, mutex, id, node_ids, state);
         }
     }
 }
 
-fn spawn_content_combobox(ui: &mut Ui, content_choice: &mut ContentChoice) {
+fn spawn_content_combobox(
+    ui: &mut Ui,
+    ctx: &Context,
+    mut mutex: MutexGuard<SimulationData>,
+    id: NodeId,
+    node_ids: Vec<NodeId>,
+    state: &mut ClientWindowState,
+) {
     ComboBox::from_id_salt("content-choice")
         .width(210.0)
-        .selected_text(format!("{}", content_choice))
+        .selected_text(format!("{}", state.content_choice))
         .show_ui(ui, |ui| {
-            spawn_choice(ui, content_choice, ContentChoice::ReqFile);
-            spawn_choice(ui, content_choice, ContentChoice::ReqFilesList);
+            spawn_choice(ui, &mut state.content_choice, ContentChoice::ReqFile);
+            spawn_choice(ui, &mut state.content_choice, ContentChoice::ReqFilesList);
         });
+    match state.content_choice {
+        ContentChoice::NotChosen => {}
+        ContentChoice::ReqFilesList => {
+            spawn_send_form(ui, ctx, mutex, id, node_ids, state, false)
+        }
+        ContentChoice::ReqFile => {
+            spawn_send_form(ui, ctx, mutex, id, node_ids, state, true)
+        }
+    }
 }
 
-fn spawn_communication_combobox(ui: &mut Ui, communication_choice: &mut CommunicationChoice) {
+fn spawn_communication_combobox(
+    ui: &mut Ui,
+    ctx: &Context,
+    mut mutex: MutexGuard<SimulationData>,
+    id: NodeId,
+    node_ids: Vec<NodeId>,
+    state: &mut ClientWindowState,
+) {
     ComboBox::from_id_salt("communication-choice")
         .width(210.0)
-        .selected_text(format!("{}", communication_choice))
+        .selected_text(format!("{}", state.communication_choice))
         .show_ui(ui, |ui| {
-            spawn_choice(
-                ui,
-                communication_choice,
-                CommunicationChoice::ReqRegistrationToChat,
-            );
-            spawn_choice(
-                ui,
-                communication_choice,
-                CommunicationChoice::ReqClientsList,
-            );
-            spawn_choice(ui, communication_choice, CommunicationChoice::MessageSend);
+            spawn_choice(ui, &mut state.communication_choice, CommunicationChoice::ReqRegistrationToChat);
+            spawn_choice(ui, &mut state.communication_choice, CommunicationChoice::ReqClientsList);
+            spawn_choice(ui, &mut state.communication_choice, CommunicationChoice::MessageSend);
         });
+    match state.communication_choice {
+        CommunicationChoice::NotChosen => {}
+        CommunicationChoice::ReqRegistrationToChat => {
+            spawn_send_form(ui, ctx, mutex, id, node_ids, state, false)
+        }
+        CommunicationChoice::MessageSend => {
+            spawn_send_form(ui, ctx, mutex, id, node_ids, state, true)
+        }
+        CommunicationChoice::ReqClientsList => {
+            spawn_send_form(ui, ctx, mutex, id, node_ids, state, false)
+        }
+    }
 }
 
-fn spawn_send_form(ui: &mut Ui, destination_id: &mut Option<NodeId>, node_ids: Vec<NodeId>,) {
+fn spawn_send_form(
+    ui: &mut Ui,
+    ctx: &Context,
+    mut mutex: MutexGuard<SimulationData>,
+    id: NodeId,
+    node_ids: Vec<NodeId>,
+    state: &mut ClientWindowState,
+    with_text_input: bool,
+) {
+    ui.add_space(2.0);
     ui.horizontal(|ui| {
         ui.label("Destination:");
         ComboBox::from_id_salt("destination")
             .width(50.0)
             .selected_text(
-                destination_id
+                state.destination_id
                     .map(|num| num.to_string())
                     .unwrap_or_else(|| "-".to_string()),
             )
             .show_ui(ui, |ui| {
                 for number in node_ids {
-                    ui.selectable_value(destination_id, Some(number), number.to_string());
+                    ui.selectable_value(&mut state.destination_id, Some(number), number.to_string());
                 }
             });
+        if with_text_input {
+            ui.add(
+                TextEdit::singleline(&mut state.text_input)
+                    .desired_width(210.0)
+                    .font(TextStyle::Monospace),
+            );
+        }
+        // if command_line_response.lost_focus()
+        //     && ui.input(|i| i.key_pressed(Key::Enter))
+        // {
+        //     //log.push_str(format!("\n{}", line).as_str());
+        //     line.clear();
+        //     command_line_response.request_focus();
+        // }
         if ui.button("Send").clicked() {
-
+            println!("send");
         }
     });
 }
