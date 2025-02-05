@@ -88,7 +88,7 @@ fn handle_message_fragmented(
     from: NodeId,
     to: NodeId,
 ) {
-    let mut log_line = format!("Fragmented message for node #{}", to);
+    let mut log_line = format!("Fragmented message for node #{}\n", to);
     log_line.push_str(&get_log_line_server_body(body));
     let mut data = data_ref.lock().unwrap();
     data.logs.get_mut(&from).unwrap().push(log_line);
