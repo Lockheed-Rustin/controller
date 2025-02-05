@@ -49,6 +49,17 @@ pub fn spawn_client_window(
         .open(open)
         .fixed_size(vec2(400.0, 300.0))
         .show(ctx, |ui| {
+            ui.horizontal(|ui| {
+                if ui.button("fragment").clicked() {
+                    mutex.sc.send_fragment_fair(id);
+                }
+                if ui.button("flood").clicked() {
+                    mutex.sc.send_flood_request_fair(id);
+                }
+                if ui.button("ack").clicked() {
+                    mutex.sc.send_ack_fair(id);
+                }
+            });
             ui_components::stats::spawn_client_stats(ui, mutex, id);
             // logs
             ui_components::logs::spawn_logs(ui, mutex, id);

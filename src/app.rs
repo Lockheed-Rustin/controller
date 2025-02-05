@@ -132,7 +132,7 @@ impl SimulationControllerUI {
         // read config file and get a SimulationController
         let file_str = fs::read_to_string("config.toml").unwrap();
         let config: Config = toml::from_str(&file_str).unwrap();
-        let sc = init_network(&config).unwrap();
+        let sc = init_network(&config, 0).unwrap();
 
         // get all node ids
         self.nodes.clear();
