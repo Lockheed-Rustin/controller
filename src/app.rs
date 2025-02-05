@@ -23,9 +23,9 @@ use petgraph::graph::NodeIndex;
 use wg_2024::config::Config;
 use wg_2024::network::NodeId;
 
-use crate::data::{ClientStats, DroneStats, SimulationData};
 use crate::custom_edge::CustomEdgeShape;
 use crate::custom_node::CustomNodeShape;
+use crate::data::{ClientStats, DroneStats, SimulationData};
 use crate::receiver_threads;
 use crate::ui_components;
 use crate::ui_components::client_window::{CommunicationChoice, ContentChoice, MessageChoice};
@@ -192,7 +192,11 @@ impl SimulationControllerUI {
         for (source, target, _weight) in sc_graph.all_edges() {
             let source_index = self.graph_index_map[&source];
             let target_index = self.graph_index_map[&target];
-            sg.add_edge(NodeIndex::from(source_index), NodeIndex::from(target_index), ());
+            sg.add_edge(
+                NodeIndex::from(source_index),
+                NodeIndex::from(target_index),
+                (),
+            );
         }
 
         self.graph = egui_graphs::Graph::from(&sg);
@@ -429,8 +433,11 @@ impl SimulationControllerUI {
         self.update_id_list();
         // delete crashed drones
         let current_drone_ids = self.get_ids(NodeType::Drone);
-        let graph_nodes: Vec<(NodeIndex<usize>, NodeId, NodeType)> = self.graph.nodes_iter()
-            .map(|(x, y)| (x, y.payload().0, y.payload().1)).collect();
+        let graph_nodes: Vec<(NodeIndex<usize>, NodeId, NodeType)> = self
+            .graph
+            .nodes_iter()
+            .map(|(x, y)| (x, y.payload().0, y.payload().1))
+            .collect();
         for (index, node_id, node_type) in graph_nodes {
             if node_type == NodeType::Drone && !current_drone_ids.contains(&node_id) {
                 self.graph.remove_node(index);
@@ -440,7 +447,7 @@ impl SimulationControllerUI {
         // add new edges
         let binding = self.simulation_data_ref.clone().unwrap();
         let mutex = binding.lock().unwrap();
-        let current_edges: Vec<(NodeId, NodeId, _)>= mutex.sc.get_topology().all_edges().collect();
+        let current_edges: Vec<(NodeId, NodeId, _)> = mutex.sc.get_topology().all_edges().collect();
 
         for (id1, id2, _) in current_edges {
             let i1 = NodeIndex::from(*self.graph_index_map.get(&id1).unwrap());
@@ -449,9 +456,6 @@ impl SimulationControllerUI {
             if !are_connected {
                 self.graph.add_edge(i1, i2, ());
             }
-
         }
-
-
     }
 }

@@ -1,3 +1,7 @@
+use drone_networks::message::{
+    ClientBody, ClientCommunicationBody, ClientContentBody, ServerBody, ServerCommunicationBody,
+    ServerContentBody,
+};
 use wg_2024::network::NodeId;
 use wg_2024::packet::{NodeType, Packet, PacketType};
 
@@ -97,5 +101,70 @@ fn format_path_trace(pt: &Vec<(NodeId, NodeType)>) -> String {
         res.push_str(&format!("{} ", id));
     }
     res.push(']');
+    res
+}
+
+pub fn get_log_line_client_body(client_body: ClientBody) -> String {
+    let mut res = "Type: ".to_string();
+    let type_str = match client_body {
+        ClientBody::ReqServerType => "Request server type".to_string(),
+        ClientBody::ClientContent(ccb) => match ccb {
+            ClientContentBody::ReqFilesList => "Content - Request files list".to_string(),
+            ClientContentBody::ReqFile(f) => {
+                format!("Content - Request file\nFile: {}", f)
+            }
+        },
+        ClientBody::ClientCommunication(ccb) => match ccb {
+            ClientCommunicationBody::ReqRegistrationToChat => {
+                "Communication - Request registration to chat".to_string()
+            }
+            ClientCommunicationBody::MessageSend(cm) => {
+                format!(
+                    "Communication - Send message \nFrom: {}, To: {}\nMessage content: {}",
+                    cm.from, cm.to, cm.message
+                )
+            }
+            ClientCommunicationBody::ReqClientList => {
+                "Communication - Request clients list".to_string()
+            }
+        },
+    };
+    res.push_str(&type_str);
+    res
+}
+
+pub fn get_log_line_server_body(client_body: ServerBody) -> String {
+    let mut res = "Type: ".to_string();
+    let type_str = match client_body {
+        ServerBody::RespServerType(t) => {
+            format!("Response server type\nMessage content: {:?}", t)
+        }
+        ServerBody::ErrUnsupportedRequestType => "Error - Unsupported request type".to_string(),
+        ServerBody::ServerContent(scb) => match scb {
+            ServerContentBody::RespFilesList(v) => {
+                format!("Content - Response files list\nMessage content: {:?}", v)
+            }
+            ServerContentBody::RespFile(v) => {
+                format!("Content - Response files list\nMessage content: {:?}", v)
+            }
+            ServerContentBody::ErrFileNotFound => "Error - File not found".to_string(),
+        },
+        ServerBody::ServerCommunication(scb) => match scb {
+            ServerCommunicationBody::RespClientList(v) => {
+                format!(
+                    "Communication - Response clients list\nMessage content: {:?}",
+                    v
+                )
+            }
+            ServerCommunicationBody::MessageReceive(cm) => {
+                format!(
+                    "Communication - Send message \nFrom: {}, To: {}\nMessage content: {}",
+                    cm.from, cm.to, cm.message
+                )
+            }
+            ServerCommunicationBody::ErrWrongClientId => "Error - Wrong client id".to_string(),
+        },
+    };
+    res.push_str(&type_str);
     res
 }

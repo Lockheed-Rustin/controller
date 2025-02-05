@@ -9,6 +9,7 @@ use wg_2024::packet::Packet;
 
 use super::helper;
 use crate::data::SimulationData;
+use crate::receiver_threads::helper::{get_log_line_client_body, get_log_line_server_body};
 
 // ----- Client -----
 pub fn receiver_loop(
@@ -67,11 +68,12 @@ fn handle_packet_received(data_ref: Arc<Mutex<SimulationData>>, p: Packet, id: N
 
 fn handle_message_assembled(
     data_ref: Arc<Mutex<SimulationData>>,
-    _body: ServerBody,
+    body: ServerBody,
     from: NodeId,
     to: NodeId,
 ) {
-    let log_line = format!("Assembled message from node #{}", from);
+    let mut log_line = format!("Assembled message from node #{}\n", from);
+    log_line.push_str(&get_log_line_server_body(body));
     let mut data = data_ref.lock().unwrap();
     data.logs.get_mut(&to).unwrap().push(log_line);
     data.client_stats.get_mut(&to).unwrap().messages_assembled += 1;
@@ -80,11 +82,12 @@ fn handle_message_assembled(
 
 fn handle_message_fragmented(
     data_ref: Arc<Mutex<SimulationData>>,
-    _body: ClientBody,
+    body: ClientBody,
     from: NodeId,
     to: NodeId,
 ) {
-    let log_line = format!("Fragmented message for node #{}", to);
+    let mut log_line = format!("Fragmented message for node #{}", to);
+    log_line.push_str(&get_log_line_client_body(body));
     let mut data = data_ref.lock().unwrap();
     data.logs.get_mut(&from).unwrap().push(log_line);
     data.client_stats

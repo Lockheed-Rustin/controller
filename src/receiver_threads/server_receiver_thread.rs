@@ -3,11 +3,13 @@ use std::sync::{Arc, Mutex};
 use crossbeam_channel::{select_biased, Receiver};
 
 use drone_networks::controller::ServerEvent;
+use drone_networks::message::{ClientBody, ServerBody};
 use wg_2024::network::NodeId;
 use wg_2024::packet::Packet;
 
 use super::helper;
 use crate::data::SimulationData;
+use crate::receiver_threads::helper::{get_log_line_client_body, get_log_line_server_body};
 
 // ----- Server -----
 pub fn receiver_loop(
@@ -33,10 +35,14 @@ pub fn receiver_loop(
 
 fn handle_event(data_ref: Arc<Mutex<SimulationData>>, event: ServerEvent) {
     match event {
-        ServerEvent::PacketReceived(p, id) => handle_packet_received(data_ref, p, id),
-        ServerEvent::MessageAssembled { body, from, to } => {}
-        ServerEvent::MessageFragmented { body, from, to } => {}
         ServerEvent::PacketSent(p) => handle_packet_sent(data_ref, p),
+        ServerEvent::PacketReceived(p, id) => handle_packet_received(data_ref, p, id),
+        ServerEvent::MessageAssembled { body, from, to } => {
+            handle_message_assembled(data_ref, body, from, to);
+        }
+        ServerEvent::MessageFragmented { body, from, to } => {
+            handle_message_fragmented(data_ref, body, from, to);
+        }
     }
 }
 
@@ -59,5 +65,36 @@ fn handle_packet_received(data_ref: Arc<Mutex<SimulationData>>, p: Packet, id: N
     let mut data = data_ref.lock().unwrap();
     data.logs.get_mut(&id).unwrap().push(log_line);
     // update server stats
+    data.ctx.request_repaint();
+}
+
+fn handle_message_assembled(
+    data_ref: Arc<Mutex<SimulationData>>,
+    body: ClientBody,
+    from: NodeId,
+    to: NodeId,
+) {
+    let mut log_line = format!("Assembled message from node #{}\n", from);
+    log_line.push_str(&get_log_line_client_body(body));
+    let mut data = data_ref.lock().unwrap();
+    data.logs.get_mut(&to).unwrap().push(log_line);
+    data.client_stats.get_mut(&to).unwrap().messages_assembled += 1;
+    data.ctx.request_repaint();
+}
+
+fn handle_message_fragmented(
+    data_ref: Arc<Mutex<SimulationData>>,
+    body: ServerBody,
+    from: NodeId,
+    to: NodeId,
+) {
+    let mut log_line = format!("Fragmented message for node #{}", to);
+    log_line.push_str(&get_log_line_server_body(body));
+    let mut data = data_ref.lock().unwrap();
+    data.logs.get_mut(&from).unwrap().push(log_line);
+    data.client_stats
+        .get_mut(&from)
+        .unwrap()
+        .messages_fragmented += 1;
     data.ctx.request_repaint();
 }
