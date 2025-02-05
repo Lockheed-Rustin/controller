@@ -1,45 +1,17 @@
 [[drone]]
-id = 5
-connected_node_ids = [1, 7]
+id = 3
+connected_node_ids = [1, 2]
 pdr = 0.05
 
 [[drone]]
-id = 6
-connected_node_ids = [1, 2, 7, 8]
+id = 4
+connected_node_ids = [1, 2]
 pdr = 0.03
-
-[[drone]]
-id = 7
-connected_node_ids = [4, 5, 6, 9]
-pdr = 0.14
-
-[[drone]]
-id = 8
-connected_node_ids = [3, 6, 10]
-pdr = 0.03
-
-[[drone]]
-id = 9
-connected_node_ids = [3, 4, 7, 10]
-pdr = 0.14
-
-[[drone]]
-id = 10
-connected_node_ids = [3, 8, 9]
-pdr = 0.14
 
 [[client]]
 id = 1
-connected_drone_ids = [5, 6]
+connected_drone_ids = [3, 4]
 
-[[client]]
+[[server]]
 id = 2
-connected_drone_ids = [6]
-
-[[server]]
-id = 3
-connected_drone_ids = [8, 9, 10]
-
-[[server]]
-id = 4
-connected_drone_ids = [7, 9]
+connected_drone_ids = [3, 4]
