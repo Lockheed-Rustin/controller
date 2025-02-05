@@ -256,6 +256,14 @@ impl SimulationControllerUI {
 
     fn topology_section(&mut self, ctx: &Context) {
         self.update_graph();
+        TopBottomPanel::bottom("top-panel").show(ctx, |ui| {
+            ui.add_space(2.0);
+            ui.label(
+                "Tip: use ctrl + mouse wheel to zoom in/out. \
+                You can move nodes around and pan the camera with the mouse cursor.",
+            );
+            ui.add_space(2.0);
+        });
         CentralPanel::default()
             .frame(Frame::default().fill(Color32::from_rgb(27, 27, 27)))
             .show(ctx, |ui| {
