@@ -23,9 +23,9 @@ use petgraph::graph::NodeIndex;
 use wg_2024::config::Config;
 use wg_2024::network::NodeId;
 
+use crate::data::{ClientStats, DroneStats, SimulationData};
 use crate::custom_edge::CustomEdgeShape;
 use crate::custom_node::CustomNodeShape;
-use crate::data::{DroneStats, SimulationData};
 use crate::receiver_threads;
 use crate::ui_components;
 use crate::ui_components::client_window::{CommunicationChoice, ContentChoice, MessageChoice};
@@ -158,10 +158,14 @@ impl SimulationControllerUI {
             logs.insert(id, vec![]);
         }
 
-        // drone stats
-        let mut stats = HashMap::new();
+        // stats
+        let mut drone_stats = HashMap::new();
         for drone_id in sc.get_drone_ids() {
-            stats.insert(drone_id, DroneStats::default());
+            drone_stats.insert(drone_id, DroneStats::default());
+        }
+        let mut client_stats = HashMap::new();
+        for client_id in sc.get_client_ids() {
+            client_stats.insert(client_id, ClientStats::default());
         }
 
         // graph
@@ -209,7 +213,8 @@ impl SimulationControllerUI {
         self.simulation_data_ref = Some(Arc::new(Mutex::new(SimulationData::new(
             sc,
             logs,
-            stats,
+            drone_stats,
+            client_stats,
             self.ctx.clone(),
         ))));
 

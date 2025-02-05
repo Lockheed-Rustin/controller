@@ -49,6 +49,7 @@ pub fn spawn_client_window(
         .open(open)
         .fixed_size(vec2(400.0, 300.0))
         .show(ctx, |ui| {
+            ui_components::stats::spawn_client_stats(ui, mutex, id);
             // logs
             ui_components::logs::spawn_logs(ui, mutex, id);
             if ui.button("Clear log").clicked() {
@@ -189,7 +190,7 @@ fn spawn_send_form(
         if with_text_input {
             ui.add(
                 TextEdit::singleline(&mut state.text_input)
-                    .desired_width(210.0)
+                    .desired_width(215.0)
                     .font(TextStyle::Monospace),
             );
         }

@@ -57,7 +57,10 @@ fn handle_packet_dropped(data_ref: Arc<Mutex<SimulationData>>, p: &Packet) {
         .push(format!("Dropped fragment sent by node #{}", from_id));
 
     // increment stat
-    data.stats.get_mut(&drone_id).unwrap().fragments_dropped += 1;
+    data.drone_stats
+        .get_mut(&drone_id)
+        .unwrap()
+        .fragments_dropped += 1;
 
     data.ctx.request_repaint();
 }
@@ -81,7 +84,10 @@ fn handle_controller_shortcut(data_ref: Arc<Mutex<SimulationData>>, p: Packet) {
     let mut data = data_ref.lock().unwrap();
     if data.sc.shortcut(p.clone()).is_some() {
         data.logs.get_mut(&from_id).unwrap().push(log_line);
-        data.stats.get_mut(&from_id).unwrap().packets_forwarded[stat_index] += 1;
+        data.drone_stats
+            .get_mut(&from_id)
+            .unwrap()
+            .packets_forwarded[stat_index] += 1;
 
         data.ctx.request_repaint();
     }
@@ -97,7 +103,7 @@ fn update_data_packet_sent(
 
     let mut data = data_ref.lock().unwrap();
     data.logs.get_mut(id).unwrap().push(log_line);
-    data.stats.get_mut(id).unwrap().packets_forwarded[stat_index] += 1;
+    data.drone_stats.get_mut(id).unwrap().packets_forwarded[stat_index] += 1;
 
     data.ctx.request_repaint();
 }

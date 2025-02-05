@@ -8,7 +8,8 @@ use wg_2024::network::NodeId;
 pub struct SimulationData {
     pub sc: SimulationController,
     pub logs: HashMap<NodeId, Vec<String>>,
-    pub stats: HashMap<NodeId, DroneStats>,
+    pub drone_stats: HashMap<NodeId, DroneStats>,
+    pub client_stats: HashMap<NodeId, ClientStats>,
     pub ctx: Context,
 }
 
@@ -16,13 +17,15 @@ impl SimulationData {
     pub fn new(
         sc: SimulationController,
         logs: HashMap<NodeId, Vec<String>>,
-        stats: HashMap<NodeId, DroneStats>,
+        drone_stats: HashMap<NodeId, DroneStats>,
+        client_stats: HashMap<NodeId, ClientStats>,
         ctx: Context,
     ) -> Self {
         Self {
             sc,
             logs,
-            stats,
+            drone_stats,
+            client_stats,
             ctx,
         }
     }
@@ -35,16 +38,18 @@ pub struct DroneStats {
     pub fragments_dropped: u32,
 }
 
-/* TODO: add stats to client and servers
 #[derive(Default)]
 pub struct ClientStats {
-    packets_sent: HashMap<PacketType, u32>,
-    packets_received: HashMap<PacketType, u32>,
+    // 0:Fragment, 1:Ack, 2:Nack, 3:Flood Req, 4:Flood Resp
+    pub packets_sent: [u32; 5],
+    pub packets_received: [u32; 5],
+    pub messages_assembled: u32,
+    pub messages_fragmented: u32,
 }
 
-#[derive(Default)]
-pub struct ServerStats {
-    packets_sent: HashMap<PacketType, u32>,
-    packets_received: HashMap<PacketType, u32>,
-}
-*/
+// TODO: choose between creating this or using the same for client and server
+// #[derive(Default)]
+// pub struct ServerStats {
+//     packets_sent: [u32; 5],
+//     packets_received: [u32; 5],
+// }
