@@ -46,7 +46,7 @@ fn handle_event(data_ref: Arc<Mutex<SimulationData>>, event: ServerEvent) {
 }
 
 fn handle_packet_sent(data_ref: Arc<Mutex<SimulationData>>, p: &Packet) {
-    helper::handle_packet_sent(NodeType::Server, &p, data_ref);
+    helper::handle_packet_sent(NodeType::Server, p, data_ref);
 }
 
 fn handle_packet_received(data_ref: Arc<Mutex<SimulationData>>, p: Packet, id: NodeId) {
