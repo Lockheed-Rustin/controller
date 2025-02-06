@@ -59,7 +59,7 @@ fn handle_packet_sent(data_ref: Arc<Mutex<SimulationData>>, p: Packet) {
 
 // copy of client except updating stats
 fn handle_packet_received(data_ref: Arc<Mutex<SimulationData>>, p: Packet, id: NodeId) {
-    let log_line = if p.routing_header.hop_index == p.routing_header.len() - 1 { // received from drone
+    let log_line = if p.routing_header.hop_index == p.routing_header.hops.len() - 1 { // received from drone
         let from_id = helper::get_from_packet_received(&p);
         helper::get_log_line_packet_received(&p, from_id)
     } else { // received from SC
