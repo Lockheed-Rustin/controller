@@ -58,6 +58,24 @@ pub fn get_log_line_packet_received(p: &Packet, from_id: NodeId) -> String {
     }
 }
 
+pub fn get_log_line_packet_received_shortcut(p: &Packet) -> String {
+    match &p.pack_type {
+        PacketType::FloodResponse(f) => {
+            format!(
+                "Received {} from SimulationController,\npath trace = {}",
+                get_packet_type_str(&p.pack_type),
+                format_path_trace(&f.path_trace),
+            )
+        }
+        _ => {
+            format!(
+                "Received {} from SimulationController",
+                get_packet_type_str(&p.pack_type),
+            )
+        }
+    }
+}
+
 pub fn get_from_packet_received(p: &Packet) -> NodeId {
     let from_id = if let PacketType::FloodRequest(fr) = &p.pack_type {
         fr.path_trace.last().unwrap().0
