@@ -57,8 +57,28 @@ fn handle_packet_sent(data_ref: Arc<Mutex<SimulationData>>, p: Packet) {
 }
 
 fn handle_packet_received(data_ref: Arc<Mutex<SimulationData>>, p: Packet, id: NodeId) {
-    let from_id = helper::get_from_packet_received(&p);
-    let log_line = helper::get_log_line_packet_received(&p, from_id);
+    let mut is_shortcut = true;
+    if p.routing_header.hops.is_empty() {
+        is_shortcut = false;
+    } else {
+        match p.routing_header.current_hop() {
+            None => { // out of bound
+                is_shortcut = false;
+            },
+            Some(hop_id) => {
+                if hop_id == id {
+                    is_shortcut = false;
+                }
+            }
+        }
+    }
+
+    let log_line = if is_shortcut {
+        helper::get_log_line_packet_received_shortcut(&p)
+    } else {
+        let from_id = helper::get_from_packet_received(&p);
+        helper::get_log_line_packet_received(&p, from_id)
+    };
 
     let mut data = data_ref.lock().unwrap();
     data.logs.get_mut(&id).unwrap().push(log_line);
