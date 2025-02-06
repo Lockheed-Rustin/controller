@@ -5,7 +5,7 @@ use crossbeam_channel::{select_biased, Receiver};
 use drone_networks::controller::ClientEvent;
 use drone_networks::message::{ClientBody, ServerBody};
 use wg_2024::network::NodeId;
-use wg_2024::packet::Packet;
+use wg_2024::packet::{NodeType, Packet};
 
 use super::helper;
 use crate::data::SimulationData;
@@ -35,7 +35,7 @@ pub fn receiver_loop(
 
 fn handle_event(data_ref: Arc<Mutex<SimulationData>>, event: ClientEvent) {
     match event {
-        ClientEvent::PacketSent(p) => handle_packet_sent(data_ref, p),
+        ClientEvent::PacketSent(p) => handle_packet_sent(data_ref, &p),
         ClientEvent::PacketReceived(p, id) => handle_packet_received(data_ref, p, id),
         ClientEvent::MessageAssembled { body, from, to } => {
             handle_message_assembled(data_ref, body, from, to);
@@ -46,44 +46,12 @@ fn handle_event(data_ref: Arc<Mutex<SimulationData>>, event: ClientEvent) {
     }
 }
 
-fn handle_packet_sent(data_ref: Arc<Mutex<SimulationData>>, p: Packet) {
-    let (from_id, to_id) = helper::get_from_and_to_packet_send(&p);
-    let log_line = helper::get_log_line_packet_sent(&p, to_id);
-
-    let mut data = data_ref.lock().unwrap();
-    data.logs.get_mut(&from_id).unwrap().push(log_line);
-    // update client stats
-    data.ctx.request_repaint();
+fn handle_packet_sent(data_ref: Arc<Mutex<SimulationData>>, p: &Packet) {
+    helper::handle_packet_sent(NodeType::Client, &p, data_ref);
 }
 
 fn handle_packet_received(data_ref: Arc<Mutex<SimulationData>>, p: Packet, id: NodeId) {
-    let mut is_shortcut = true;
-    if p.routing_header.hops.is_empty() {
-        is_shortcut = false;
-    } else {
-        match p.routing_header.current_hop() {
-            None => { // out of bound
-                is_shortcut = false;
-            },
-            Some(hop_id) => {
-                if hop_id == id {
-                    is_shortcut = false;
-                }
-            }
-        }
-    }
-
-    let log_line = if is_shortcut {
-        helper::get_log_line_packet_received_shortcut(&p)
-    } else {
-        let from_id = helper::get_from_packet_received(&p);
-        helper::get_log_line_packet_received(&p, from_id)
-    };
-
-    let mut data = data_ref.lock().unwrap();
-    data.logs.get_mut(&id).unwrap().push(log_line);
-    // update client stats
-    data.ctx.request_repaint();
+    helper::handle_packet_received(id, NodeType::Client, &p, data_ref);
 }
 
 fn handle_message_assembled(

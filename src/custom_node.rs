@@ -3,7 +3,7 @@ use eframe::epaint::{Rect, RectShape, Rounding};
 use egui_graphs::{DisplayNode, NodeProps};
 use petgraph::{stable_graph::IndexType, EdgeType};
 
-use crate::app::NodeType;
+use wg_2024::packet::NodeType;
 use wg_2024::network::NodeId;
 
 const RADIUS: f32 = 5.0;

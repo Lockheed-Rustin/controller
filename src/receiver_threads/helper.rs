@@ -1,12 +1,42 @@
+use crate::data::SimulationData;
+use crate::receiver_threads::helper;
 use drone_networks::message::{
     ClientBody, ClientCommunicationBody, ClientContentBody, ServerBody, ServerCommunicationBody,
     ServerContentBody,
 };
+use std::sync::mpsc::Receiver;
+use std::sync::{Arc, Mutex};
 use wg_2024::network::NodeId;
 use wg_2024::packet::{NodeType, Packet, PacketType};
 
-// all nodes
-pub fn get_log_line_packet_sent(p: &Packet, to_id: Option<NodeId>) -> String {
+// all nodes -----
+pub fn handle_packet_sent(sender_type: NodeType, p: &Packet, data_ref: Arc<Mutex<SimulationData>>) {
+    let (from_id, to_id) = get_from_and_to_packet_send(p);
+    let log_line = get_log_line_packet_sent(p, to_id);
+    let stat_index = get_packet_stat_index(&p.pack_type);
+
+    let mut data = data_ref.lock().unwrap();
+    data.logs.get_mut(&from_id).unwrap().push(log_line);
+    match sender_type {
+        NodeType::Client => {
+            data.client_stats.get_mut(&from_id).unwrap().packets_sent[stat_index] += 1;
+        }
+        NodeType::Drone => {
+            data.drone_stats
+                .get_mut(&from_id)
+                .unwrap()
+                .packets_forwarded[stat_index] += 1;
+        }
+        NodeType::Server => {
+            // TODO: server stats
+            // data.server_stats.get_mut(&from_id).unwrap().packets_sent[stat_index] += 1;
+        }
+    }
+    data.ctx.request_repaint();
+}
+
+
+fn get_log_line_packet_sent(p: &Packet, to_id: Option<NodeId>) -> String {
     match to_id {
         None => format!("{} broadcasted", get_packet_type_str(&p.pack_type)),
         Some(id) => match &p.pack_type {
@@ -23,7 +53,7 @@ pub fn get_log_line_packet_sent(p: &Packet, to_id: Option<NodeId>) -> String {
     }
 }
 
-pub fn get_from_and_to_packet_send(p: &Packet) -> (NodeId, Option<NodeId>) {
+fn get_from_and_to_packet_send(p: &Packet) -> (NodeId, Option<NodeId>) {
     let from_id = if let PacketType::FloodRequest(fr) = &p.pack_type {
         fr.path_trace.last().unwrap().0
     } else {
@@ -37,46 +67,66 @@ pub fn get_from_and_to_packet_send(p: &Packet) -> (NodeId, Option<NodeId>) {
     (from_id, to_id)
 }
 
-// clients and servers
-pub fn get_log_line_packet_received(p: &Packet, from_id: NodeId) -> String {
+// clients and servers -----
+pub fn handle_packet_received(
+    receiver_id: NodeId,
+    receiver_type: NodeType,
+    p: &Packet,
+    data_ref: Arc<Mutex<SimulationData>>,
+) {
+    let log_line = get_log_line_packet_received(&p, receiver_id);
+    let stat_index = get_packet_stat_index(&p.pack_type);
+
+    let mut data = data_ref.lock().unwrap();
+    data.logs.get_mut(&receiver_id).unwrap().push(log_line);
+    match receiver_type {
+        NodeType::Client => {
+            data.client_stats
+                .get_mut(&receiver_id)
+                .unwrap()
+                .packets_received[stat_index] += 1;
+        }
+        NodeType::Server => {
+            // TODO: serve stats
+            // data.server_stats
+            //     .get_mut(&receiver_id)
+            //     .unwrap()
+            //     .packets_received[stat_index] += 1;
+        }
+        NodeType::Drone => {
+            unreachable!()
+        }
+    }
+    data.ctx.request_repaint();
+}
+
+fn get_log_line_packet_received(p: &Packet, receiver_id: NodeId) -> String {
+    let from_str = if is_shortcut(&p, receiver_id) {
+        "SimulationController".to_string()
+    } else {
+        let from_id = helper::get_from_packet_received(&p);
+        format!("node #{}", from_id)
+    };
     match &p.pack_type {
         PacketType::FloodResponse(f) => {
             format!(
-                "Received {} from node #{},\npath trace = {}",
+                "Received {} from {},\npath trace = {}",
                 get_packet_type_str(&p.pack_type),
-                from_id,
+                from_str,
                 format_path_trace(&f.path_trace),
             )
         }
         _ => {
             format!(
-                "Received {} from node #{}",
+                "Received {} from {}",
                 get_packet_type_str(&p.pack_type),
-                from_id
+                from_str
             )
         }
     }
 }
 
-pub fn get_log_line_packet_received_shortcut(p: &Packet) -> String {
-    match &p.pack_type {
-        PacketType::FloodResponse(f) => {
-            format!(
-                "Received {} from SimulationController,\npath trace = {}",
-                get_packet_type_str(&p.pack_type),
-                format_path_trace(&f.path_trace),
-            )
-        }
-        _ => {
-            format!(
-                "Received {} from SimulationController",
-                get_packet_type_str(&p.pack_type),
-            )
-        }
-    }
-}
-
-pub fn get_from_packet_received(p: &Packet) -> NodeId {
+fn get_from_packet_received(p: &Packet) -> NodeId {
     let from_id = if let PacketType::FloodRequest(fr) = &p.pack_type {
         fr.path_trace.last().unwrap().0
     } else if p.routing_header.hop_index < p.routing_header.hops.len() - 1 {
@@ -88,7 +138,29 @@ pub fn get_from_packet_received(p: &Packet) -> NodeId {
     from_id
 }
 
-pub fn get_packet_stat_index(t: &PacketType) -> usize {
+fn is_shortcut(p: &Packet, receiver_id: NodeId) -> bool {
+    let mut is_shortcut = true;
+    if p.routing_header.hops.is_empty() {
+        is_shortcut = false;
+    } else {
+        match p.routing_header.current_hop() {
+            None => {
+                // out of bound
+                is_shortcut = false;
+            }
+            Some(hop_id) => {
+                if hop_id == receiver_id {
+                    is_shortcut = false;
+                }
+            }
+        }
+    }
+    is_shortcut
+}
+
+// log strings and stats -----
+
+fn get_packet_stat_index(t: &PacketType) -> usize {
     match t {
         PacketType::MsgFragment(_) => 0,
         PacketType::Ack(_) => 1,
@@ -98,7 +170,7 @@ pub fn get_packet_stat_index(t: &PacketType) -> usize {
     }
 }
 
-pub fn get_packet_type_str(t: &PacketType) -> &'static str {
+fn get_packet_type_str(t: &PacketType) -> &'static str {
     match t {
         PacketType::MsgFragment(_) => "Fragment",
         PacketType::Ack(_) => "Ack",
