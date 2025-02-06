@@ -6,7 +6,7 @@ use drone_networks::message::{
 };
 use std::sync::{Arc, Mutex};
 use wg_2024::network::NodeId;
-use wg_2024::packet::{NodeType, Packet, PacketType};
+use wg_2024::packet::{NackType, NodeType, Packet, PacketType};
 
 // all nodes -----
 pub fn handle_packet_sent(sender_type: NodeType, p: &Packet, data_ref: Arc<Mutex<SimulationData>>) {
@@ -171,7 +171,12 @@ fn get_packet_type_str(t: &PacketType) -> &'static str {
     match t {
         PacketType::MsgFragment(_) => "Fragment",
         PacketType::Ack(_) => "Ack",
-        PacketType::Nack(_) => "Nack",
+        PacketType::Nack(t) => match t.nack_type {
+            NackType::ErrorInRouting(_) => "Nack:ErrorInRouting",
+            NackType::DestinationIsDrone => "Nack:DestinationIsDrone",
+            NackType::Dropped => "Nack:Dropped",
+            NackType::UnexpectedRecipient(_) => "Nack:UnexpectedRecipient",
+        }
         PacketType::FloodRequest(_) => "Flood request",
         PacketType::FloodResponse(_) => "Flood response",
     }
