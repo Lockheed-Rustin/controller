@@ -33,7 +33,6 @@ pub fn handle_packet_sent(sender_type: NodeType, p: &Packet, data_ref: Arc<Mutex
     data.ctx.request_repaint();
 }
 
-
 fn get_log_line_packet_sent(p: &Packet, to_id: Option<NodeId>) -> String {
     match to_id {
         None => format!("{} broadcasted", get_packet_type_str(&p.pack_type)),
@@ -176,7 +175,7 @@ fn get_packet_type_str(t: &PacketType) -> &'static str {
             NackType::DestinationIsDrone => "Nack:DestinationIsDrone",
             NackType::Dropped => "Nack:Dropped",
             NackType::UnexpectedRecipient(_) => "Nack:UnexpectedRecipient",
-        }
+        },
         PacketType::FloodRequest(_) => "Flood request",
         PacketType::FloodResponse(_) => "Flood response",
     }

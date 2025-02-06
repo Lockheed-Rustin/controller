@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use std::fs;
 use std::mem::take;
-use std::ops::Not;
 use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
 
@@ -24,7 +23,6 @@ use petgraph::graph::NodeIndex;
 use wg_2024::config::Config;
 use wg_2024::network::NodeId;
 use wg_2024::packet::NodeType;
-
 
 use crate::custom_edge::CustomEdgeShape;
 use crate::custom_node::CustomNodeShape;
@@ -393,11 +391,7 @@ impl SimulationControllerUI {
             NodeWindowState::Client(o, _) => o,
             NodeWindowState::Server(o) => o,
         };
-        let marker = if *open {
-            "> "
-        } else {
-            ""
-        };
+        let marker = if *open { "> " } else { "" };
         let response = ui.add(Label::new(format!("{}{} #{}", marker, s, id)).sense(Sense::click()));
         if response.hovered() {
             ui.ctx().set_cursor_icon(CursorIcon::PointingHand);
