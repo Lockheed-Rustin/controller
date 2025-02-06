@@ -27,7 +27,7 @@ use wg_2024::packet::NodeType;
 
 use crate::custom_edge::CustomEdgeShape;
 use crate::custom_node::CustomNodeShape;
-use crate::data::{ClientStats, DroneStats, SimulationData};
+use crate::data::{ClientStats, DroneStats, ServerStats, SimulationData};
 use crate::receiver_threads;
 use crate::ui_components;
 use crate::ui_components::client_window::{CommunicationChoice, ContentChoice, MessageChoice};
@@ -163,6 +163,10 @@ impl SimulationControllerUI {
         for client_id in sc.get_client_ids() {
             client_stats.insert(client_id, ClientStats::default());
         }
+        let mut server_stats = HashMap::new();
+        for server_id in sc.get_server_ids() {
+            server_stats.insert(server_id, ServerStats::default());
+        }
 
         // graph
         let sc_graph: &UnGraphMap<NodeId, ()> = sc.get_topology();
@@ -215,6 +219,7 @@ impl SimulationControllerUI {
             logs,
             drone_stats,
             client_stats,
+            server_stats,
             self.ctx.clone(),
         ))));
 
