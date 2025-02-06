@@ -22,6 +22,8 @@ use drone_networks::network::init_network;
 use petgraph::graph::NodeIndex;
 use wg_2024::config::Config;
 use wg_2024::network::NodeId;
+use wg_2024::packet::NodeType;
+
 
 use crate::custom_edge::CustomEdgeShape;
 use crate::custom_node::CustomNodeShape;
@@ -52,12 +54,6 @@ pub struct DroneWindowState {
     pub add_link_selected_id: Option<NodeId>,
 }
 
-#[derive(PartialEq, Clone, Copy, Debug)]
-pub enum NodeType {
-    Client,
-    Drone,
-    Server,
-}
 #[derive(PartialEq, Clone, Copy)]
 
 enum Section {
