@@ -8,7 +8,6 @@ use wg_2024::packet::{NodeType, Packet};
 use super::helper;
 use crate::data::SimulationData;
 
-
 pub fn receiver_loop(
     data_ref: Arc<Mutex<SimulationData>>,
     rec_client: Receiver<DroneEvent>,
@@ -79,7 +78,7 @@ fn handle_controller_shortcut(data_ref: Arc<Mutex<SimulationData>>, p: Packet) {
     // );
     // let stat_index = helper::get_packet_stat_index(&p.pack_type);
 
-    let  data = data_ref.lock().unwrap();
+    let data = data_ref.lock().unwrap();
     _ = data.sc.shortcut(p.clone());
     // if data.sc.shortcut(p.clone()).is_some() {
     //     data.logs.get_mut(&from_id).unwrap().push(log_line);
@@ -91,7 +90,3 @@ fn handle_controller_shortcut(data_ref: Arc<Mutex<SimulationData>>, p: Packet) {
     //     data.ctx.request_repaint();
     // }
 }
-
-
-
-

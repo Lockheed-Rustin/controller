@@ -24,7 +24,6 @@ use wg_2024::config::Config;
 use wg_2024::network::NodeId;
 use wg_2024::packet::NodeType;
 
-
 use crate::custom_edge::CustomEdgeShape;
 use crate::custom_node::CustomNodeShape;
 use crate::data::{ClientStats, DroneStats, ServerStats, SimulationData};
@@ -323,29 +322,32 @@ impl SimulationControllerUI {
 
     pub fn sidebar(&mut self, ctx: &Context) {
         SidePanel::left("left").show(ctx, |ui| {
-            ui.heading("Nodes");
-            ui.separator();
-
-            ui.label("Clients");
+            ui.add_space(5.0);
+            ui.heading("Clients");
             ui.indent("clients", |ui| {
-                for id in self.get_ids(NodeType::Client) {
+                let mut v = self.get_ids(NodeType::Client);
+                v.sort();
+                for id in v {
                     self.spawn_node_list_element(ui, id, "Client");
                 }
             });
             ui.separator();
 
-            ui.label("Servers");
+            ui.heading("Servers");
             ui.indent("servers", |ui| {
-                for id in self.get_ids(NodeType::Server) {
+                let mut v = self.get_ids(NodeType::Server);
+                v.sort();
+                for id in v {
                     self.spawn_node_list_element(ui, id, "Server");
                 }
             });
             ui.separator();
 
-            ui.label("Drones");
+            ui.heading("Drones");
             ui.indent("drones", |ui| {
-                // clickable labels
-                for id in self.get_ids(NodeType::Drone) {
+                let mut v = self.get_ids(NodeType::Drone);
+                v.sort();
+                for id in v {
                     self.spawn_node_list_element(ui, id, "Drone");
                 }
             });
@@ -384,16 +386,18 @@ impl SimulationControllerUI {
 
     fn spawn_node_list_element(&mut self, ui: &mut Ui, id: NodeId, s: &'static str) {
         ui.add_space(5.0);
-        let response = ui.add(Label::new(format!("{} #{}", s, id)).sense(Sense::click()));
+        let open = match self.nodes.get_mut(&id).unwrap() {
+            NodeWindowState::Drone(o, _) => o,
+            NodeWindowState::Client(o, _) => o,
+            NodeWindowState::Server(o) => o,
+        };
+        let marker = if *open { "> " } else { "" };
+        let response = ui.add(Label::new(format!("{}{} #{}", marker, s, id)).sense(Sense::click()));
         if response.hovered() {
             ui.ctx().set_cursor_icon(CursorIcon::PointingHand);
         }
         if response.clicked() {
-            match self.nodes.get_mut(&id).unwrap() {
-                NodeWindowState::Drone(o, _) => *o = true,
-                NodeWindowState::Client(o, _) => *o = true,
-                NodeWindowState::Server(o) => *o = true,
-            }
+            *open = !*open;
         };
         ui.add_space(5.0);
     }
