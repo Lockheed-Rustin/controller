@@ -65,7 +65,7 @@ fn handle_packet_dropped(data_ref: Arc<Mutex<SimulationData>>, p: &Packet) {
 }
 
 fn handle_packet_sent(data_ref: Arc<Mutex<SimulationData>>, p: &Packet) {
-    helper::handle_packet_sent(NodeType::Drone, &p, data_ref);
+    helper::handle_packet_sent(NodeType::Drone, p, data_ref);
 }
 
 fn handle_controller_shortcut(data_ref: Arc<Mutex<SimulationData>>, p: Packet) {
@@ -79,7 +79,7 @@ fn handle_controller_shortcut(data_ref: Arc<Mutex<SimulationData>>, p: Packet) {
     // );
     // let stat_index = helper::get_packet_stat_index(&p.pack_type);
 
-    let mut data = data_ref.lock().unwrap();
+    let  data = data_ref.lock().unwrap();
     _ = data.sc.shortcut(p.clone());
     // if data.sc.shortcut(p.clone()).is_some() {
     //     data.logs.get_mut(&from_id).unwrap().push(log_line);

@@ -4,7 +4,6 @@ use drone_networks::message::{
     ClientBody, ClientCommunicationBody, ClientContentBody, ServerBody, ServerCommunicationBody,
     ServerContentBody,
 };
-use std::sync::mpsc::Receiver;
 use std::sync::{Arc, Mutex};
 use wg_2024::network::NodeId;
 use wg_2024::packet::{NodeType, Packet, PacketType};
@@ -28,8 +27,7 @@ pub fn handle_packet_sent(sender_type: NodeType, p: &Packet, data_ref: Arc<Mutex
                 .packets_forwarded[stat_index] += 1;
         }
         NodeType::Server => {
-            // TODO: server stats
-            // data.server_stats.get_mut(&from_id).unwrap().packets_sent[stat_index] += 1;
+            data.server_stats.get_mut(&from_id).unwrap().packets_sent[stat_index] += 1;
         }
     }
     data.ctx.request_repaint();
@@ -74,7 +72,7 @@ pub fn handle_packet_received(
     p: &Packet,
     data_ref: Arc<Mutex<SimulationData>>,
 ) {
-    let log_line = get_log_line_packet_received(&p, receiver_id);
+    let log_line = get_log_line_packet_received(p, receiver_id);
     let stat_index = get_packet_stat_index(&p.pack_type);
 
     let mut data = data_ref.lock().unwrap();
@@ -87,11 +85,10 @@ pub fn handle_packet_received(
                 .packets_received[stat_index] += 1;
         }
         NodeType::Server => {
-            // TODO: serve stats
-            // data.server_stats
-            //     .get_mut(&receiver_id)
-            //     .unwrap()
-            //     .packets_received[stat_index] += 1;
+            data.server_stats
+                .get_mut(&receiver_id)
+                .unwrap()
+                .packets_received[stat_index] += 1;
         }
         NodeType::Drone => {
             unreachable!()
@@ -101,10 +98,10 @@ pub fn handle_packet_received(
 }
 
 fn get_log_line_packet_received(p: &Packet, receiver_id: NodeId) -> String {
-    let from_str = if is_shortcut(&p, receiver_id) {
+    let from_str = if is_shortcut(p, receiver_id) {
         "SimulationController".to_string()
     } else {
-        let from_id = helper::get_from_packet_received(&p);
+        let from_id = helper::get_from_packet_received(p);
         format!("node #{}", from_id)
     };
     match &p.pack_type {

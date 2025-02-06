@@ -90,6 +90,60 @@ pub fn spawn_client_stats(ui: &mut Ui, mutex: &MutexGuard<SimulationData>, id: N
     ui.separator();
 }
 
+// copy of client
+pub fn spawn_server_stats(ui: &mut Ui, mutex: &MutexGuard<SimulationData>, id: NodeId) {
+    let stats = mutex.server_stats.get(&id).unwrap();
+    spawn_white_heading(ui, "Statistics");
+    Grid::new("server_stats").striped(true).show(ui, |ui| {
+        // First row
+        spawn_packet_stats_table_header(ui);
+
+        // Second row
+        ui.with_layout(
+            Layout::centered_and_justified(Direction::LeftToRight),
+            |ui| {
+                ui.monospace("Sent");
+            },
+        );
+        for n in stats.packets_sent {
+            ui.with_layout(
+                Layout::centered_and_justified(Direction::LeftToRight),
+                |ui| {
+                    ui.monospace(n.to_string());
+                },
+            );
+        }
+        ui.end_row();
+
+        // Third row
+        ui.with_layout(
+            Layout::centered_and_justified(Direction::LeftToRight),
+            |ui| {
+                ui.monospace("Received");
+            },
+        );
+        for n in stats.packets_received {
+            ui.with_layout(
+                Layout::centered_and_justified(Direction::LeftToRight),
+                |ui| {
+                    ui.monospace(n.to_string());
+                },
+            );
+        }
+        ui.end_row();
+    });
+
+    ui.add_space(5.0);
+
+    ui.monospace(format!(
+        "Fragmented messages: {}   Assembled messages: {}",
+        stats.messages_fragmented, stats.messages_assembled
+    ));
+
+    ui.add_space(2.0);
+    ui.separator();
+}
+
 fn spawn_packet_stats_table_header(ui: &mut Ui) {
     for header in [
         "Packet type",
