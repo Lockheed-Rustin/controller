@@ -57,8 +57,12 @@ fn handle_packet_sent(data_ref: Arc<Mutex<SimulationData>>, p: Packet) {
 }
 
 fn handle_packet_received(data_ref: Arc<Mutex<SimulationData>>, p: Packet, id: NodeId) {
-    let from_id = helper::get_from_packet_received(&p);
-    let log_line = helper::get_log_line_packet_received(&p, from_id);
+    let log_line = if p.routing_header.hop_index == p.routing_header.len() - 1 { // received from drone
+        let from_id = helper::get_from_packet_received(&p);
+        helper::get_log_line_packet_received(&p, from_id)
+    } else { // received from SC
+        helper::get_log_line_packet_received_shortcut(&p)
+    };
 
     let mut data = data_ref.lock().unwrap();
     data.logs.get_mut(&id).unwrap().push(log_line);
