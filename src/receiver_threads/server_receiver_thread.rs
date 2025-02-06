@@ -84,7 +84,7 @@ fn handle_packet_received(data_ref: Arc<Mutex<SimulationData>>, p: Packet, id: N
 
     let mut data = data_ref.lock().unwrap();
     data.logs.get_mut(&id).unwrap().push(log_line);
-    // update stats
+    // update client stats
     data.ctx.request_repaint();
 }
 
