@@ -3,12 +3,11 @@ use std::sync::{Arc, Mutex};
 use crossbeam_channel::{select_biased, Receiver};
 
 use wg_2024::controller::DroneEvent;
-use wg_2024::network::NodeId;
-use wg_2024::packet::{Packet, PacketType};
+use wg_2024::packet::{NodeType, Packet};
 
 use super::helper;
 use crate::data::SimulationData;
-use crate::receiver_threads::helper::get_packet_type_str;
+
 
 pub fn receiver_loop(
     data_ref: Arc<Mutex<SimulationData>>,
@@ -66,23 +65,21 @@ fn handle_packet_dropped(data_ref: Arc<Mutex<SimulationData>>, p: &Packet) {
 }
 
 fn handle_packet_sent(data_ref: Arc<Mutex<SimulationData>>, p: &Packet) {
-    let (from_id, to_id) = helper::get_from_and_to_packet_send(p);
-    let log_line = helper::get_log_line_packet_sent(p, to_id);
-    update_data_packet_sent(data_ref, &p.pack_type, &from_id, log_line);
+    helper::handle_packet_sent(NodeType::Drone, p, data_ref);
 }
 
 fn handle_controller_shortcut(data_ref: Arc<Mutex<SimulationData>>, p: Packet) {
     // TODO: check who really sent it
     // let from_id = p.routing_header.hops[p.routing_header.hop_index];
-    let to_id = *p.routing_header.hops.last().unwrap();
+    // let to_id = *p.routing_header.hops.last().unwrap();
     // let log_line = format!(
     //     "{} sent to Simulation Controller, recipient: node #{}",
     //     get_packet_type_str(&p.pack_type),
     //     to_id
     // );
-    let stat_index = helper::get_packet_stat_index(&p.pack_type);
+    // let stat_index = helper::get_packet_stat_index(&p.pack_type);
 
-    let mut data = data_ref.lock().unwrap();
+    let  data = data_ref.lock().unwrap();
     _ = data.sc.shortcut(p.clone());
     // if data.sc.shortcut(p.clone()).is_some() {
     //     data.logs.get_mut(&from_id).unwrap().push(log_line);
@@ -95,17 +92,6 @@ fn handle_controller_shortcut(data_ref: Arc<Mutex<SimulationData>>, p: Packet) {
     // }
 }
 
-fn update_data_packet_sent(
-    data_ref: Arc<Mutex<SimulationData>>,
-    pt: &PacketType,
-    id: &NodeId,
-    log_line: String,
-) {
-    let stat_index = helper::get_packet_stat_index(pt);
 
-    let mut data = data_ref.lock().unwrap();
-    data.logs.get_mut(id).unwrap().push(log_line);
-    data.drone_stats.get_mut(id).unwrap().packets_forwarded[stat_index] += 1;
 
-    data.ctx.request_repaint();
-}
+
