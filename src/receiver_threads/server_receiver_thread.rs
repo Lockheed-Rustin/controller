@@ -63,7 +63,7 @@ fn handle_message_assembled(
     log_line.push_str(&helper::get_log_line_client_body(body));
     let mut data = data_ref.lock().unwrap();
     data.logs.get_mut(&to).unwrap().push(log_line);
-    data.client_stats.get_mut(&to).unwrap().messages_assembled += 1;
+    data.server_stats.get_mut(&to).unwrap().messages_assembled += 1;
     data.ctx.request_repaint();
 }
 
@@ -77,7 +77,7 @@ fn handle_message_fragmented(
     log_line.push_str(&helper::get_log_line_server_body(body));
     let mut data = data_ref.lock().unwrap();
     data.logs.get_mut(&from).unwrap().push(log_line);
-    data.client_stats
+    data.server_stats
         .get_mut(&from)
         .unwrap()
         .messages_fragmented += 1;

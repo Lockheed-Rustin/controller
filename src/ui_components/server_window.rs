@@ -17,8 +17,7 @@ pub fn spawn_server_window(
         .open(open)
         .fixed_size(vec2(400.0, 300.0))
         .show(ctx, |ui| {
-            ui.add_space(5.0);
-
+            ui_components::stats::spawn_server_stats(ui, mutex, id);
             // logs
             ui_components::logs::spawn_logs(ui, mutex, id);
 

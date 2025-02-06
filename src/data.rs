@@ -10,6 +10,7 @@ pub struct SimulationData {
     pub logs: HashMap<NodeId, Vec<String>>,
     pub drone_stats: HashMap<NodeId, DroneStats>,
     pub client_stats: HashMap<NodeId, ClientStats>,
+    pub server_stats: HashMap<NodeId, ServerStats>,
     pub ctx: Context,
 }
 
@@ -19,6 +20,7 @@ impl SimulationData {
         logs: HashMap<NodeId, Vec<String>>,
         drone_stats: HashMap<NodeId, DroneStats>,
         client_stats: HashMap<NodeId, ClientStats>,
+        server_stats: HashMap<NodeId, ServerStats>,
         ctx: Context,
     ) -> Self {
         Self {
@@ -26,6 +28,7 @@ impl SimulationData {
             logs,
             drone_stats,
             client_stats,
+            server_stats,
             ctx,
         }
     }
@@ -47,9 +50,11 @@ pub struct ClientStats {
     pub messages_fragmented: u32,
 }
 
-// TODO: choose between creating this or using the same for client and server
-// #[derive(Default)]
-// pub struct ServerStats {
-//     packets_sent: [u32; 5],
-//     packets_received: [u32; 5],
-// }
+#[derive(Default)]
+pub struct ServerStats {
+    // 0:Fragment, 1:Ack, 2:Nack, 3:Flood Req, 4:Flood Resp
+    pub packets_sent: [u32; 5],
+    pub packets_received: [u32; 5],
+    pub messages_assembled: u32,
+    pub messages_fragmented: u32,
+}
