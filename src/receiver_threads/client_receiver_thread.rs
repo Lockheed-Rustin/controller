@@ -63,10 +63,7 @@ fn handle_message_assembled(
     let mut log_line = format!("Assembled message from server #{}\n", from);
     log_line.push_str(&helper::get_log_line_server_body(body));
     let mut data = data_ref.lock().unwrap();
-    data.logs
-        .get_mut(&to)
-        .unwrap()
-        .push((log_line, Color32::WHITE));
+    data.add_log(to, log_line, Color32::WHITE);
     data.client_stats.get_mut(&to).unwrap().messages_assembled += 1;
     data.ctx.request_repaint();
 }
@@ -80,10 +77,7 @@ fn handle_message_fragmented(
     let mut log_line = format!("Fragmented message for server #{}\n", to);
     log_line.push_str(&helper::get_log_line_client_body(body));
     let mut data = data_ref.lock().unwrap();
-    data.logs
-        .get_mut(&from)
-        .unwrap()
-        .push((log_line, Color32::WHITE));
+    data.add_log(from, log_line, Color32::WHITE);
     data.client_stats
         .get_mut(&from)
         .unwrap()

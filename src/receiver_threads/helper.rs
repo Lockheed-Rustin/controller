@@ -16,10 +16,7 @@ pub fn handle_packet_sent(sender_type: NodeType, p: &Packet, data_ref: Arc<Mutex
     let stat_index = get_packet_stat_index(&p.pack_type);
 
     let mut data = data_ref.lock().unwrap();
-    data.logs
-        .get_mut(&from_id)
-        .unwrap()
-        .push((log_line, Color32::GRAY));
+    data.add_log(from_id, log_line, Color32::GRAY);
     match sender_type {
         NodeType::Client => {
             data.client_stats.get_mut(&from_id).unwrap().packets_sent[stat_index] += 1;
@@ -79,10 +76,7 @@ pub fn handle_packet_received(
     let stat_index = get_packet_stat_index(&p.pack_type);
 
     let mut data = data_ref.lock().unwrap();
-    data.logs
-        .get_mut(&receiver_id)
-        .unwrap()
-        .push((log_line, Color32::GRAY));
+    data.add_log(receiver_id, log_line, Color32::GRAY);
     match receiver_type {
         NodeType::Client => {
             data.client_stats
