@@ -49,10 +49,11 @@ fn handle_packet_dropped(data_ref: Arc<Mutex<SimulationData>>, p: &Packet) {
     let mut data = data_ref.lock().unwrap();
 
     // add log
-    data.logs.get_mut(&drone_id).unwrap().push((
+    data.add_log(
+        drone_id,
         format!("Dropped fragment sent by node #{}", from_id),
         Color32::LIGHT_RED,
-    ));
+    );
 
     // increment stat
     data.drone_stats

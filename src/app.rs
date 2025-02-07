@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::fs;
 use std::mem::take;
 use std::sync::{Arc, Mutex};
@@ -151,7 +151,7 @@ impl SimulationControllerUI {
         // node logs
         let mut logs = HashMap::new();
         for &id in self.nodes.keys() {
-            logs.insert(id, vec![]);
+            logs.insert(id, VecDeque::new());
         }
 
         // stats
@@ -356,11 +356,7 @@ impl SimulationControllerUI {
             if ui.button("Clear all logs").clicked() {
                 let binding = self.simulation_data_ref.clone().unwrap();
                 let mut mutex = binding.lock().unwrap();
-                let all_keys: Vec<NodeId> = mutex.logs.keys().copied().collect();
-                for id in all_keys {
-                    let v = mutex.logs.get_mut(&id).unwrap();
-                    v.clear();
-                }
+                mutex.clear_all_logs();
             }
             if ui.button("Reset simulation").clicked() {
                 self.reset();

@@ -53,8 +53,7 @@ pub fn spawn_client_window(
             // logs
             ui_components::logs::spawn_logs(ui, mutex, id);
             if ui.button("Clear log").clicked() {
-                let v = mutex.logs.get_mut(&id).unwrap();
-                v.clear();
+                mutex.clear_log(id);
             }
             ui.add_space(5.0);
 
@@ -310,7 +309,7 @@ fn spawn_client_combobox(ui: &mut Ui, node_ids: Vec<NodeId>, state: &mut ClientW
 
 fn spawn_text_input(ui: &mut Ui, state: &mut ClientWindowState, width: f32) {
     ui.add(
-        TextEdit::singleline(&mut state.text_input)
+        TextEdit::multiline(&mut state.text_input)
             .desired_width(width)
             .font(TextStyle::Monospace),
     );
@@ -335,7 +334,7 @@ fn spawn_send_button(
                 "ClientCommand sent correctly".to_string()
             }
         };
-        ui_components::logs::push_log(mutex, id, (log_line, Color32::GRAY));
+        mutex.add_log(id, log_line, Color32::GRAY);
     }
 }
 
