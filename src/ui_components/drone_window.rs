@@ -1,6 +1,6 @@
 use std::sync::MutexGuard;
 
-use eframe::egui::{vec2, ComboBox, Context, Slider, Window};
+use eframe::egui::{vec2, Color32, ComboBox, Context, Slider, Window};
 
 use crate::app::DroneWindowState;
 use crate::data::SimulationData;
@@ -60,7 +60,7 @@ pub fn spawn_drone_window(
                                     ui_components::logs::push_log(
                                         mutex,
                                         sid,
-                                        format!("Link added with node {}", id),
+                                        (format!("Link added with node {}", id), Color32::WHITE),
                                     );
                                     format!("Link added with node {}", sid)
                                 }
@@ -69,7 +69,7 @@ pub fn spawn_drone_window(
                         }
                     };
 
-                    ui_components::logs::push_log(mutex, id, log_line);
+                    ui_components::logs::push_log(mutex, id, (log_line, Color32::WHITE));
                 }
             });
 
@@ -87,7 +87,7 @@ pub fn spawn_drone_window(
                         Some(_) => format!("Changed PDR to {}", state.pdr_slider),
                         None => "Failed to change PDR".to_string(),
                     };
-                    ui_components::logs::push_log(mutex, id, log_line);
+                    ui_components::logs::push_log(mutex, id, (log_line, Color32::WHITE));
                 }
             });
 
@@ -95,7 +95,11 @@ pub fn spawn_drone_window(
 
             ui.horizontal(|ui| {
                 if ui.button("Crash").clicked() && mutex.sc.crash_drone(id).is_none() {
-                    ui_components::logs::push_log(mutex, id, "Failed to crash".to_string());
+                    ui_components::logs::push_log(
+                        mutex,
+                        id,
+                        ("Cannot crash".to_string(), Color32::LIGHT_RED),
+                    );
                 }
                 if ui.button("Clear log").clicked() {
                     let v = mutex.logs.get_mut(&id).unwrap();
