@@ -57,10 +57,10 @@ pub fn spawn_drone_window(
                             match mutex.sc.add_edge(id, sid) {
                                 Some(_) => {
                                     // push log to other node as well
-                                    ui_components::logs::push_log(
-                                        mutex,
+                                    mutex.add_log(
                                         sid,
-                                        (format!("Link added with node {}", id), Color32::WHITE),
+                                        format!("Link added with node {}", id),
+                                        Color32::WHITE,
                                     );
                                     format!("Link added with node {}", sid)
                                 }
@@ -69,7 +69,7 @@ pub fn spawn_drone_window(
                         }
                     };
 
-                    ui_components::logs::push_log(mutex, id, (log_line, Color32::WHITE));
+                    mutex.add_log(id, log_line, Color32::WHITE);
                 }
             });
 
@@ -87,7 +87,7 @@ pub fn spawn_drone_window(
                         Some(_) => format!("Changed PDR to {}", state.pdr_slider),
                         None => "Failed to change PDR".to_string(),
                     };
-                    ui_components::logs::push_log(mutex, id, (log_line, Color32::WHITE));
+                    mutex.add_log(id, log_line, Color32::WHITE);
                 }
             });
 
@@ -95,15 +95,14 @@ pub fn spawn_drone_window(
 
             ui.horizontal(|ui| {
                 if ui.button("Crash").clicked() && mutex.sc.crash_drone(id).is_none() {
-                    ui_components::logs::push_log(
-                        mutex,
+                    mutex.add_log(
                         id,
-                        ("Cannot crash".to_string(), Color32::LIGHT_RED),
+                        "Cannot crash".to_string(),
+                        Color32::LIGHT_RED,
                     );
                 }
                 if ui.button("Clear log").clicked() {
-                    let v = mutex.logs.get_mut(&id).unwrap();
-                    v.clear();
+                    mutex.clear_log(id);
                 }
             });
         });

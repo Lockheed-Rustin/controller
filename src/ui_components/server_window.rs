@@ -25,8 +25,7 @@ pub fn spawn_server_window(
             ui.add_space(5.0);
 
             if ui.button("Clear log").clicked() {
-                let v = mutex.logs.get_mut(&id).unwrap();
-                v.clear();
+                mutex.clear_log(id);
             }
         });
 }
