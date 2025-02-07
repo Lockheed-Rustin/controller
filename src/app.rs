@@ -352,11 +352,19 @@ impl SimulationControllerUI {
                 }
             });
             ui.separator();
-
-            if ui.button("Reset").clicked() {
+            if ui.button("Clear all logs").clicked() {
+                let binding = self.simulation_data_ref.clone().unwrap();
+                let mut mutex = binding.lock().unwrap();
+                let all_keys: Vec<NodeId> = mutex.logs.keys().copied().collect();
+                for id in all_keys {
+                    let v = mutex.logs.get_mut(&id).unwrap();
+                    v.clear();
+                }
+            }
+            if ui.button("Reset simulation").clicked() {
                 self.reset();
             }
-            if ui.button("Quit").clicked() {
+            if ui.button("Quit app").clicked() {
                 std::process::exit(0);
             }
         });

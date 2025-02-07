@@ -2,7 +2,7 @@ use drone_networks::message::ClientBody::{ClientCommunication, ClientContent};
 use drone_networks::message::{
     ClientBody, ClientCommunicationBody, ClientContentBody, CommunicationMessage,
 };
-use eframe::egui::{vec2, ComboBox, Context, TextEdit, TextStyle, Ui, Window};
+use eframe::egui::{vec2, Color32, ComboBox, Context, TextEdit, TextStyle, Ui, Window};
 use std::fmt::{Display, Formatter};
 use std::sync::MutexGuard;
 
@@ -207,7 +207,7 @@ fn spawn_send_form(
                     "Command sent correctly".to_string()
                 }
             };
-            ui_components::logs::push_log(mutex, id, log_line);
+            ui_components::logs::push_log(mutex, id, (log_line, Color32::GRAY));
         }
     });
 }
