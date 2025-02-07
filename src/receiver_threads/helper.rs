@@ -209,7 +209,7 @@ pub fn get_log_line_client_body(client_body: ClientBody) -> String {
         ClientBody::ClientContent(ccb) => match ccb {
             ClientContentBody::ReqFilesList => "Content - Request files list".to_string(),
             ClientContentBody::ReqFile(f) => {
-                format!("Content - Request file\nFile: {}", f)
+                format!("Content - Request file\n  File: {}", f)
             }
         },
         ClientBody::ClientCommunication(ccb) => match ccb {
@@ -235,7 +235,7 @@ pub fn get_log_line_server_body(client_body: ServerBody) -> String {
     let mut res = "  Type: ".to_string();
     let type_str = match client_body {
         ServerBody::RespServerType(t) => {
-            format!("Response server type\nMessage content: {:?}", t)
+            format!("Response server type\n  Message content: {:?}", t)
         }
         ServerBody::ErrUnsupportedRequestType => "Error - Unsupported request type".to_string(),
         ServerBody::ServerContent(scb) => match scb {
