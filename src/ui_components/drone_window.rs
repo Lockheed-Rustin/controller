@@ -95,11 +95,7 @@ pub fn spawn_drone_window(
 
             ui.horizontal(|ui| {
                 if ui.button("Crash").clicked() && mutex.sc.crash_drone(id).is_none() {
-                    mutex.add_log(
-                        id,
-                        "Cannot crash".to_string(),
-                        Color32::LIGHT_RED,
-                    );
+                    mutex.add_log(id, "Cannot crash".to_string(), Color32::LIGHT_RED);
                 }
                 if ui.button("Clear log").clicked() {
                     mutex.clear_log(id);

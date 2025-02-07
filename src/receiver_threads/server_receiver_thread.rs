@@ -77,7 +77,7 @@ fn handle_message_fragmented(
     let mut log_line = format!("Fragmented message for client #{}\n", to);
     log_line.push_str(&helper::get_log_line_server_body(body));
     let mut data = data_ref.lock().unwrap();
-    data.add_log(from,log_line, Color32::WHITE);
+    data.add_log(from, log_line, Color32::WHITE);
     data.server_stats
         .get_mut(&from)
         .unwrap()

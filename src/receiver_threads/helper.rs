@@ -1,5 +1,4 @@
 use crate::data::SimulationData;
-use crate::receiver_threads::helper;
 use drone_networks::message::{
     ClientBody, ClientCommunicationBody, ClientContentBody, ServerBody, ServerCommunicationBody,
     ServerContentBody,
@@ -12,11 +11,13 @@ use wg_2024::packet::{NackType, NodeType, Packet, PacketType};
 // all nodes -----
 pub fn handle_packet_sent(sender_type: NodeType, p: &Packet, data_ref: Arc<Mutex<SimulationData>>) {
     let (from_id, to_id) = get_from_and_to_packet_send(p);
-    let log_line = get_log_line_packet_sent(p, to_id);
+    let log = get_log_packet_sent(p, to_id);
     let stat_index = get_packet_stat_index(&p.pack_type);
 
     let mut data = data_ref.lock().unwrap();
-    data.add_log(from_id, log_line, Color32::GRAY);
+    if let Some((line, color)) = log {
+        data.add_log(from_id, line, color);
+    }
     match sender_type {
         NodeType::Client => {
             data.client_stats.get_mut(&from_id).unwrap().packets_sent[stat_index] += 1;
@@ -34,20 +35,30 @@ pub fn handle_packet_sent(sender_type: NodeType, p: &Packet, data_ref: Arc<Mutex
     data.ctx.request_repaint();
 }
 
-fn get_log_line_packet_sent(p: &Packet, to_id: Option<NodeId>) -> String {
-    match to_id {
-        None => format!("{} sent", get_packet_type_str(&p.pack_type)),
-        Some(id) => match &p.pack_type {
-            PacketType::FloodResponse(f) => {
-                format!(
-                    "{} sent to node #{}\n  path trace = {}",
-                    get_packet_type_str(&p.pack_type),
-                    id,
-                    format_path_trace(&f.path_trace),
-                )
-            }
-            _ => format!("{} sent to node #{}", get_packet_type_str(&p.pack_type), id),
-        },
+fn get_log_packet_sent(p: &Packet, to_id: Option<NodeId>) -> Option<(String, Color32)> {
+    let line = get_log_line_packet_sent(p, to_id)?;
+    let color = get_log_color_packet(p)?;
+    Some((line, color))
+}
+fn get_log_line_packet_sent(p: &Packet, to_id: Option<NodeId>) -> Option<String> {
+    let to_id = to_id?;
+    match &p.pack_type {
+        PacketType::FloodResponse(_) => None,
+        PacketType::FloodRequest(_) => None,
+        _ => Some(format!(
+            "{} sent to node #{}",
+            get_packet_type_str(&p.pack_type),
+            to_id
+        )),
+    }
+}
+
+fn get_log_color_packet(p: &Packet) -> Option<Color32> {
+    match &p.pack_type {
+        PacketType::MsgFragment(_) => Some(Color32::GRAY),
+        PacketType::Ack(_) => Some(Color32::LIGHT_GREEN),
+        PacketType::Nack(_) => Some(Color32::LIGHT_RED),
+        _ => None,
     }
 }
 
@@ -72,11 +83,13 @@ pub fn handle_packet_received(
     p: &Packet,
     data_ref: Arc<Mutex<SimulationData>>,
 ) {
-    let log_line = get_log_line_packet_received(p, receiver_id);
+    let log = get_log_packet_received(p, receiver_id);
     let stat_index = get_packet_stat_index(&p.pack_type);
 
     let mut data = data_ref.lock().unwrap();
-    data.add_log(receiver_id, log_line, Color32::GRAY);
+    if let Some((line, color)) = log {
+        data.add_log(receiver_id, line, color);
+    }
     match receiver_type {
         NodeType::Client => {
             data.client_stats
@@ -97,28 +110,28 @@ pub fn handle_packet_received(
     data.ctx.request_repaint();
 }
 
-fn get_log_line_packet_received(p: &Packet, receiver_id: NodeId) -> String {
-    let from_str = if is_shortcut(p, receiver_id) {
-        "SimulationController".to_string()
-    } else {
-        let from_id = helper::get_from_packet_received(p);
-        format!("node #{}", from_id)
-    };
+fn get_log_packet_received(p: &Packet, from_id: NodeId) -> Option<(String, Color32)> {
+    let line = get_log_line_packet_received(p, from_id)?;
+    let color = get_log_color_packet(p)?;
+    Some((line, color))
+}
+
+fn get_log_line_packet_received(p: &Packet, receiver_id: NodeId) -> Option<String> {
     match &p.pack_type {
-        PacketType::FloodResponse(f) => {
-            format!(
-                "Received {} from {},\n  path trace = {}",
-                get_packet_type_str(&p.pack_type),
-                from_str,
-                format_path_trace(&f.path_trace),
-            )
-        }
+        PacketType::FloodResponse(_) => None,
+        PacketType::FloodRequest(_) => None,
         _ => {
-            format!(
+            let from_str = if is_shortcut(p, receiver_id) {
+                "SimulationController".to_string()
+            } else {
+                let from_id = get_from_packet_received(p);
+                format!("node #{}", from_id)
+            };
+            Some(format!(
                 "Received {} from {}",
                 get_packet_type_str(&p.pack_type),
                 from_str
-            )
+            ))
         }
     }
 }
@@ -182,19 +195,19 @@ fn get_packet_type_str(t: &PacketType) -> &'static str {
     }
 }
 
-fn format_path_trace(pt: &Vec<(NodeId, NodeType)>) -> String {
-    let mut res = "[ ".to_string();
-    for (id, t) in pt {
-        res.push(match t {
-            NodeType::Client => 'C',
-            NodeType::Drone => 'D',
-            NodeType::Server => 'S',
-        });
-        res.push_str(&format!("{} ", id));
-    }
-    res.push(']');
-    res
-}
+// fn format_path_trace(pt: &Vec<(NodeId, NodeType)>) -> String {
+//     let mut res = "[ ".to_string();
+//     for (id, t) in pt {
+//         res.push(match t {
+//             NodeType::Client => 'C',
+//             NodeType::Drone => 'D',
+//             NodeType::Server => 'S',
+//         });
+//         res.push_str(&format!("{} ", id));
+//     }
+//     res.push(']');
+//     res
+// }
 
 pub fn get_log_line_client_body(client_body: ClientBody) -> String {
     let mut res = "  Type: ".to_string();

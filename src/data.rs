@@ -35,7 +35,7 @@ impl SimulationData {
         }
     }
 
-    pub fn add_log(&mut self, id:NodeId, str: String, color: Color32) {
+    pub fn add_log(&mut self, id: NodeId, str: String, color: Color32) {
         let v = self.logs.get_mut(&id).unwrap();
         if v.len() >= MAX_LOG_LENGTH {
             v.pop_front();
