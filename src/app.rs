@@ -43,7 +43,8 @@ pub struct ClientWindowState {
     pub message_choice: MessageChoice,
     pub content_choice: ContentChoice,
     pub communication_choice: CommunicationChoice,
-    pub destination_id: Option<NodeId>,
+    pub server_destination_id: Option<NodeId>,
+    pub client_destination_id: Option<NodeId>,
     pub text_input: String,
 }
 
