@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::fs;
 use std::mem::take;
 use std::sync::{Arc, Mutex};
@@ -43,7 +43,8 @@ pub struct ClientWindowState {
     pub message_choice: MessageChoice,
     pub content_choice: ContentChoice,
     pub communication_choice: CommunicationChoice,
-    pub destination_id: Option<NodeId>,
+    pub server_destination_id: Option<NodeId>,
+    pub client_destination_id: Option<NodeId>,
     pub text_input: String,
 }
 
@@ -150,7 +151,7 @@ impl SimulationControllerUI {
         // node logs
         let mut logs = HashMap::new();
         for &id in self.nodes.keys() {
-            logs.insert(id, vec![]);
+            logs.insert(id, VecDeque::new());
         }
 
         // stats
@@ -352,11 +353,15 @@ impl SimulationControllerUI {
                 }
             });
             ui.separator();
-
-            if ui.button("Reset").clicked() {
+            if ui.button("Clear all logs").clicked() {
+                let binding = self.simulation_data_ref.clone().unwrap();
+                let mut mutex = binding.lock().unwrap();
+                mutex.clear_all_logs();
+            }
+            if ui.button("Reset simulation").clicked() {
                 self.reset();
             }
-            if ui.button("Quit").clicked() {
+            if ui.button("Quit app").clicked() {
                 std::process::exit(0);
             }
         });

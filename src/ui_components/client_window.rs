@@ -2,7 +2,7 @@ use drone_networks::message::ClientBody::{ClientCommunication, ClientContent};
 use drone_networks::message::{
     ClientBody, ClientCommunicationBody, ClientContentBody, CommunicationMessage,
 };
-use eframe::egui::{vec2, ComboBox, Context, TextEdit, TextStyle, Ui, Window};
+use eframe::egui::{vec2, Color32, ComboBox, Context, TextEdit, TextStyle, Ui, Window};
 use std::fmt::{Display, Formatter};
 use std::sync::MutexGuard;
 
@@ -53,8 +53,7 @@ pub fn spawn_client_window(
             // logs
             ui_components::logs::spawn_logs(ui, mutex, id);
             if ui.button("Clear log").clicked() {
-                let v = mutex.logs.get_mut(&id).unwrap();
-                v.clear();
+                mutex.clear_log(id);
             }
             ui.add_space(5.0);
 
@@ -86,7 +85,7 @@ fn spawn_message_combobox(
         MessageChoice::ReqServerType => {
             state.communication_choice = CommunicationChoice::NotChosen;
             state.content_choice = ContentChoice::NotChosen;
-            spawn_send_form(ui, mutex, id, node_ids, state, false);
+            spawn_send_form(ui, mutex, id, node_ids, state);
         }
         MessageChoice::Content => {
             state.communication_choice = CommunicationChoice::NotChosen;
@@ -115,8 +114,8 @@ fn spawn_content_combobox(
         });
     match state.content_choice {
         ContentChoice::NotChosen => {}
-        ContentChoice::ReqFilesList => spawn_send_form(ui, mutex, id, node_ids, state, false),
-        ContentChoice::ReqFile => spawn_send_form(ui, mutex, id, node_ids, state, true),
+        ContentChoice::ReqFilesList => spawn_send_form(ui, mutex, id, node_ids, state),
+        ContentChoice::ReqFile => spawn_send_form(ui, mutex, id, node_ids, state),
     }
 }
 
@@ -150,12 +149,10 @@ fn spawn_communication_combobox(
     match state.communication_choice {
         CommunicationChoice::NotChosen => {}
         CommunicationChoice::ReqRegistrationToChat => {
-            spawn_send_form(ui, mutex, id, node_ids, state, false)
+            spawn_send_form(ui, mutex, id, node_ids, state)
         }
-        CommunicationChoice::MessageSend => spawn_send_form(ui, mutex, id, node_ids, state, true),
-        CommunicationChoice::ReqClientsList => {
-            spawn_send_form(ui, mutex, id, node_ids, state, false)
-        }
+        CommunicationChoice::MessageSend => spawn_send_form(ui, mutex, id, node_ids, state),
+        CommunicationChoice::ReqClientsList => spawn_send_form(ui, mutex, id, node_ids, state),
     }
 }
 
@@ -165,51 +162,58 @@ fn spawn_send_form(
     id: NodeId,
     node_ids: Vec<NodeId>,
     state: &mut ClientWindowState,
-    with_text_input: bool,
 ) {
     ui.add_space(2.0);
-    ui.horizontal(|ui| {
-        ui.label("Destination:");
-        ComboBox::from_id_salt("destination")
-            .width(50.0)
-            .selected_text(
-                state
-                    .destination_id
-                    .map(|num| num.to_string())
-                    .unwrap_or_else(|| "-".to_string()),
-            )
-            .show_ui(ui, |ui| {
-                for number in node_ids {
-                    ui.selectable_value(
-                        &mut state.destination_id,
-                        Some(number),
-                        number.to_string(),
-                    );
-                }
+    match state.message_choice {
+        MessageChoice::Content => match state.content_choice {
+            ContentChoice::NotChosen => {}
+            ContentChoice::ReqFilesList => {
+                ui.horizontal(|ui| {
+                    spawn_server_combobox(ui, node_ids.clone(), state);
+                    spawn_send_button(ui, mutex, id, state);
+                });
+            }
+            ContentChoice::ReqFile => {
+                ui.horizontal(|ui| {
+                    spawn_server_combobox(ui, node_ids.clone(), state);
+                    spawn_text_input(ui, state, 235.0);
+                    spawn_send_button(ui, mutex, id, state);
+                });
+            }
+        },
+        MessageChoice::Communication => match state.communication_choice {
+            CommunicationChoice::NotChosen => {}
+            CommunicationChoice::ReqRegistrationToChat => {
+                ui.horizontal(|ui| {
+                    spawn_server_combobox(ui, node_ids.clone(), state);
+                    spawn_send_button(ui, mutex, id, state);
+                });
+            }
+            CommunicationChoice::ReqClientsList => {
+                ui.horizontal(|ui| {
+                    spawn_server_combobox(ui, node_ids.clone(), state);
+                    spawn_send_button(ui, mutex, id, state);
+                });
+            }
+            CommunicationChoice::MessageSend => {
+                ui.horizontal(|ui| {
+                    spawn_server_combobox(ui, node_ids.clone(), state);
+                    spawn_client_combobox(ui, node_ids.clone(), state);
+                });
+                ui.horizontal(|ui| {
+                    spawn_text_input(ui, state, 310.0);
+                    spawn_send_button(ui, mutex, id, state);
+                });
+            }
+        },
+        MessageChoice::ReqServerType => {
+            ui.horizontal(|ui| {
+                spawn_server_combobox(ui, node_ids.clone(), state);
+                spawn_send_button(ui, mutex, id, state);
             });
-        if with_text_input {
-            ui.add(
-                TextEdit::singleline(&mut state.text_input)
-                    .desired_width(215.0)
-                    .font(TextStyle::Monospace),
-            );
         }
-
-        if ui.button("Send").clicked() {
-            let log_line = match send(mutex, id, state) {
-                None => "Error in sending command".to_string(),
-                Some(_) => {
-                    state.message_choice = MessageChoice::NotChosen;
-                    state.content_choice = ContentChoice::NotChosen;
-                    state.communication_choice = CommunicationChoice::NotChosen;
-                    state.destination_id = None;
-                    state.text_input.clear();
-                    "Command sent correctly".to_string()
-                }
-            };
-            ui_components::logs::push_log(mutex, id, log_line);
-        }
-    });
+        _ => {}
+    }
 }
 
 fn send(
@@ -238,7 +242,7 @@ fn send(
                 CommunicationChoice::MessageSend => {
                     let communication_message = CommunicationMessage {
                         from: id,
-                        to: state.destination_id?,
+                        to: state.client_destination_id?,
                         message: state.text_input.clone(),
                     };
                     ClientCommunicationBody::MessageSend(communication_message)
@@ -249,7 +253,7 @@ fn send(
     };
     mutex
         .sc
-        .client_send_message(id, state.destination_id?, client_body)
+        .client_send_message(id, state.server_destination_id?, client_body)
 }
 
 fn spawn_choice<V: PartialEq + Display + Copy>(
@@ -258,6 +262,80 @@ fn spawn_choice<V: PartialEq + Display + Copy>(
     selected_value: V,
 ) {
     ui.selectable_value(current_value, selected_value, format!("{}", selected_value));
+}
+
+fn spawn_server_combobox(ui: &mut Ui, node_ids: Vec<NodeId>, state: &mut ClientWindowState) {
+    ui.label("Server id:");
+    let node_ids_copy_for_closure = node_ids.iter().copied();
+    ComboBox::from_id_salt("server")
+        .width(50.0)
+        .selected_text(
+            state
+                .server_destination_id
+                .map(|num| num.to_string())
+                .unwrap_or_else(|| "-".to_string()),
+        )
+        .show_ui(ui, |ui| {
+            for number in node_ids_copy_for_closure {
+                ui.selectable_value(
+                    &mut state.server_destination_id,
+                    Some(number),
+                    number.to_string(),
+                );
+            }
+        });
+}
+
+fn spawn_client_combobox(ui: &mut Ui, node_ids: Vec<NodeId>, state: &mut ClientWindowState) {
+    ui.label("Destination (Client) id:");
+    ComboBox::from_id_salt("client")
+        .width(50.0)
+        .selected_text(
+            state
+                .client_destination_id
+                .map(|num| num.to_string())
+                .unwrap_or_else(|| "-".to_string()),
+        )
+        .show_ui(ui, |ui| {
+            for number in node_ids {
+                ui.selectable_value(
+                    &mut state.client_destination_id,
+                    Some(number),
+                    number.to_string(),
+                );
+            }
+        });
+}
+
+fn spawn_text_input(ui: &mut Ui, state: &mut ClientWindowState, width: f32) {
+    ui.add(
+        TextEdit::multiline(&mut state.text_input)
+            .desired_width(width)
+            .font(TextStyle::Monospace),
+    );
+}
+
+fn spawn_send_button(
+    ui: &mut Ui,
+    mutex: &mut MutexGuard<SimulationData>,
+    id: NodeId,
+    state: &mut ClientWindowState,
+) {
+    if ui.button("Send").clicked() {
+        let log_line = match send(mutex, id, state) {
+            None => "Error in sending command".to_string(),
+            Some(_) => {
+                state.message_choice = MessageChoice::NotChosen;
+                state.content_choice = ContentChoice::NotChosen;
+                state.communication_choice = CommunicationChoice::NotChosen;
+                state.server_destination_id = None;
+                state.client_destination_id = None;
+                state.text_input.clear();
+                "ClientCommand sent correctly".to_string()
+            }
+        };
+        mutex.add_log(id, log_line, Color32::GRAY);
+    }
 }
 
 impl Display for MessageChoice {

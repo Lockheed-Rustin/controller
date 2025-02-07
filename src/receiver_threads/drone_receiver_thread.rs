@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use crossbeam_channel::{select_biased, Receiver};
-
+use eframe::egui::Color32;
 use wg_2024::controller::DroneEvent;
 use wg_2024::packet::{NodeType, Packet};
 
@@ -49,10 +49,11 @@ fn handle_packet_dropped(data_ref: Arc<Mutex<SimulationData>>, p: &Packet) {
     let mut data = data_ref.lock().unwrap();
 
     // add log
-    data.logs
-        .get_mut(&drone_id)
-        .unwrap()
-        .push(format!("Dropped fragment sent by node #{}", from_id));
+    data.add_log(
+        drone_id,
+        format!("Dropped fragment sent by node #{}", from_id),
+        Color32::LIGHT_RED,
+    );
 
     // increment stat
     data.drone_stats
