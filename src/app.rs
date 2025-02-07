@@ -368,8 +368,15 @@ impl SimulationControllerUI {
     }
 
     pub fn spawn_node_window(&mut self, ctx: &Context, id: NodeId) {
-        let mut node_ids: Vec<NodeId> = self.get_all_ids();
+        // TODO: very inefficient
+        let mut node_ids = self.get_all_ids();
         node_ids.sort();
+        let mut other_client_ids: Vec<NodeId> = self.get_ids(NodeType::Client);
+        other_client_ids.retain(|i| *i != id);
+        other_client_ids.sort();
+        let mut server_ids: Vec<NodeId> = self.get_ids(NodeType::Server);
+        server_ids.sort();
+
         let binding = self.simulation_data_ref.clone().unwrap();
         let mut mutex = binding.lock().unwrap();
         match self.nodes.get_mut(&id).unwrap() {
@@ -380,7 +387,7 @@ impl SimulationControllerUI {
             }
             NodeWindowState::Client(open, state) => {
                 ui_components::client_window::spawn_client_window(
-                    ctx, &mut mutex, id, node_ids, open, state,
+                    ctx, &mut mutex, id, other_client_ids, server_ids, open, state,
                 );
             }
             NodeWindowState::Server(open) => {
@@ -388,6 +395,7 @@ impl SimulationControllerUI {
             }
         }
     }
+
 
     fn spawn_node_list_element(&mut self, ui: &mut Ui, id: NodeId, s: &'static str) {
         ui.add_space(5.0);
