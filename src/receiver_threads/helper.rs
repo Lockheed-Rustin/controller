@@ -4,6 +4,7 @@ use drone_networks::message::{
     ClientBody, ClientCommunicationBody, ClientContentBody, ServerBody, ServerCommunicationBody,
     ServerContentBody,
 };
+use eframe::egui::Color32;
 use std::sync::{Arc, Mutex};
 use wg_2024::network::NodeId;
 use wg_2024::packet::{NackType, NodeType, Packet, PacketType};
@@ -15,7 +16,10 @@ pub fn handle_packet_sent(sender_type: NodeType, p: &Packet, data_ref: Arc<Mutex
     let stat_index = get_packet_stat_index(&p.pack_type);
 
     let mut data = data_ref.lock().unwrap();
-    data.logs.get_mut(&from_id).unwrap().push(log_line);
+    data.logs
+        .get_mut(&from_id)
+        .unwrap()
+        .push((log_line, Color32::GRAY));
     match sender_type {
         NodeType::Client => {
             data.client_stats.get_mut(&from_id).unwrap().packets_sent[stat_index] += 1;
@@ -35,11 +39,11 @@ pub fn handle_packet_sent(sender_type: NodeType, p: &Packet, data_ref: Arc<Mutex
 
 fn get_log_line_packet_sent(p: &Packet, to_id: Option<NodeId>) -> String {
     match to_id {
-        None => format!("{} broadcasted", get_packet_type_str(&p.pack_type)),
+        None => format!("{} sent", get_packet_type_str(&p.pack_type)),
         Some(id) => match &p.pack_type {
             PacketType::FloodResponse(f) => {
                 format!(
-                    "{} sent to node #{}\npath trace = {}",
+                    "{} sent to node #{}\n  path trace = {}",
                     get_packet_type_str(&p.pack_type),
                     id,
                     format_path_trace(&f.path_trace),
@@ -75,7 +79,10 @@ pub fn handle_packet_received(
     let stat_index = get_packet_stat_index(&p.pack_type);
 
     let mut data = data_ref.lock().unwrap();
-    data.logs.get_mut(&receiver_id).unwrap().push(log_line);
+    data.logs
+        .get_mut(&receiver_id)
+        .unwrap()
+        .push((log_line, Color32::GRAY));
     match receiver_type {
         NodeType::Client => {
             data.client_stats
@@ -106,7 +113,7 @@ fn get_log_line_packet_received(p: &Packet, receiver_id: NodeId) -> String {
     match &p.pack_type {
         PacketType::FloodResponse(f) => {
             format!(
-                "Received {} from {},\npath trace = {}",
+                "Received {} from {},\n  path trace = {}",
                 get_packet_type_str(&p.pack_type),
                 from_str,
                 format_path_trace(&f.path_trace),
@@ -196,13 +203,13 @@ fn format_path_trace(pt: &Vec<(NodeId, NodeType)>) -> String {
 }
 
 pub fn get_log_line_client_body(client_body: ClientBody) -> String {
-    let mut res = "Type: ".to_string();
+    let mut res = "  Type: ".to_string();
     let type_str = match client_body {
         ClientBody::ReqServerType => "Request server type".to_string(),
         ClientBody::ClientContent(ccb) => match ccb {
             ClientContentBody::ReqFilesList => "Content - Request files list".to_string(),
             ClientContentBody::ReqFile(f) => {
-                format!("Content - Request file\nFile: {}", f)
+                format!("Content - Request file\n  File: {}", f)
             }
         },
         ClientBody::ClientCommunication(ccb) => match ccb {
@@ -211,7 +218,7 @@ pub fn get_log_line_client_body(client_body: ClientBody) -> String {
             }
             ClientCommunicationBody::MessageSend(cm) => {
                 format!(
-                    "Communication - Send message \nFrom: {}, To: {}\nMessage content: {}",
+                    "Communication - Send message \n  From: {}, To: {}\n  Message content: {}",
                     cm.from, cm.to, cm.message
                 )
             }
@@ -225,31 +232,31 @@ pub fn get_log_line_client_body(client_body: ClientBody) -> String {
 }
 
 pub fn get_log_line_server_body(client_body: ServerBody) -> String {
-    let mut res = "Type: ".to_string();
+    let mut res = "  Type: ".to_string();
     let type_str = match client_body {
         ServerBody::RespServerType(t) => {
-            format!("Response server type\nMessage content: {:?}", t)
+            format!("Response server type\n  Message content: {:?}", t)
         }
         ServerBody::ErrUnsupportedRequestType => "Error - Unsupported request type".to_string(),
         ServerBody::ServerContent(scb) => match scb {
             ServerContentBody::RespFilesList(v) => {
-                format!("Content - Response files list\nMessage content: {:?}", v)
+                format!("Content - Response files list\n  Message content: {:?}", v)
             }
             ServerContentBody::RespFile(v) => {
-                format!("Content - Response files list\nMessage content: {:?}", v)
+                format!("Content - Response files list\n  Message content: {:?}", v)
             }
             ServerContentBody::ErrFileNotFound => "Error - File not found".to_string(),
         },
         ServerBody::ServerCommunication(scb) => match scb {
             ServerCommunicationBody::RespClientList(v) => {
                 format!(
-                    "Communication - Response clients list\nMessage content: {:?}",
+                    "Communication - Response clients list\n  Message content: {:?}",
                     v
                 )
             }
             ServerCommunicationBody::MessageReceive(cm) => {
                 format!(
-                    "Communication - Send message \nFrom: {}, To: {}\nMessage content: {}",
+                    "Communication - Send message \n  From: {}, To: {}\n  Message content: {}",
                     cm.from, cm.to, cm.message
                 )
             }

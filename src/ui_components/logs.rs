@@ -1,6 +1,6 @@
 use std::sync::MutexGuard;
 
-use eframe::egui::{ScrollArea, Ui};
+use eframe::egui::{Color32, RichText, ScrollArea, Ui};
 
 use wg_2024::network::NodeId;
 
@@ -17,13 +17,16 @@ pub fn spawn_logs(ui: &mut Ui, mutex: &MutexGuard<SimulationData>, id: NodeId) {
             .show(ui, |ui| {
                 let v = mutex.logs.get(&id).unwrap();
                 for line in v {
-                    ui.monospace(line);
+                    ui.label(colored_monospace_text(&line.0, line.1));
                 }
             });
     });
 }
 
-pub(crate) fn push_log(mutex: &mut MutexGuard<SimulationData>, id: NodeId, line: String) {
+pub fn push_log(mutex: &mut MutexGuard<SimulationData>, id: NodeId, line: (String, Color32)) {
     let v = mutex.logs.get_mut(&id).unwrap();
     v.push(line);
+}
+fn colored_monospace_text(text: &String, color: Color32) -> RichText {
+    RichText::new(text).monospace().color(color)
 }
