@@ -1,10 +1,10 @@
 use std::collections::{HashMap, VecDeque};
 
-use eframe::egui::{Color32, Context, TextureHandle};
+use eframe::egui::{Color32, Context};
 
+use crate::app::{ContentFile, ContentFileType};
 use drone_networks::controller::SimulationController;
 use wg_2024::network::NodeId;
-use crate::app::{ContentFile, ContentFileType};
 
 const MAX_LOG_LENGTH: usize = 100;
 
@@ -95,13 +95,13 @@ fn random_stuff() -> Vec<ContentFile> {
     v.push(
         ContentFile {
             name: "titolo pazzo".to_string(),
-            file: ContentFileType::Text("testo pazzo".to_string()),
+            file: ContentFileType::Text("testo pazzo\ntesto pazzo\ntesto pazzo\ntesto pazzo\ntesto pazzo\ntesto pazzo\n".to_string()),
         },
     );
     v.push(
         ContentFile {
             name: "titolo pazzo 22222".to_string(),
-            file: ContentFileType::Text("testo pazzo 2222".to_string()),
+            file: ContentFileType::Text("testo pazzo 22223333333333333333333333333333333333333".to_string()),
         },
     );
     v

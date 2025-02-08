@@ -66,6 +66,7 @@ fn handle_message_assembled(
     data.add_log(to, log_line, Color32::WHITE);
     data.client_stats.get_mut(&to).unwrap().messages_assembled += 1;
     // TODO: CHECK IF FILE SENT, THEN LOAD FILE AND PUT IT IN data.files
+    load_random_image(&mut data);
     data.ctx.request_repaint();
 }
 
@@ -86,6 +87,7 @@ fn handle_message_fragmented(
     data.ctx.request_repaint();
 }
 
+// TODO: REMOVE AFTER FILES WORK
 fn load_random_image(
     data: &mut MutexGuard<SimulationData>,
 ) {

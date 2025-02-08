@@ -5,7 +5,7 @@ use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
 
 use crossbeam_channel::{unbounded, Sender};
-use eframe::egui::{CentralPanel, Color32, ColorImage, Context, CursorIcon, Frame, Label, RichText, Sense, SidePanel, TextureHandle, TopBottomPanel, Ui, Vec2};
+use eframe::egui::{CentralPanel, Color32, Context, CursorIcon, Frame, Label, RichText, Sense, SidePanel, TextureHandle, TopBottomPanel, Ui, Vec2};
 use eframe::CreationContext;
 use egui_graphs::{
     GraphView, LayoutRandom, LayoutStateRandom, SettingsInteraction, SettingsNavigation,
