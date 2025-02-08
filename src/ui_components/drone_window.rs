@@ -82,7 +82,7 @@ pub fn spawn_drone_window(
                     //self.drone_pdr_sliders.get_mut(&id).unwrap(),
                     0.0..=1.0,
                 ));
-                if response.drag_stopped() {
+                if response.drag_stopped() || response.lost_focus() {
                     let log_line = match mutex.sc.set_pdr(id, state.pdr_slider) {
                         Some(_) => format!("Changed PDR to {}", state.pdr_slider),
                         None => "Failed to change PDR".to_string(),
