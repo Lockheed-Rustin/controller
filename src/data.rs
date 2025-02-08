@@ -62,24 +62,24 @@ impl SimulationData {
 #[derive(Default)]
 pub struct DroneStats {
     // 0:Fragment, 1:Ack, 2:Nack, 3:Flood Req, 4:Flood Resp
-    pub packets_forwarded: [u32; 5],
-    pub fragments_dropped: u32,
+    pub packets_forwarded: [u64; 5],
+    pub fragments_dropped: u64,
 }
 
 #[derive(Default)]
 pub struct ClientStats {
     // 0:Fragment, 1:Ack, 2:Nack, 3:Flood Req, 4:Flood Resp
-    pub packets_sent: [u32; 5],
-    pub packets_received: [u32; 5],
-    pub messages_assembled: u32,
-    pub messages_fragmented: u32,
+    pub packets_sent: [u64; 5],
+    pub packets_received: [u64; 5],
+    pub messages_assembled: u64,
+    pub messages_fragmented: u64,
 }
 
 #[derive(Default)]
 pub struct ServerStats {
     // 0:Fragment, 1:Ack, 2:Nack, 3:Flood Req, 4:Flood Resp
-    pub packets_sent: [u32; 5],
-    pub packets_received: [u32; 5],
-    pub messages_assembled: u32,
-    pub messages_fragmented: u32,
+    pub packets_sent: [u64; 5],
+    pub packets_received: [u64; 5],
+    pub messages_assembled: u64,
+    pub messages_fragmented: u64,
 }
