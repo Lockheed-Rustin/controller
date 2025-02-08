@@ -133,9 +133,11 @@ impl SimulationControllerUI {
         // get all node ids
         self.nodes.clear();
         for id in sc.get_drone_ids() {
+            let mut dws = DroneWindowState::default();
+            dws.pdr_slider = sc.get_pdr(id).unwrap();
             self.nodes.insert(
                 id,
-                NodeWindowState::Drone(false, DroneWindowState::default()),
+                NodeWindowState::Drone(false, dws),
             );
         }
         for id in sc.get_client_ids() {

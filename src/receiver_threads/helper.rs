@@ -268,6 +268,8 @@ pub fn get_log_line_server_body(client_body: ServerBody) -> String {
                 )
             }
             ServerCommunicationBody::ErrWrongClientId => "Error - Wrong client id".to_string(),
+            ServerCommunicationBody::ErrNotRegistered => "Error - Not registered".to_string(),
+            ServerCommunicationBody::RegistrationSuccess => "Registration success".to_string(),
         },
     };
     res.push_str(&type_str);
