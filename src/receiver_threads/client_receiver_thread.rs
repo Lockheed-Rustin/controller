@@ -1,13 +1,13 @@
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, MutexGuard};
 
 use crossbeam_channel::{select_biased, Receiver};
 
 use drone_networks::controller::ClientEvent;
 use drone_networks::message::{ClientBody, ServerBody};
-use eframe::egui::Color32;
+use eframe::egui::{Color32, ColorImage, TextureOptions};
 use wg_2024::network::NodeId;
 use wg_2024::packet::{NodeType, Packet};
-
+use crate::app::{ContentFile, ContentFileType};
 use super::helper;
 use crate::data::SimulationData;
 
@@ -65,6 +65,7 @@ fn handle_message_assembled(
     let mut data = data_ref.lock().unwrap();
     data.add_log(to, log_line, Color32::WHITE);
     data.client_stats.get_mut(&to).unwrap().messages_assembled += 1;
+    // TODO: CHECK IF FILE SENT, THEN LOAD FILE AND PUT IT IN data.files
     data.ctx.request_repaint();
 }
 
@@ -83,4 +84,15 @@ fn handle_message_fragmented(
         .unwrap()
         .messages_fragmented += 1;
     data.ctx.request_repaint();
+}
+
+fn load_random_image(
+    data: &mut MutexGuard<SimulationData>,
+) {
+    let color_image = ColorImage::new([100, 100], Color32::LIGHT_GREEN);
+    let texture = data.ctx.load_texture("my_texture", color_image, TextureOptions::default());
+    data.files.push(ContentFile{
+        name: "Immagine".to_string(),
+        file: ContentFileType::Image(texture),
+    });
 }

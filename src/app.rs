@@ -5,10 +5,7 @@ use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
 
 use crossbeam_channel::{unbounded, Sender};
-use eframe::egui::{
-    CentralPanel, Color32, Context, CursorIcon, Frame, Label, RichText, Sense, SidePanel,
-    TopBottomPanel, Ui, Vec2,
-};
+use eframe::egui::{CentralPanel, Color32, ColorImage, Context, CursorIcon, Frame, Label, RichText, Sense, SidePanel, TextureHandle, TopBottomPanel, Ui, Vec2};
 use eframe::CreationContext;
 use egui_graphs::{
     GraphView, LayoutRandom, LayoutStateRandom, SettingsInteraction, SettingsNavigation,
@@ -54,6 +51,16 @@ pub struct DroneWindowState {
     pub add_link_selected_id: Option<NodeId>,
 }
 
+pub enum ContentFileType {
+    Image(TextureHandle),
+    Text(String),
+}
+
+pub struct ContentFile {
+    pub name: String,
+    pub file: ContentFileType,
+}
+
 #[derive(PartialEq, Clone, Copy)]
 
 enum Section {
@@ -71,6 +78,7 @@ pub struct SimulationControllerUI {
     /// shared data
     simulation_data_ref: Option<Arc<Mutex<SimulationData>>>,
     nodes: HashMap<NodeId, NodeWindowState>,
+    files: Vec<(bool, ContentFile)>,
     graph: egui_graphs::Graph<
         (NodeId, NodeType),
         (),
@@ -105,6 +113,7 @@ impl SimulationControllerUI {
             kill_senders: Default::default(),
             simulation_data_ref: None,
             nodes: Default::default(),
+            files: vec![],
             graph: egui_graphs::Graph::from(&StableUnGraph::default()),
             graph_index_map: Default::default(),
         };
@@ -125,6 +134,9 @@ impl SimulationControllerUI {
         self.handles.clear();
         self.kill_senders.clear();
 
+        // delete all file windows
+        self.files.clear();
+
         // read config file and get a SimulationController
         let file_str = fs::read_to_string("config.toml").unwrap();
         let config: Config = toml::from_str(&file_str).unwrap();
@@ -135,10 +147,7 @@ impl SimulationControllerUI {
         for id in sc.get_drone_ids() {
             let mut dws = DroneWindowState::default();
             dws.pdr_slider = sc.get_pdr(id).unwrap();
-            self.nodes.insert(
-                id,
-                NodeWindowState::Drone(false, dws),
-            );
+            self.nodes.insert(id, NodeWindowState::Drone(false, dws));
         }
         for id in sc.get_client_ids() {
             self.nodes.insert(
@@ -247,10 +256,14 @@ impl SimulationControllerUI {
 
     fn control_section(&mut self, ctx: &Context) {
         self.update_id_list();
+        self.update_files();
         // sidebar
         self.sidebar(ctx);
         // node windows
         CentralPanel::default().show(ctx, |_ui| {
+            for (open, fws) in self.files.iter_mut() {
+                ui_components::file_window::spawn_file_window(ctx, open, fws);
+            }
             for id in self.get_all_ids() {
                 self.spawn_node_window(ctx, id);
             }
@@ -389,7 +402,13 @@ impl SimulationControllerUI {
             }
             NodeWindowState::Client(open, state) => {
                 ui_components::client_window::spawn_client_window(
-                    ctx, &mut mutex, id, other_client_ids, server_ids, open, state,
+                    ctx,
+                    &mut mutex,
+                    id,
+                    other_client_ids,
+                    server_ids,
+                    open,
+                    state,
                 );
             }
             NodeWindowState::Server(open) => {
@@ -397,7 +416,6 @@ impl SimulationControllerUI {
             }
         }
     }
-
 
     fn spawn_node_list_element(&mut self, ui: &mut Ui, id: NodeId, s: &'static str) {
         ui.add_space(5.0);
@@ -484,6 +502,19 @@ impl SimulationControllerUI {
             if !are_connected {
                 self.graph.add_edge(i1, i2, ());
             }
+        }
+    }
+
+    fn update_files(&mut self) {
+        // delete all files with closed windows
+        self.files.retain(|(open, _)| *open);
+
+        let binding = self.simulation_data_ref.clone().unwrap();
+        let mut mutex = binding.lock().unwrap();
+
+        // take all files from shared data
+        while let Some(file) = mutex.files.pop() {
+            self.files.push((true, file));
         }
     }
 }

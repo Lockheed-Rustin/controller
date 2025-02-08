@@ -1,9 +1,10 @@
 use std::collections::{HashMap, VecDeque};
 
-use eframe::egui::{Color32, Context};
+use eframe::egui::{Color32, Context, TextureHandle};
 
 use drone_networks::controller::SimulationController;
 use wg_2024::network::NodeId;
+use crate::app::{ContentFile, ContentFileType};
 
 const MAX_LOG_LENGTH: usize = 100;
 
@@ -14,6 +15,7 @@ pub struct SimulationData {
     pub client_stats: HashMap<NodeId, ClientStats>,
     pub server_stats: HashMap<NodeId, ServerStats>,
     pub ctx: Context,
+    pub files: Vec<ContentFile>,
 }
 
 impl SimulationData {
@@ -32,6 +34,9 @@ impl SimulationData {
             client_stats,
             server_stats,
             ctx,
+            // TODO: REMOVE AFTER FILES WORK
+            files: random_stuff()
+            // files: vec![]
         }
     }
 
@@ -82,4 +87,22 @@ pub struct ServerStats {
     pub packets_received: [u64; 5],
     pub messages_assembled: u64,
     pub messages_fragmented: u64,
+}
+
+// TODO: REMOVE AFTER FILES WORK
+fn random_stuff() -> Vec<ContentFile> {
+    let mut v = vec![];
+    v.push(
+        ContentFile {
+            name: "titolo pazzo".to_string(),
+            file: ContentFileType::Text("testo pazzo".to_string()),
+        },
+    );
+    v.push(
+        ContentFile {
+            name: "titolo pazzo 22222".to_string(),
+            file: ContentFileType::Text("testo pazzo 2222".to_string()),
+        },
+    );
+    v
 }
