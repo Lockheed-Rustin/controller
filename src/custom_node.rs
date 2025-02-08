@@ -1,4 +1,4 @@
-use eframe::egui::{epaint::TextShape, Color32, FontFamily, FontId, Pos2, Shape, Vec2};
+use eframe::egui::{epaint::TextShape, Color32, FontFamily, FontId, Pos2, Shape, Stroke, TextureId, Vec2};
 use eframe::epaint::{Rect, RectShape, Rounding};
 use egui_graphs::{DisplayNode, NodeProps};
 use petgraph::{stable_graph::IndexType, EdgeType};
@@ -35,10 +35,6 @@ impl From<NodeProps<(NodeId, NodeType)>> for CustomNodeShape {
 impl<E: Clone, Ty: EdgeType, Ix: IndexType> DisplayNode<(NodeId, NodeType), E, Ty, Ix>
     for CustomNodeShape
 {
-    fn is_inside(&self, pos: Pos2) -> bool {
-        pos.distance(self.loc) < RADIUS * 1.3
-    }
-
     fn closest_boundary_point(&self, _dir: Vec2) -> Pos2 {
         self.loc
     }
@@ -65,9 +61,9 @@ impl<E: Clone, Ty: EdgeType, Ix: IndexType> DisplayNode<(NodeId, NodeType), E, T
 
         // create the shapes
         let mut res = match self.node_type {
-            NodeType::Client => self.get_client_shapes(center, radius),
-            NodeType::Drone => self.get_drone_shapes(center, radius),
-            NodeType::Server => self.get_server_shapes(center, radius),
+            NodeType::Client => CustomNodeShape::get_client_shapes(center, radius),
+            NodeType::Drone => CustomNodeShape::get_drone_shapes(center, radius),
+            NodeType::Server => CustomNodeShape::get_server_shapes(center, radius),
         };
         let shape_label = TextShape::new(center + label_offset, galley, COLOR);
         res.push(Shape::from(shape_label));
@@ -77,15 +73,19 @@ impl<E: Clone, Ty: EdgeType, Ix: IndexType> DisplayNode<(NodeId, NodeType), E, T
     fn update(&mut self, state: &NodeProps<(NodeId, NodeType)>) {
         self.loc = state.location();
     }
+
+    fn is_inside(&self, pos: Pos2) -> bool {
+        pos.distance(self.loc) < RADIUS * 1.3
+    }
 }
 
 impl CustomNodeShape {
-    fn get_client_shapes(&self, screen_center: Pos2, screen_radius: f32) -> Vec<Shape> {
+    fn get_client_shapes(screen_center: Pos2, screen_radius: f32) -> Vec<Shape> {
         let shape_circle = Shape::circle_filled(screen_center, screen_radius, COLOR);
         vec![shape_circle]
     }
 
-    fn get_server_shapes(&self, screen_center: Pos2, screen_radius: f32) -> Vec<Shape> {
+    fn get_server_shapes(screen_center: Pos2, screen_radius: f32) -> Vec<Shape> {
         let shape_rect = Shape::Rect(RectShape {
             rect: Rect::from_center_size(
                 screen_center,
@@ -93,25 +93,25 @@ impl CustomNodeShape {
             ),
             rounding: Rounding::same(screen_radius * 0.2),
             fill: COLOR,
-            stroke: Default::default(),
+            stroke: Stroke::default(),
             blur_width: 0.0,
-            fill_texture_id: Default::default(),
+            fill_texture_id: TextureId::default(),
             uv: Rect::ZERO,
         });
         vec![shape_rect]
     }
 
-    fn get_drone_shapes(&self, screen_center: Pos2, screen_radius: f32) -> Vec<Shape> {
+    fn get_drone_shapes(screen_center: Pos2, screen_radius: f32) -> Vec<Shape> {
         let shape_rect = Shape::Rect(RectShape {
             rect: Rect::from_center_size(
                 screen_center,
                 Vec2::new(screen_radius * 1.2, screen_radius * 1.2),
             ),
-            rounding: Default::default(),
+            rounding: Rounding::default(),
             fill: COLOR,
-            stroke: Default::default(),
+            stroke: Stroke::default(),
             blur_width: 0.0,
-            fill_texture_id: Default::default(),
+            fill_texture_id: TextureId::default(),
             uv: Rect::ZERO,
         });
         let mut res = vec![shape_rect];
