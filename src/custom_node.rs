@@ -1,4 +1,6 @@
-use eframe::egui::{epaint::TextShape, Color32, FontFamily, FontId, Pos2, Shape, Stroke, TextureId, Vec2};
+use eframe::egui::{
+    epaint::TextShape, Color32, FontFamily, FontId, Pos2, Shape, Stroke, TextureId, Vec2,
+};
 use eframe::epaint::{Rect, RectShape, Rounding};
 use egui_graphs::{DisplayNode, NodeProps};
 use petgraph::{stable_graph::IndexType, EdgeType};

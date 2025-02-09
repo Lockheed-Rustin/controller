@@ -37,7 +37,8 @@ pub fn spawn_drone_window(
                     .width(50.0)
                     .selected_text(
                         state
-                            .add_link_selected_id.map_or_else(|| "-".to_string(), |num| num.to_string()),
+                            .add_link_selected_id
+                            .map_or_else(|| "-".to_string(), |num| num.to_string()),
                     )
                     .show_ui(ui, |ui| {
                         for number in node_ids {

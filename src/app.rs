@@ -113,7 +113,6 @@ impl SimulationControllerUI {
     }
 
     pub fn reset(&mut self) {
-
         // kill old receiving threads
         for s in &self.kill_senders {
             s.send(())
