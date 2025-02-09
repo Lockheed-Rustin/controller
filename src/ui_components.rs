@@ -6,3 +6,4 @@ pub mod logs;
 pub mod server_window;
 pub mod stats;
 pub mod text;
+pub mod file_window;

@@ -235,7 +235,7 @@ pub fn get_log_line_client_body(client_body: ClientBody) -> String {
     res
 }
 
-pub fn get_log_line_server_body(client_body: ServerBody) -> String {
+pub fn get_log_line_server_body(client_body: &ServerBody) -> String {
     let mut res = "  Type: ".to_string();
     let type_str = match client_body {
         ServerBody::RespServerType(t) => {

@@ -29,6 +29,8 @@ impl SimulationControllerUI {
 
     fn reset(&mut self, random_drones: bool) {
         self.kill_old_receiving_threads();
+        // delete all file windows
+        self.files.clear();
 
         let sc = Self::get_simulation_controller(random_drones);
         self.reset_ids(&sc);
