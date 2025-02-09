@@ -13,7 +13,7 @@ pub fn spawn_server_window(
     open: &mut bool,
     id: NodeId,
 ) {
-    Window::new(format!("Server #{}", id))
+    Window::new(format!("Server #{id}"))
         .open(open)
         .fixed_size(vec2(400.0, 300.0))
         .show(ctx, |ui| {

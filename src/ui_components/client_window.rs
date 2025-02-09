@@ -117,8 +117,12 @@ fn spawn_content_combobox(
         });
     match state.content_choice {
         ContentChoice::NotChosen => {}
-        ContentChoice::ReqFilesList => spawn_send_form(ui, mutex, id, other_client_ids, server_ids, state),
-        ContentChoice::ReqFile => spawn_send_form(ui, mutex, id, other_client_ids, server_ids, state),
+        ContentChoice::ReqFilesList => {
+            spawn_send_form(ui, mutex, id, other_client_ids, server_ids, state)
+        }
+        ContentChoice::ReqFile => {
+            spawn_send_form(ui, mutex, id, other_client_ids, server_ids, state)
+        }
     }
 }
 
@@ -155,8 +159,12 @@ fn spawn_communication_combobox(
         CommunicationChoice::ReqRegistrationToChat => {
             spawn_send_form(ui, mutex, id, other_client_ids, server_ids, state)
         }
-        CommunicationChoice::MessageSend => spawn_send_form(ui, mutex, id, other_client_ids, server_ids, state),
-        CommunicationChoice::ReqClientsList => spawn_send_form(ui, mutex, id, other_client_ids, server_ids, state),
+        CommunicationChoice::MessageSend => {
+            spawn_send_form(ui, mutex, id, other_client_ids, server_ids, state)
+        }
+        CommunicationChoice::ReqClientsList => {
+            spawn_send_form(ui, mutex, id, other_client_ids, server_ids, state)
+        }
     }
 }
 
@@ -221,8 +229,6 @@ fn spawn_send_form(
     }
 }
 
-
-
 fn spawn_server_combobox(ui: &mut Ui, server_ids: Vec<NodeId>, state: &mut ClientWindowState) {
     ui.label("Server id:");
     let node_ids_copy_for_closure = server_ids.iter().copied();
@@ -245,7 +251,11 @@ fn spawn_server_combobox(ui: &mut Ui, server_ids: Vec<NodeId>, state: &mut Clien
         });
 }
 
-fn spawn_client_combobox(ui: &mut Ui, other_client_ids: Vec<NodeId>, state: &mut ClientWindowState) {
+fn spawn_client_combobox(
+    ui: &mut Ui,
+    other_client_ids: Vec<NodeId>,
+    state: &mut ClientWindowState,
+) {
     ui.label("Destination (Client) id:");
     ComboBox::from_id_salt("client")
         .width(50.0)
@@ -352,7 +362,6 @@ fn send(
         .sc
         .client_send_message(id, state.server_destination_id?, client_body)
 }
-
 
 impl Display for MessageChoice {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {

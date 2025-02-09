@@ -45,7 +45,7 @@ impl SimulationData {
         if v.len() >= MAX_LOG_LENGTH {
             v.pop_front();
         }
-        v.push_back((str, color))
+        v.push_back((str, color));
     }
 
     pub fn clear_log(&mut self, id: NodeId) {

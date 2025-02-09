@@ -11,7 +11,6 @@ use crate::app::{ContentFile, ContentFileType};
 use super::helper;
 use crate::data::SimulationData;
 
-// ----- Client -----
 pub fn receiver_loop(
     data_ref: Arc<Mutex<SimulationData>>,
     rec_client: Receiver<ClientEvent>,
