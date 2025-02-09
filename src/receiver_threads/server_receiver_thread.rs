@@ -36,7 +36,7 @@ pub fn receiver_loop(
 fn handle_event(data_ref: Arc<Mutex<SimulationData>>, event: ServerEvent) {
     match event {
         ServerEvent::PacketSent(p) => handle_packet_sent(data_ref, &p),
-        ServerEvent::PacketReceived(p, id) => handle_packet_received(data_ref, p, id),
+        ServerEvent::PacketReceived(p, id) => handle_packet_received(data_ref, &p, id),
         ServerEvent::MessageAssembled { body, from, to } => {
             handle_message_assembled(data_ref, body, from, to);
         }
@@ -50,8 +50,8 @@ fn handle_packet_sent(data_ref: Arc<Mutex<SimulationData>>, p: &Packet) {
     helper::handle_packet_sent(NodeType::Server, p, data_ref);
 }
 
-fn handle_packet_received(data_ref: Arc<Mutex<SimulationData>>, p: Packet, id: NodeId) {
-    helper::handle_packet_received(id, NodeType::Server, &p, data_ref);
+fn handle_packet_received(data_ref: Arc<Mutex<SimulationData>>, p: &Packet, id: NodeId) {
+    helper::handle_packet_received(id, NodeType::Server, p, data_ref);
 }
 
 fn handle_message_assembled(
@@ -60,7 +60,7 @@ fn handle_message_assembled(
     from: NodeId,
     to: NodeId,
 ) {
-    let mut log_line = format!("Assembled message from client #{}\n", from);
+    let mut log_line = format!("Assembled message from client #{from}\n");
     log_line.push_str(&helper::get_log_line_client_body(body));
     let mut data = data_ref.lock().unwrap();
     data.add_log(to, log_line, Color32::WHITE);
@@ -74,7 +74,7 @@ fn handle_message_fragmented(
     from: NodeId,
     to: NodeId,
 ) {
-    let mut log_line = format!("Fragmented message for client #{}\n", to);
+    let mut log_line = format!("Fragmented message for client #{to}\n");
     log_line.push_str(&helper::get_log_line_server_body(body));
     let mut data = data_ref.lock().unwrap();
     data.add_log(from, log_line, Color32::WHITE);

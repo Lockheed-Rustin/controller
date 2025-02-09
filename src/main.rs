@@ -1,8 +1,7 @@
+use app::simulation_controller_ui;
 use eframe::egui;
 
 mod app;
-mod custom_edge;
-mod custom_node;
 pub mod data;
 mod receiver_threads;
 mod ui_components;
@@ -18,6 +17,10 @@ fn main() -> eframe::Result {
     eframe::run_native(
         "Simulation Controller",
         native_options,
-        Box::new(|cc| Ok(Box::new(app::SimulationControllerUI::new(cc)))),
+        Box::new(|cc| {
+            Ok(Box::new(
+                simulation_controller_ui::SimulationControllerUI::new(cc),
+            ))
+        }),
     )
 }

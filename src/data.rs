@@ -19,6 +19,7 @@ pub struct SimulationData {
 }
 
 impl SimulationData {
+    #[must_use]
     pub fn new(
         sc: SimulationController,
         logs: HashMap<NodeId, VecDeque<(String, Color32)>>,
@@ -59,6 +60,7 @@ impl SimulationData {
         }
     }
 
+    #[must_use]
     pub fn get_logs(&self, id: NodeId) -> &VecDeque<(String, Color32)> {
         self.logs.get(&id).unwrap()
     }
