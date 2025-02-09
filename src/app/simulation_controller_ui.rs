@@ -112,9 +112,7 @@ impl SimulationControllerUI {
         self.sidebar(ctx);
         // node windows
         CentralPanel::default().show(ctx, |_ui| {
-            for id in self.get_all_ids() {
-                self.spawn_node_window(ctx, id);
-            }
+                self.spawn_node_windows(ctx);
         });
     }
 
@@ -230,39 +228,44 @@ impl SimulationControllerUI {
         });
     }
 
-    pub fn spawn_node_window(&mut self, ctx: &Context, id: NodeId) {
+    pub fn spawn_node_windows(&mut self, ctx: &Context) {
         // TODO: very inefficient
-        let mut node_ids = self.get_all_ids();
-        node_ids.sort_unstable();
-        let mut other_client_ids: Vec<NodeId> = self.get_ids(NodeType::Client);
-        other_client_ids.retain(|i| *i != id);
-        other_client_ids.sort_unstable();
-        let mut server_ids: Vec<NodeId> = self.get_ids(NodeType::Server);
-        server_ids.sort_unstable();
+        let mut sorted_node_ids = self.get_all_ids();
+        sorted_node_ids.sort_unstable();
+
+        let mut sorted_client_ids: Vec<NodeId> = self.get_ids(NodeType::Client);
+        sorted_client_ids.sort_unstable();
+
+        let mut sorted_server_ids: Vec<NodeId> = self.get_ids(NodeType::Server);
+        sorted_server_ids.sort_unstable();
 
         let binding = self.simulation_data_ref.clone().unwrap();
         let mut mutex = binding.lock().unwrap();
-        match self.nodes.get_mut(&id).unwrap() {
-            NodeWindowState::Drone(open, state) => {
-                ui_components::drone_window::spawn_drone_window(
-                    ctx, &mut mutex, id, node_ids, open, state,
-                );
-            }
-            NodeWindowState::Client(open, state) => {
-                ui_components::client_window::spawn_client_window(
-                    ctx,
-                    &mut mutex,
-                    id,
-                    &other_client_ids,
-                    &server_ids,
-                    open,
-                    state,
-                );
-            }
-            NodeWindowState::Server(open) => {
-                ui_components::server_window::spawn_server_window(ctx, &mut mutex, open, id);
+
+        for id in self.get_all_ids() {
+            match self.nodes.get_mut(&id).unwrap() {
+                NodeWindowState::Drone(open, state) => {
+                    ui_components::drone_window::spawn_drone_window(
+                        ctx, &mut mutex, id, &sorted_node_ids, open, state,
+                    );
+                }
+                NodeWindowState::Client(open, state) => {
+                    ui_components::client_window::spawn_client_window(
+                        ctx,
+                        &mut mutex,
+                        id,
+                        &sorted_client_ids,
+                        &sorted_server_ids,
+                        open,
+                        state,
+                    );
+                }
+                NodeWindowState::Server(open) => {
+                    ui_components::server_window::spawn_server_window(ctx, &mut mutex, open, id);
+                }
             }
         }
+
     }
 
     fn spawn_node_list_element(&mut self, ui: &mut Ui, id: NodeId, s: &'static str) {
