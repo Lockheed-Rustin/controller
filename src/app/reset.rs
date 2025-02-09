@@ -5,7 +5,7 @@ use crate::data::{ClientStats, DroneStats, ServerStats, SimulationData};
 use crate::receiver_threads;
 use crossbeam_channel::unbounded;
 use drone_networks::controller::SimulationController;
-use drone_networks::network::init_network;
+use drone_networks::network::{init_network, init_network_with_drone};
 use eframe::egui::Color32;
 use petgraph::graph::NodeIndex;
 use petgraph::graphmap::UnGraphMap;
@@ -17,12 +17,20 @@ use std::sync::{Arc, Mutex};
 use wg_2024::config::Config;
 use wg_2024::network::NodeId;
 use wg_2024::packet::NodeType;
+use lockheedrustin_drone::LockheedRustin;
 
 impl SimulationControllerUI {
-    pub fn reset(&mut self) {
+    pub fn reset_with_our_drone(&mut self) {
+        self.reset(false);
+    }
+    pub fn reset_with_fair_drones(&mut self) {
+        self.reset(true);
+    }
+
+    fn reset(&mut self, random_drones: bool) {
         self.kill_old_receiving_threads();
 
-        let sc = Self::get_simulation_controller();
+        let sc = Self::get_simulation_controller(random_drones);
         self.reset_ids(&sc);
 
         // new shared data
@@ -89,10 +97,14 @@ impl SimulationControllerUI {
         self.kill_senders.clear();
     }
 
-    fn get_simulation_controller() -> SimulationController {
+    fn get_simulation_controller(random_drones: bool) -> SimulationController {
         let file_str = fs::read_to_string("config.toml").unwrap();
         let config: Config = toml::from_str(&file_str).unwrap();
-        init_network(&config).unwrap()
+        if random_drones {
+            init_network(&config).unwrap()
+        } else {
+            init_network_with_drone::<LockheedRustin>(&config, "Lockheed Rustin".to_string()).unwrap()
+        }
     }
 
     fn reset_ids(&mut self, sc: &SimulationController) {
@@ -103,8 +115,9 @@ impl SimulationControllerUI {
                 crate::app::simulation_controller_ui::NodeWindowState::Drone(
                     false,
                     DroneWindowState {
+                        name: sc.get_group_name(id).unwrap().to_string(),
                         pdr_slider: sc.get_pdr(id).unwrap(),
-                        ..Default::default()
+                        add_link_selected_id: None,
                     },
                 ),
             );
