@@ -19,11 +19,11 @@ use petgraph::graph::NodeIndex;
 use wg_2024::network::NodeId;
 use wg_2024::packet::NodeType;
 
-use crate::data::SimulationData;
+use crate::shared_data::SimulationData;
 use crate::ui_components;
 use crate::ui_components::client_window::{CommunicationChoice, ContentChoice, MessageChoice};
-use crate::ui_components::custom_edge::CustomEdgeShape;
-use crate::ui_components::custom_node::CustomNodeShape;
+use crate::ui_components::custom_edge::EdgeShape;
+use crate::ui_components::custom_node::NodeShape;
 
 #[derive(Debug)]
 pub(crate) enum NodeWindowState {
@@ -71,8 +71,8 @@ pub struct SimulationControllerUI {
         (),
         Undirected,
         usize,
-        CustomNodeShape,
-        CustomEdgeShape,
+        NodeShape,
+        EdgeShape,
     >,
     pub(crate) graph_index_map: HashMap<NodeId, usize>,
 }
@@ -136,8 +136,8 @@ impl SimulationControllerUI {
                         _,
                         _,
                         _,
-                        CustomNodeShape,
-                        CustomEdgeShape,
+                        NodeShape,
+                        EdgeShape,
                         LayoutStateRandom,
                         LayoutRandom,
                     >::new(&mut self.graph)
@@ -252,7 +252,7 @@ impl SimulationControllerUI {
         for id in self.get_all_ids() {
             match self.nodes.get_mut(&id).unwrap() {
                 NodeWindowState::Drone(open, state) => {
-                    ui_components::drone_window::spawn_drone_window(
+                    ui_components::drone_window::spawn(
                         ctx,
                         &mut mutex,
                         id,
@@ -262,7 +262,7 @@ impl SimulationControllerUI {
                     );
                 }
                 NodeWindowState::Client(open, state) => {
-                    ui_components::client_window::spawn_client_window(
+                    ui_components::client_window::spawn(
                         ctx,
                         &mut mutex,
                         id,
@@ -273,7 +273,7 @@ impl SimulationControllerUI {
                     );
                 }
                 NodeWindowState::Server(open) => {
-                    ui_components::server_window::spawn_server_window(ctx, &mut mutex, open, id);
+                    ui_components::server_window::spawn(ctx, &mut mutex, open, id);
                 }
             }
         }
