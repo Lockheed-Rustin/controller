@@ -11,7 +11,7 @@ pub fn spawn_drone_window(
     ctx: &Context,
     mutex: &mut MutexGuard<SimulationData>,
     id: NodeId,            // drone id
-    node_ids: Vec<NodeId>, // all other nodes
+    node_ids: &[NodeId], // all other nodes
     open: &mut bool,
     state: &mut DroneWindowState,
 ) {
@@ -41,10 +41,10 @@ pub fn spawn_drone_window(
                             .map_or_else(|| "-".to_string(), |num| num.to_string()),
                     )
                     .show_ui(ui, |ui| {
-                        for number in node_ids {
+                        for number in node_ids.iter().filter(|i| **i != id) {
                             ui.selectable_value(
                                 &mut state.add_link_selected_id,
-                                Some(number),
+                                Some(*number),
                                 number.to_string(),
                             );
                         }

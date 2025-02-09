@@ -41,7 +41,7 @@ pub fn spawn_client_window(
     ctx: &Context,
     mutex: &mut MutexGuard<SimulationData>,
     id: NodeId,
-    other_client_ids: &[NodeId],
+    client_ids: &[NodeId],
     server_ids: &[NodeId],
     open: &mut bool,
     state: &mut ClientWindowState,
@@ -62,7 +62,7 @@ pub fn spawn_client_window(
             ui_components::text::spawn_white_heading(ui, "Actions");
             ui.add_space(5.0);
 
-            spawn_message_combobox(ui, mutex, id, other_client_ids, server_ids, state);
+            spawn_message_combobox(ui, mutex, id, client_ids, server_ids, state);
         });
 }
 
@@ -204,7 +204,7 @@ fn spawn_send_form(
             CommunicationChoice::MessageSend => {
                 ui.horizontal(|ui| {
                     spawn_server_combobox(ui, server_ids, state);
-                    spawn_client_combobox(ui, other_client_ids, state);
+                    spawn_client_combobox(ui, id, other_client_ids, state);
                 });
                 ui.horizontal(|ui| {
                     spawn_text_input_multiline(ui, state, 350.0);
@@ -243,7 +243,7 @@ fn spawn_server_combobox(ui: &mut Ui, server_ids: &[NodeId], state: &mut ClientW
         });
 }
 
-fn spawn_client_combobox(ui: &mut Ui, other_client_ids: &[NodeId], state: &mut ClientWindowState) {
+fn spawn_client_combobox(ui: &mut Ui, id: NodeId, client_ids: &[NodeId], state: &mut ClientWindowState) {
     ui.label("Destination (Client) id:");
     ComboBox::from_id_salt("client")
         .width(50.0)
@@ -253,7 +253,7 @@ fn spawn_client_combobox(ui: &mut Ui, other_client_ids: &[NodeId], state: &mut C
                 .map_or_else(|| "-".to_string(), |num| num.to_string()),
         )
         .show_ui(ui, |ui| {
-            for number in other_client_ids {
+            for number in client_ids.iter().filter(|i| **i != id) {
                 ui.selectable_value(
                     &mut state.client_destination_id,
                     Some(*number),
