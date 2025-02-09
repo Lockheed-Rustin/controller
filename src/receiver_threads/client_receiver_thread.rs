@@ -90,10 +90,23 @@ fn handle_message_fragmented(
 fn load_random_image(
     data: &mut MutexGuard<SimulationData>,
 ) {
-    let color_image = ColorImage::new([100, 100], Color32::LIGHT_GREEN);
-    let texture = data.ctx.load_texture("my_texture", color_image, TextureOptions::default());
-    data.files.push(ContentFile{
-        name: "Immagine".to_string(),
-        file: ContentFileType::Image(texture),
-    });
+    // let text_bytes = include_bytes!("../../hello.txt");
+    // let text = String::from_utf8_lossy(text_bytes).to_string();
+    // println!("{}", text);
+    //
+    //
+    // let image_bytes = include_bytes!("../../image.png");
+    // let image = image::load_from_memory(image_bytes).expect("Failed to load image");
+    // let size = [image.width() as usize, image.height() as usize];
+    //
+    // // Convert the image to RGBA format
+    // let rgba = image.to_rgba8();
+    //
+    // let color_image = ColorImage::from_rgba_unmultiplied(size, &rgba);
+    //
+    // let texture = data.ctx.load_texture("my_texture", color_image, TextureOptions::default());
+    // data.files.push(ContentFile{
+    //     name: "Immagine".to_string(),
+    //     file: ContentFileType::Image(texture),
+    // });
 }
