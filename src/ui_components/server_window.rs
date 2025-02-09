@@ -7,7 +7,7 @@ use wg_2024::network::NodeId;
 use crate::data::SimulationData;
 use crate::ui_components;
 
-pub fn spawn_server_window(
+pub fn spawn(
     ctx: &Context,
     mutex: &mut MutexGuard<SimulationData>,
     open: &mut bool,
@@ -17,9 +17,9 @@ pub fn spawn_server_window(
         .open(open)
         .fixed_size(vec2(400.0, 300.0))
         .show(ctx, |ui| {
-            ui_components::stats::spawn_server_stats(ui, mutex, id);
+            ui_components::stats::spawn_server(ui, mutex, id);
             // logs
-            ui_components::logs::spawn_logs(ui, mutex, id);
+            ui_components::logs::spawn(ui, mutex, id);
 
             ui_components::text::spawn_white_heading(ui, "Actions");
             ui.add_space(5.0);

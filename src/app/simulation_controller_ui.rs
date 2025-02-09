@@ -252,7 +252,7 @@ impl SimulationControllerUI {
         for id in self.get_all_ids() {
             match self.nodes.get_mut(&id).unwrap() {
                 NodeWindowState::Drone(open, state) => {
-                    ui_components::drone_window::spawn_drone_window(
+                    ui_components::drone_window::spawn(
                         ctx,
                         &mut mutex,
                         id,
@@ -262,7 +262,7 @@ impl SimulationControllerUI {
                     );
                 }
                 NodeWindowState::Client(open, state) => {
-                    ui_components::client_window::spawn_client_window(
+                    ui_components::client_window::spawn(
                         ctx,
                         &mut mutex,
                         id,
@@ -273,7 +273,7 @@ impl SimulationControllerUI {
                     );
                 }
                 NodeWindowState::Server(open) => {
-                    ui_components::server_window::spawn_server_window(ctx, &mut mutex, open, id);
+                    ui_components::server_window::spawn(ctx, &mut mutex, open, id);
                 }
             }
         }

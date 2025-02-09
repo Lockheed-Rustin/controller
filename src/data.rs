@@ -36,6 +36,9 @@ impl SimulationData {
         }
     }
 
+    /// adds a log entry for the node that matches id.
+    /// # Panics
+    /// Will panic if the id is not present.
     pub fn add_log(&mut self, id: NodeId, str: String, color: Color32) {
         let v = self.logs.get_mut(&id).unwrap();
         if v.len() >= MAX_LOG_LENGTH {
@@ -44,6 +47,9 @@ impl SimulationData {
         v.push_back((str, color));
     }
 
+    /// clears logs for the node that matches id.
+    /// # Panics
+    /// Will panic if the id is not present.
     pub fn clear_log(&mut self, id: NodeId) {
         let v = self.logs.get_mut(&id).unwrap();
         v.clear();
@@ -55,6 +61,10 @@ impl SimulationData {
         }
     }
 
+    /// Returns immutable borrow of the `VecDeque` containing all logs
+    /// for the node that matches id.
+    /// # Panics
+    /// Will panic if the id is not present.
     #[must_use]
     pub fn get_logs(&self, id: NodeId) -> &VecDeque<(String, Color32)> {
         self.logs.get(&id).unwrap()
