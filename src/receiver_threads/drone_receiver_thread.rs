@@ -6,7 +6,7 @@ use wg_2024::controller::DroneEvent;
 use wg_2024::packet::{NodeType, Packet};
 
 use super::helper;
-use crate::data::SimulationData;
+use crate::shared_data::SimulationData;
 
 pub fn receiver_loop(
     data_ref: Arc<Mutex<SimulationData>>,

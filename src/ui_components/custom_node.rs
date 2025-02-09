@@ -1,6 +1,4 @@
-use eframe::egui::{
-    epaint::TextShape, Color32, FontFamily, FontId, Pos2, Shape, Stroke, TextureId, Vec2,
-};
+use eframe::egui::{epaint::TextShape, Color32, FontFamily, FontId, Pos2, Shape, Stroke, TextureId, Vec2};
 use eframe::epaint::{Rect, RectShape, Rounding};
 use egui_graphs::{DisplayNode, NodeProps};
 use petgraph::{stable_graph::IndexType, EdgeType};
@@ -12,13 +10,13 @@ const RADIUS: f32 = 5.0;
 const COLOR: Color32 = Color32::WHITE;
 
 #[derive(Clone)]
-pub struct CustomNodeShape {
+pub struct NodeShape {
     label: String,
     node_type: NodeType,
     loc: Pos2,
 }
 
-impl From<NodeProps<(NodeId, NodeType)>> for CustomNodeShape {
+impl From<NodeProps<(NodeId, NodeType)>> for NodeShape {
     fn from(node_props: NodeProps<(NodeId, NodeType)>) -> Self {
         let mut label = match node_props.payload.1 {
             NodeType::Client => "Client #".to_string(),
@@ -35,7 +33,7 @@ impl From<NodeProps<(NodeId, NodeType)>> for CustomNodeShape {
 }
 
 impl<E: Clone, Ty: EdgeType, Ix: IndexType> DisplayNode<(NodeId, NodeType), E, Ty, Ix>
-    for CustomNodeShape
+    for NodeShape
 {
     fn closest_boundary_point(&self, _dir: Vec2) -> Pos2 {
         self.loc
@@ -63,9 +61,9 @@ impl<E: Clone, Ty: EdgeType, Ix: IndexType> DisplayNode<(NodeId, NodeType), E, T
 
         // create the shapes
         let mut res = match self.node_type {
-            NodeType::Client => CustomNodeShape::get_client_shapes(center, radius),
-            NodeType::Drone => CustomNodeShape::get_drone_shapes(center, radius),
-            NodeType::Server => CustomNodeShape::get_server_shapes(center, radius),
+            NodeType::Client => NodeShape::get_client_shapes(center, radius),
+            NodeType::Drone => NodeShape::get_drone_shapes(center, radius),
+            NodeType::Server => NodeShape::get_server_shapes(center, radius),
         };
         let shape_label = TextShape::new(center + label_offset, galley, COLOR);
         res.push(Shape::from(shape_label));
@@ -81,7 +79,7 @@ impl<E: Clone, Ty: EdgeType, Ix: IndexType> DisplayNode<(NodeId, NodeType), E, T
     }
 }
 
-impl CustomNodeShape {
+impl NodeShape {
     fn get_client_shapes(screen_center: Pos2, screen_radius: f32) -> Vec<Shape> {
         let shape_circle = Shape::circle_filled(screen_center, screen_radius, COLOR);
         vec![shape_circle]

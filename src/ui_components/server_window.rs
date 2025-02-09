@@ -4,7 +4,7 @@ use eframe::egui::{vec2, Context, Window};
 
 use wg_2024::network::NodeId;
 
-use crate::data::SimulationData;
+use crate::shared_data::SimulationData;
 use crate::ui_components;
 
 pub fn spawn(

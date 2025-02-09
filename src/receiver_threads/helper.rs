@@ -1,4 +1,4 @@
-use crate::data::SimulationData;
+use crate::shared_data::SimulationData;
 use drone_networks::message::{
     ClientBody, ClientCommunicationBody, ClientContentBody, ServerBody, ServerCommunicationBody,
     ServerContentBody,

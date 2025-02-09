@@ -3,7 +3,7 @@ use std::sync::MutexGuard;
 use eframe::egui::{vec2, Color32, ComboBox, Context, Slider, Window};
 
 use crate::app::simulation_controller_ui::DroneWindowState;
-use crate::data::SimulationData;
+use crate::shared_data::SimulationData;
 use crate::ui_components;
 use wg_2024::network::NodeId;
 

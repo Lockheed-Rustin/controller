@@ -7,7 +7,7 @@ use std::fmt::{Display, Formatter};
 use std::sync::MutexGuard;
 
 use crate::app::simulation_controller_ui::ClientWindowState;
-use crate::data::SimulationData;
+use crate::shared_data::SimulationData;
 use crate::ui_components;
 use wg_2024::network::NodeId;
 

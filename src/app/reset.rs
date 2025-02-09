@@ -1,7 +1,7 @@
 use crate::app::simulation_controller_ui::{
     ClientWindowState, DroneWindowState, SimulationControllerUI,
 };
-use crate::data::{ClientStats, DroneStats, ServerStats, SimulationData};
+use crate::shared_data::{ClientStats, DroneStats, ServerStats, SimulationData};
 use crate::receiver_threads;
 use crossbeam_channel::unbounded;
 use drone_networks::controller::SimulationController;

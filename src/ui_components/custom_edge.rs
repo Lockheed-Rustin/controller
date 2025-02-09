@@ -6,11 +6,11 @@ const COLOR: Color32 = Color32::from_rgb(70, 70, 70);
 const WIDTH: f32 = 3.0;
 
 #[derive(Clone)]
-pub struct CustomEdgeShape {
+pub struct EdgeShape {
     default_impl: DefaultEdgeShape,
 }
 
-impl<E: Clone> From<EdgeProps<E>> for CustomEdgeShape {
+impl<E: Clone> From<EdgeProps<E>> for EdgeShape {
     fn from(props: EdgeProps<E>) -> Self {
         Self {
             default_impl: DefaultEdgeShape::from(props),
@@ -19,7 +19,7 @@ impl<E: Clone> From<EdgeProps<E>> for CustomEdgeShape {
 }
 
 impl<N: Clone, E: Clone, Ty: EdgeType, Ix: IndexType, D: DisplayNode<N, E, Ty, Ix>>
-    DisplayEdge<N, E, Ty, Ix, D> for CustomEdgeShape
+    DisplayEdge<N, E, Ty, Ix, D> for EdgeShape
 {
     fn shapes(
         &mut self,

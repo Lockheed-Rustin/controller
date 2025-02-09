@@ -4,7 +4,7 @@ use eframe::egui::{Color32, RichText, ScrollArea, Ui};
 
 use wg_2024::network::NodeId;
 
-use crate::data::SimulationData;
+use crate::shared_data::SimulationData;
 use crate::ui_components::text::spawn_white_heading;
 
 pub fn spawn(ui: &mut Ui, mutex: &MutexGuard<SimulationData>, id: NodeId) {

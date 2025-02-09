@@ -4,7 +4,7 @@ use eframe::egui::{Direction, Grid, Layout, Ui};
 
 use wg_2024::network::NodeId;
 
-use crate::data::SimulationData;
+use crate::shared_data::SimulationData;
 use crate::ui_components::text::spawn_white_heading;
 
 pub fn spawn_drone(ui: &mut Ui, mutex: &MutexGuard<SimulationData>, id: NodeId) {
