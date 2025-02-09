@@ -7,7 +7,7 @@ use drone_networks::message::{ClientBody, ServerBody};
 use eframe::egui::{Color32, ColorImage, TextureOptions};
 use wg_2024::network::NodeId;
 use wg_2024::packet::{NodeType, Packet};
-use crate::app::{ContentFile, ContentFileType};
+use crate::app::simulation_controller_ui::{ContentFile, ContentFileType};
 use super::helper;
 use crate::data::SimulationData;
 

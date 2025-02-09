@@ -1,5 +1,5 @@
-use crate::app::{ContentFile, ContentFileType};
 use eframe::egui::{vec2, Context, Image, ScrollArea, Window};
+use crate::app::simulation_controller_ui::{ContentFile, ContentFileType};
 
 pub fn spawn_file_window(
     ctx: &Context,
