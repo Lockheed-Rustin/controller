@@ -15,7 +15,7 @@ pub fn spawn_drone_window(
     open: &mut bool,
     state: &mut DroneWindowState,
 ) {
-    Window::new(format!("Drone #{id}"))
+    Window::new(format!("{} #{id}", state.name))
         .open(open)
         .fixed_size(vec2(400.0, 300.0))
         .show(ctx, |ui| {
