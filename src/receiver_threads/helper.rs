@@ -9,7 +9,7 @@ use wg_2024::network::NodeId;
 use wg_2024::packet::{NackType, NodeType, Packet, PacketType};
 
 // all nodes -----
-pub fn handle_packet_sent(sender_type: NodeType, p: &Packet, data_ref: Arc<Mutex<SimulationData>>) {
+pub fn handle_packet_sent(sender_type: NodeType, p: &Packet, data_ref: &Arc<Mutex<SimulationData>>) {
     let (from_id, to_id) = get_from_and_to_packet_send(p);
     let log = get_log_packet_sent(p, to_id);
     let stat_index = get_packet_stat_index(&p.pack_type);
@@ -80,7 +80,7 @@ pub fn handle_packet_received(
     receiver_id: NodeId,
     receiver_type: NodeType,
     p: &Packet,
-    data_ref: Arc<Mutex<SimulationData>>,
+    data_ref: &Arc<Mutex<SimulationData>>,
 ) {
     let log = get_log_packet_received(p, receiver_id);
     let stat_index = get_packet_stat_index(&p.pack_type);

@@ -26,14 +26,14 @@ pub fn receiver_loop(
             }
             recv(rec_client) -> packet => {
                 if let Ok(event) = packet {
-                    handle_event(Arc::clone(&data_ref), event);
+                    handle_event(&data_ref, event);
                 }
             }
         }
     }
 }
 
-fn handle_event(data_ref: Arc<Mutex<SimulationData>>, event: ServerEvent) {
+fn handle_event(data_ref: &Arc<Mutex<SimulationData>>, event: ServerEvent) {
     match event {
         ServerEvent::PacketSent(p) => handle_packet_sent(data_ref, &p),
         ServerEvent::PacketReceived(p, id) => handle_packet_received(data_ref, &p, id),
@@ -46,16 +46,16 @@ fn handle_event(data_ref: Arc<Mutex<SimulationData>>, event: ServerEvent) {
     }
 }
 
-fn handle_packet_sent(data_ref: Arc<Mutex<SimulationData>>, p: &Packet) {
+fn handle_packet_sent(data_ref: &Arc<Mutex<SimulationData>>, p: &Packet) {
     helper::handle_packet_sent(NodeType::Server, p, data_ref);
 }
 
-fn handle_packet_received(data_ref: Arc<Mutex<SimulationData>>, p: &Packet, id: NodeId) {
+fn handle_packet_received(data_ref: &Arc<Mutex<SimulationData>>, p: &Packet, id: NodeId) {
     helper::handle_packet_received(id, NodeType::Server, p, data_ref);
 }
 
 fn handle_message_assembled(
-    data_ref: Arc<Mutex<SimulationData>>,
+    data_ref: &Arc<Mutex<SimulationData>>,
     body: ClientBody,
     from: NodeId,
     to: NodeId,
@@ -69,7 +69,7 @@ fn handle_message_assembled(
 }
 
 fn handle_message_fragmented(
-    data_ref: Arc<Mutex<SimulationData>>,
+    data_ref: &Arc<Mutex<SimulationData>>,
     body: ServerBody,
     from: NodeId,
     to: NodeId,

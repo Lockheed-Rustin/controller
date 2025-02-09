@@ -22,14 +22,14 @@ pub fn receiver_loop(
             }
             recv(rec_client) -> packet => {
                 if let Ok(event) = packet {
-                    handle_event(Arc::clone(&data_ref), event);
+                    handle_event(&data_ref, event);
                 }
             }
         }
     }
 }
 
-fn handle_event(data_ref: Arc<Mutex<SimulationData>>, event: DroneEvent) {
+fn handle_event(data_ref: &Arc<Mutex<SimulationData>>, event: DroneEvent) {
     match event {
         DroneEvent::PacketSent(p) => {
             handle_packet_sent(data_ref, &p);
@@ -43,7 +43,7 @@ fn handle_event(data_ref: Arc<Mutex<SimulationData>>, event: DroneEvent) {
     }
 }
 
-fn handle_packet_dropped(data_ref: Arc<Mutex<SimulationData>>, p: &Packet) {
+fn handle_packet_dropped(data_ref: &Arc<Mutex<SimulationData>>, p: &Packet) {
     let drone_id = p.routing_header.hops[p.routing_header.hop_index];
     let from_id = p.routing_header.hops[p.routing_header.hop_index - 1];
     let mut data = data_ref.lock().unwrap();
@@ -64,11 +64,11 @@ fn handle_packet_dropped(data_ref: Arc<Mutex<SimulationData>>, p: &Packet) {
     data.ctx.request_repaint();
 }
 
-fn handle_packet_sent(data_ref: Arc<Mutex<SimulationData>>, p: &Packet) {
+fn handle_packet_sent(data_ref: &Arc<Mutex<SimulationData>>, p: &Packet) {
     helper::handle_packet_sent(NodeType::Drone, p, data_ref);
 }
 
-fn handle_controller_shortcut(data_ref: Arc<Mutex<SimulationData>>, p: &Packet) {
+fn handle_controller_shortcut(data_ref: &Arc<Mutex<SimulationData>>, p: &Packet) {
     // TODO: check who really sent it
     // let from_id = p.routing_header.hops[p.routing_header.hop_index];
     // let to_id = *p.routing_header.hops.last().unwrap();
