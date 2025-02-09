@@ -11,4 +11,7 @@ egui_graphs = "0.23.0"
 petgraph = "0.6.5"
 wg_2024 =  { git = "https://github.com/WGL-2024/WGL_repo_2024.git", features = ["serialize"] }
 drone-networks = { git = "https://github.com/Lockheed-Rustin/drone-network.git", branch = "client-server-test" }
+lockheedrustin-drone = { git = "https://github.com/Lockheed-Rustin/drone.git" }
+
+
 

@@ -38,7 +38,7 @@ fn handle_event(data_ref: Arc<Mutex<SimulationData>>, event: DroneEvent) {
             handle_packet_dropped(data_ref, &p);
         }
         DroneEvent::ControllerShortcut(p) => {
-            handle_controller_shortcut(data_ref, p);
+            handle_controller_shortcut(data_ref, &p);
         }
     }
 }
@@ -51,7 +51,7 @@ fn handle_packet_dropped(data_ref: Arc<Mutex<SimulationData>>, p: &Packet) {
     // add log
     data.add_log(
         drone_id,
-        format!("Dropped fragment sent by node #{}", from_id),
+        format!("Dropped fragment sent by node #{from_id}"),
         Color32::LIGHT_RED,
     );
 
@@ -68,7 +68,7 @@ fn handle_packet_sent(data_ref: Arc<Mutex<SimulationData>>, p: &Packet) {
     helper::handle_packet_sent(NodeType::Drone, p, data_ref);
 }
 
-fn handle_controller_shortcut(data_ref: Arc<Mutex<SimulationData>>, p: Packet) {
+fn handle_controller_shortcut(data_ref: Arc<Mutex<SimulationData>>, p: &Packet) {
     // TODO: check who really sent it
     // let from_id = p.routing_header.hops[p.routing_header.hop_index];
     // let to_id = *p.routing_header.hops.last().unwrap();

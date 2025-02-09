@@ -43,8 +43,7 @@ fn get_log_packet_sent(p: &Packet, to_id: Option<NodeId>) -> Option<(String, Col
 fn get_log_line_packet_sent(p: &Packet, to_id: Option<NodeId>) -> Option<String> {
     let to_id = to_id?;
     match &p.pack_type {
-        PacketType::FloodResponse(_) => None,
-        PacketType::FloodRequest(_) => None,
+        PacketType::FloodResponse(_) | PacketType::FloodRequest(_) => None,
         _ => Some(format!(
             "{} sent to node #{}",
             get_packet_type_str(&p.pack_type),
@@ -118,19 +117,17 @@ fn get_log_packet_received(p: &Packet, from_id: NodeId) -> Option<(String, Color
 
 fn get_log_line_packet_received(p: &Packet, receiver_id: NodeId) -> Option<String> {
     match &p.pack_type {
-        PacketType::FloodResponse(_) => None,
-        PacketType::FloodRequest(_) => None,
+        PacketType::FloodResponse(_) | PacketType::FloodRequest(_) => None,
         _ => {
             let from_str = if is_shortcut(p, receiver_id) {
                 "SimulationController".to_string()
             } else {
                 let from_id = get_from_packet_received(p);
-                format!("node #{}", from_id)
+                format!("node #{from_id}")
             };
             Some(format!(
-                "Received {} from {}",
+                "Received {} from {from_str}",
                 get_packet_type_str(&p.pack_type),
-                from_str
             ))
         }
     }
@@ -216,7 +213,7 @@ pub fn get_log_line_client_body(client_body: ClientBody) -> String {
         ClientBody::ClientContent(ccb) => match ccb {
             ClientContentBody::ReqFilesList => "Content - Request files list".to_string(),
             ClientContentBody::ReqFile(f) => {
-                format!("Content - Request file\n  File: {}", f)
+                format!("Content - Request file\n  File: {f}")
             }
         },
         ClientBody::ClientCommunication(ccb) => match ccb {
@@ -242,24 +239,21 @@ pub fn get_log_line_server_body(client_body: ServerBody) -> String {
     let mut res = "  Type: ".to_string();
     let type_str = match client_body {
         ServerBody::RespServerType(t) => {
-            format!("Response server type\n  Message content: {:?}", t)
+            format!("Response server type\n  Message content: {t:?}")
         }
         ServerBody::ErrUnsupportedRequestType => "Error - Unsupported request type".to_string(),
         ServerBody::ServerContent(scb) => match scb {
             ServerContentBody::RespFilesList(v) => {
-                format!("Content - Response files list\n  Message content: {:?}", v)
+                format!("Content - Response files list\n  Message content: {v:?}")
             }
             ServerContentBody::RespFile(v) => {
-                format!("Content - Response files list\n  Message content: {:?}", v)
+                format!("Content - Response files list\n  Message content: {v:?}")
             }
             ServerContentBody::ErrFileNotFound => "Error - File not found".to_string(),
         },
         ServerBody::ServerCommunication(scb) => match scb {
             ServerCommunicationBody::RespClientList(v) => {
-                format!(
-                    "Communication - Response clients list\n  Message content: {:?}",
-                    v
-                )
+                format!("Communication - Response clients list\n  Message content: {v:?}",)
             }
             ServerCommunicationBody::MessageReceive(cm) => {
                 format!(
