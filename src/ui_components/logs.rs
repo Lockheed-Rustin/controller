@@ -4,10 +4,10 @@ use eframe::egui::{Color32, RichText, ScrollArea, Ui};
 
 use wg_2024::network::NodeId;
 
-use crate::data::SimulationData;
+use crate::shared_data::SimulationData;
 use crate::ui_components::text::spawn_white_heading;
 
-pub fn spawn_logs(ui: &mut Ui, mutex: &MutexGuard<SimulationData>, id: NodeId) {
+pub fn spawn(ui: &mut Ui, mutex: &MutexGuard<SimulationData>, id: NodeId) {
     spawn_white_heading(ui, "History");
     ui.add_space(5.0);
     ui.group(|ui| {

@@ -7,7 +7,7 @@ use std::fmt::{Display, Formatter};
 use std::sync::MutexGuard;
 
 use crate::app::simulation_controller_ui::ClientWindowState;
-use crate::data::SimulationData;
+use crate::shared_data::SimulationData;
 use crate::ui_components;
 use wg_2024::network::NodeId;
 
@@ -37,7 +37,7 @@ pub enum CommunicationChoice {
     ReqClientsList,
 }
 
-pub fn spawn_client_window(
+pub fn spawn(
     ctx: &Context,
     mutex: &mut MutexGuard<SimulationData>,
     id: NodeId,
@@ -50,9 +50,9 @@ pub fn spawn_client_window(
         .open(open)
         .fixed_size(vec2(400.0, 300.0))
         .show(ctx, |ui| {
-            ui_components::stats::spawn_client_stats(ui, mutex, id);
+            ui_components::stats::spawn_client(ui, mutex, id);
             // logs
-            ui_components::logs::spawn_logs(ui, mutex, id);
+            ui_components::logs::spawn(ui, mutex, id);
             if ui.button("Clear log").clicked() {
                 mutex.clear_log(id);
             }
