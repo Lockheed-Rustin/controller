@@ -101,12 +101,12 @@ impl SimulationControllerUI {
         let mut res = Self {
             section: Section::Control,
             ctx: cc.egui_ctx.clone(),
-            handles: Default::default(),
-            kill_senders: Default::default(),
+            handles: Vec::default(),
+            kill_senders: Vec::default(),
             simulation_data_ref: None,
-            nodes: Default::default(),
+            nodes: HashMap::default(),
             graph: egui_graphs::Graph::from(&StableUnGraph::default()),
-            graph_index_map: Default::default(),
+            graph_index_map: HashMap::default(),
         };
         res.reset();
         res
@@ -114,7 +114,7 @@ impl SimulationControllerUI {
 
     pub fn reset(&mut self) {
         // kill old receiving threads
-        for s in self.kill_senders.iter() {
+        for s in &self.kill_senders {
             s.send(())
                 .expect("Error in sending kill message to receiving threads");
         }
@@ -133,11 +133,15 @@ impl SimulationControllerUI {
         // get all node ids
         self.nodes.clear();
         for id in sc.get_drone_ids() {
-            let mut dws = DroneWindowState::default();
-            dws.pdr_slider = sc.get_pdr(id).unwrap();
             self.nodes.insert(
                 id,
-                NodeWindowState::Drone(false, dws),
+                NodeWindowState::Drone(
+                    false,
+                    DroneWindowState {
+                        pdr_slider: sc.get_pdr(id).unwrap(),
+                        ..Default::default()
+                    },
+                ),
             );
         }
         for id in sc.get_client_ids() {
@@ -329,7 +333,7 @@ impl SimulationControllerUI {
             ui.heading("Clients");
             ui.indent("clients", |ui| {
                 let mut v = self.get_ids(NodeType::Client);
-                v.sort();
+                v.sort_unstable();
                 for id in v {
                     self.spawn_node_list_element(ui, id, "Client");
                 }
@@ -339,7 +343,7 @@ impl SimulationControllerUI {
             ui.heading("Servers");
             ui.indent("servers", |ui| {
                 let mut v = self.get_ids(NodeType::Server);
-                v.sort();
+                v.sort_unstable();
                 for id in v {
                     self.spawn_node_list_element(ui, id, "Server");
                 }
@@ -349,7 +353,7 @@ impl SimulationControllerUI {
             ui.heading("Drones");
             ui.indent("drones", |ui| {
                 let mut v = self.get_ids(NodeType::Drone);
-                v.sort();
+                v.sort_unstable();
                 for id in v {
                     self.spawn_node_list_element(ui, id, "Drone");
                 }
@@ -372,12 +376,12 @@ impl SimulationControllerUI {
     pub fn spawn_node_window(&mut self, ctx: &Context, id: NodeId) {
         // TODO: very inefficient
         let mut node_ids = self.get_all_ids();
-        node_ids.sort();
+        node_ids.sort_unstable();
         let mut other_client_ids: Vec<NodeId> = self.get_ids(NodeType::Client);
         other_client_ids.retain(|i| *i != id);
-        other_client_ids.sort();
+        other_client_ids.sort_unstable();
         let mut server_ids: Vec<NodeId> = self.get_ids(NodeType::Server);
-        server_ids.sort();
+        server_ids.sort_unstable();
 
         let binding = self.simulation_data_ref.clone().unwrap();
         let mut mutex = binding.lock().unwrap();
@@ -389,7 +393,13 @@ impl SimulationControllerUI {
             }
             NodeWindowState::Client(open, state) => {
                 ui_components::client_window::spawn_client_window(
-                    ctx, &mut mutex, id, other_client_ids, server_ids, open, state,
+                    ctx,
+                    &mut mutex,
+                    id,
+                    other_client_ids,
+                    server_ids,
+                    open,
+                    state,
                 );
             }
             NodeWindowState::Server(open) => {
@@ -398,16 +408,15 @@ impl SimulationControllerUI {
         }
     }
 
-
     fn spawn_node_list_element(&mut self, ui: &mut Ui, id: NodeId, s: &'static str) {
         ui.add_space(5.0);
         let open = match self.nodes.get_mut(&id).unwrap() {
-            NodeWindowState::Drone(o, _) => o,
-            NodeWindowState::Client(o, _) => o,
-            NodeWindowState::Server(o) => o,
+            NodeWindowState::Client(o, _)
+            | NodeWindowState::Drone(o, _)
+            | NodeWindowState::Server(o) => o,
         };
         let marker = if *open { "> " } else { "" };
-        let response = ui.add(Label::new(format!("{}{} #{}", marker, s, id)).sense(Sense::click()));
+        let response = ui.add(Label::new(format!("{marker}{s} #{id}")).sense(Sense::click()));
         if response.hovered() {
             ui.ctx().set_cursor_icon(CursorIcon::PointingHand);
         }
@@ -419,7 +428,7 @@ impl SimulationControllerUI {
 
     fn get_ids(&self, node_type: NodeType) -> Vec<NodeId> {
         let mut res = vec![];
-        for (id, state) in self.nodes.iter() {
+        for (id, state) in &self.nodes {
             match state {
                 NodeWindowState::Drone(_, _) => {
                     if node_type == NodeType::Drone {

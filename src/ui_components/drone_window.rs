@@ -38,8 +38,7 @@ pub fn spawn_drone_window(
                     .selected_text(
                         state
                             .add_link_selected_id
-                            .map(|num| num.to_string())
-                            .unwrap_or_else(|| "-".to_string()),
+                            .map_or_else(|| "-".to_string(), |num| num.to_string()),
                     )
                     .show_ui(ui, |ui| {
                         for number in node_ids {
@@ -59,12 +58,12 @@ pub fn spawn_drone_window(
                                     // push log to other node as well
                                     mutex.add_log(
                                         sid,
-                                        format!("Link added with node {}", id),
+                                        format!("Link added with node {id}"),
                                         Color32::WHITE,
                                     );
-                                    format!("Link added with node {}", sid)
+                                    format!("Link added with node {sid}")
                                 }
-                                None => format!("Failed to add link with node {}", sid),
+                                None => format!("Failed to add link with node {sid}"),
                             }
                         }
                     };
