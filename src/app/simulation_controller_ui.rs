@@ -253,8 +253,8 @@ impl SimulationControllerUI {
                     ctx,
                     &mut mutex,
                     id,
-                    other_client_ids,
-                    server_ids,
+                    &other_client_ids,
+                    &server_ids,
                     open,
                     state,
                 );
@@ -343,7 +343,7 @@ impl SimulationControllerUI {
         let mutex = binding.lock().unwrap();
         let current_edges: Vec<(NodeId, NodeId, _)> = mutex.sc.get_topology().all_edges().collect();
 
-        for (id1, id2, _) in current_edges {
+        for (id1, id2, ()) in current_edges {
             let i1 = NodeIndex::from(*self.graph_index_map.get(&id1).unwrap());
             let i2 = NodeIndex::from(*self.graph_index_map.get(&id2).unwrap());
             let are_connected = self.graph.edges_connecting(i1, i2).count() > 0;

@@ -1,7 +1,8 @@
-use std::collections::{HashMap, VecDeque};
-use std::fs;
-use std::mem::take;
-use std::sync::{Arc, Mutex};
+use crate::app::simulation_controller_ui::{
+    ClientWindowState, DroneWindowState, SimulationControllerUI,
+};
+use crate::data::{ClientStats, DroneStats, ServerStats, SimulationData};
+use crate::receiver_threads;
 use crossbeam_channel::unbounded;
 use drone_networks::controller::SimulationController;
 use drone_networks::network::init_network;
@@ -9,15 +10,15 @@ use eframe::egui::Color32;
 use petgraph::graph::NodeIndex;
 use petgraph::graphmap::UnGraphMap;
 use petgraph::prelude::StableUnGraph;
+use std::collections::{HashMap, VecDeque};
+use std::fs;
+use std::mem::take;
+use std::sync::{Arc, Mutex};
 use wg_2024::config::Config;
 use wg_2024::network::NodeId;
 use wg_2024::packet::NodeType;
-use crate::app::simulation_controller_ui::{ClientWindowState, DroneWindowState, SimulationControllerUI};
-use crate::data::{ClientStats, DroneStats, ServerStats, SimulationData};
-use crate::receiver_threads;
 
 impl SimulationControllerUI {
-
     pub fn reset(&mut self) {
         self.kill_old_receiving_threads();
 
@@ -86,7 +87,6 @@ impl SimulationControllerUI {
         }
         self.handles.clear();
         self.kill_senders.clear();
-
     }
 
     fn get_simulation_controller() -> SimulationController {
@@ -112,11 +112,17 @@ impl SimulationControllerUI {
         for id in sc.get_client_ids() {
             self.nodes.insert(
                 id,
-                crate::app::simulation_controller_ui::NodeWindowState::Client(false, ClientWindowState::default()),
+                crate::app::simulation_controller_ui::NodeWindowState::Client(
+                    false,
+                    ClientWindowState::default(),
+                ),
             );
         }
         for id in sc.get_server_ids() {
-            self.nodes.insert(id, crate::app::simulation_controller_ui::NodeWindowState::Server(false));
+            self.nodes.insert(
+                id,
+                crate::app::simulation_controller_ui::NodeWindowState::Server(false),
+            );
         }
     }
 
@@ -128,21 +134,21 @@ impl SimulationControllerUI {
         logs
     }
 
-    fn get_new_drone_stats(&self) -> HashMap<NodeId, DroneStats>{
+    fn get_new_drone_stats(&self) -> HashMap<NodeId, DroneStats> {
         let mut drone_stats = HashMap::new();
         for drone_id in self.get_ids(NodeType::Drone) {
             drone_stats.insert(drone_id, DroneStats::default());
         }
         drone_stats
     }
-    fn get_new_client_stats(&self) -> HashMap<NodeId, ClientStats>{
+    fn get_new_client_stats(&self) -> HashMap<NodeId, ClientStats> {
         let mut client_stats = HashMap::new();
         for client_id in self.get_ids(NodeType::Client) {
             client_stats.insert(client_id, ClientStats::default());
         }
         client_stats
     }
-    fn get_new_server_stats(&self) -> HashMap<NodeId, ServerStats>{
+    fn get_new_server_stats(&self) -> HashMap<NodeId, ServerStats> {
         let mut server_stats = HashMap::new();
         for server_id in self.get_ids(NodeType::Server) {
             server_stats.insert(server_id, ServerStats::default());
@@ -184,4 +190,3 @@ impl SimulationControllerUI {
         self.graph = egui_graphs::Graph::from(&sg);
     }
 }
-
