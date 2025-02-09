@@ -2,7 +2,7 @@ use std::sync::MutexGuard;
 
 use eframe::egui::{vec2, Color32, ComboBox, Context, Slider, Window};
 
-use crate::app::DroneWindowState;
+use crate::app::simulation_controller_ui::DroneWindowState;
 use crate::data::SimulationData;
 use crate::ui_components;
 use wg_2024::network::NodeId;
@@ -15,7 +15,7 @@ pub fn spawn_drone_window(
     open: &mut bool,
     state: &mut DroneWindowState,
 ) {
-    Window::new(format!("Drone #{}", id))
+    Window::new(format!("Drone #{id}"))
         .open(open)
         .fixed_size(vec2(400.0, 300.0))
         .show(ctx, |ui| {
@@ -54,7 +54,7 @@ pub fn spawn_drone_window(
                         None => "Error: id not selected".to_string(),
                         Some(sid) => {
                             match mutex.sc.add_edge(id, sid) {
-                                Some(_) => {
+                                Some(()) => {
                                     // push log to other node as well
                                     mutex.add_log(
                                         sid,
@@ -83,7 +83,7 @@ pub fn spawn_drone_window(
                 ));
                 if response.drag_stopped() || response.lost_focus() {
                     let log_line = match mutex.sc.set_pdr(id, state.pdr_slider) {
-                        Some(_) => format!("Changed PDR to {}", state.pdr_slider),
+                        Some(()) => format!("Changed PDR to {}", state.pdr_slider),
                         None => "Failed to change PDR".to_string(),
                     };
                     mutex.add_log(id, log_line, Color32::WHITE);
