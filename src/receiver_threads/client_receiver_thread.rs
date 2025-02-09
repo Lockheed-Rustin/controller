@@ -103,16 +103,18 @@ fn load_file(
     if infer::is_image(&v) {
         let image = image::load_from_memory(&v).expect("Failed to load image");
         let size = [image.width() as usize, image.height() as usize];
-
-        // Convert the image to RGBA format
         let rgba = image.to_rgba8();
-
         let color_image = ColorImage::from_rgba_unmultiplied(size, &rgba);
-
         let texture = data.ctx.load_texture("my_texture", color_image, TextureOptions::default());
         data.files.push(ContentFile{
             name: "Immagine".to_string(),
             file: ContentFileType::Image(texture),
+        });
+    } else {
+        let text = String::from_utf8_lossy(&v).to_string();
+        data.files.push(ContentFile{
+            name: "Testo".to_string(),
+            file: ContentFileType::Text(text)
         });
     }
 }
