@@ -2,7 +2,7 @@ use app::simulation_controller_ui;
 use eframe::egui;
 
 mod app;
-pub mod data;
+pub mod shared_data;
 mod receiver_threads;
 mod ui_components;
 

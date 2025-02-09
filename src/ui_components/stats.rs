@@ -4,10 +4,10 @@ use eframe::egui::{Direction, Grid, Layout, Ui};
 
 use wg_2024::network::NodeId;
 
-use crate::data::SimulationData;
+use crate::shared_data::SimulationData;
 use crate::ui_components::text::spawn_white_heading;
 
-pub fn spawn_drone_stats(ui: &mut Ui, mutex: &MutexGuard<SimulationData>, id: NodeId) {
+pub fn spawn_drone(ui: &mut Ui, mutex: &MutexGuard<SimulationData>, id: NodeId) {
     let stats = mutex.drone_stats.get(&id).unwrap();
     spawn_white_heading(ui, "Statistics");
     Grid::new("done_stats").striped(true).show(ui, |ui| {
@@ -37,7 +37,7 @@ pub fn spawn_drone_stats(ui: &mut Ui, mutex: &MutexGuard<SimulationData>, id: No
     ui.monospace(format!("Fragments dropped: {}", stats.fragments_dropped));
 }
 
-pub fn spawn_client_stats(ui: &mut Ui, mutex: &MutexGuard<SimulationData>, id: NodeId) {
+pub fn spawn_client(ui: &mut Ui, mutex: &MutexGuard<SimulationData>, id: NodeId) {
     let stats = mutex.client_stats.get(&id).unwrap();
     spawn_white_heading(ui, "Statistics");
     Grid::new("client_stats").striped(true).show(ui, |ui| {
@@ -91,7 +91,7 @@ pub fn spawn_client_stats(ui: &mut Ui, mutex: &MutexGuard<SimulationData>, id: N
 }
 
 // copy of client
-pub fn spawn_server_stats(ui: &mut Ui, mutex: &MutexGuard<SimulationData>, id: NodeId) {
+pub fn spawn_server(ui: &mut Ui, mutex: &MutexGuard<SimulationData>, id: NodeId) {
     let stats = mutex.server_stats.get(&id).unwrap();
     spawn_white_heading(ui, "Statistics");
     Grid::new("server_stats").striped(true).show(ui, |ui| {
