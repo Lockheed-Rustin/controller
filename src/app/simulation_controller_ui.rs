@@ -111,7 +111,7 @@ impl SimulationControllerUI {
             graph: egui_graphs::Graph::from(&StableUnGraph::default()),
             graph_index_map: HashMap::default(),
         };
-        res.reset_with_our_drone();
+        res.reset_with_fair_drones();
         res
     }
 
