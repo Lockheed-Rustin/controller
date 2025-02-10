@@ -8,6 +8,7 @@ use wg_2024::network::NodeId;
 
 const MAX_LOG_LENGTH: usize = 100;
 
+/// Data about the simulation that will be shared between the program's threads
 pub struct SimulationData {
     pub sc: SimulationController,
     logs: HashMap<NodeId, VecDeque<(String, Color32)>>,
@@ -39,7 +40,7 @@ impl SimulationData {
         }
     }
 
-    /// adds a log entry for the node that matches id.
+    /// Adds a log entry for the node that matches id.
     /// # Panics
     /// Will panic if the id is not present.
     pub fn add_log(&mut self, id: NodeId, str: String, color: Color32) {
@@ -50,7 +51,7 @@ impl SimulationData {
         v.push_back((str, color));
     }
 
-    /// clears logs for the node that matches id.
+    /// Clears logs for the node that matches id.
     /// # Panics
     /// Will panic if the id is not present.
     pub fn clear_log(&mut self, id: NodeId) {
@@ -58,6 +59,7 @@ impl SimulationData {
         v.clear();
     }
 
+    /// Clears all logs.
     pub fn clear_all_logs(&mut self) {
         for v in self.logs.values_mut() {
             v.clear();
@@ -74,6 +76,7 @@ impl SimulationData {
     }
 }
 
+/// Statistics about drones. Contained inside `SimulationData`
 #[derive(Default)]
 pub struct DroneStats {
     // 0:Fragment, 1:Ack, 2:Nack, 3:Flood Req, 4:Flood Resp
@@ -81,6 +84,7 @@ pub struct DroneStats {
     pub fragments_dropped: u64,
 }
 
+/// Statistics about clients. Contained inside `SimulationData`
 #[derive(Default)]
 pub struct ClientStats {
     // 0:Fragment, 1:Ack, 2:Nack, 3:Flood Req, 4:Flood Resp
@@ -90,6 +94,7 @@ pub struct ClientStats {
     pub messages_fragmented: u64,
 }
 
+/// Statistics about servers. Contained inside `SimulationData`
 #[derive(Default)]
 pub struct ServerStats {
     // 0:Fragment, 1:Ack, 2:Nack, 3:Flood Req, 4:Flood Resp
