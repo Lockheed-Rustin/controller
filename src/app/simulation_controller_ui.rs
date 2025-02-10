@@ -105,6 +105,9 @@ impl eframe::App for SimulationControllerUI {
 }
 
 impl SimulationControllerUI {
+    /// Returns a new app.
+    /// # Panics
+    /// Will panic if the topology contained in config.toml violates the protocol.
     pub fn new(cc: &CreationContext<'_>) -> Self {
         let mut res = Self {
             section: Section::Control,

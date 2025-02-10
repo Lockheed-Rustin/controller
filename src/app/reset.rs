@@ -21,16 +21,22 @@ use wg_2024::packet::NodeType;
 
 impl SimulationControllerUI {
     /// resets the app with `LockheedRustin` drones.
+    /// # Panics
+    /// Will panic if the topology contained in config.toml violates the protocol.
     pub fn reset_with_our_drone(&mut self) {
         self.reset(false);
     }
 
     /// resets the app with the drones bought during the fair.
+    /// # Panics
+    /// Will panic if the topology contained in config.toml violates the protocol.
     pub fn reset_with_fair_drones(&mut self) {
         self.reset(true);
     }
 
     /// resets the app.
+    /// # Panics
+    /// Will panic if the topology contained in config.toml violates the protocol.
     fn reset(&mut self, random_drones: bool) {
         self.kill_old_receiving_threads();
         // delete all file windows

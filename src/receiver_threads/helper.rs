@@ -73,7 +73,7 @@ fn get_log_color_packet(p: &Packet) -> Option<Color32> {
 
 /// get the `NodeId` of sender and receiver of a packet. This assumes that
 /// all nodes follow the protocol.
-/// #Panics
+/// # Panics
 /// This might panic if a node does not follow the protocol regarding packets.
 fn get_from_and_to_packet_send(p: &Packet) -> (NodeId, Option<NodeId>) {
     let from_id = if let PacketType::FloodRequest(fr) = &p.pack_type {
@@ -153,7 +153,7 @@ fn get_log_line_packet_received(p: &Packet, receiver_id: NodeId) -> Option<Strin
 
 /// get the `NodeId` of sender of a packet. This assumes that
 /// all nodes follow the protocol.
-/// #Panics
+/// # Panics
 /// This might panic if a node does not follow the protocol regarding packets.
 fn get_from_packet_received(p: &Packet) -> NodeId {
     let from_id = if let PacketType::FloodRequest(fr) = &p.pack_type {
