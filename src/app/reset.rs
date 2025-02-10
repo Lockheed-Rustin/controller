@@ -68,19 +68,28 @@ impl SimulationControllerUI {
         // spawn receiving threads
         let arc_clone = self.simulation_data_ref.clone().unwrap();
         let handle = std::thread::spawn(move || {
-            receiver_threads::drone_receiver_loop(arc_clone, drone_receiver, kill_drone_recv);
+            let arc = arc_clone;
+            let event_recv = drone_receiver;
+            let kill_recv = kill_drone_recv;
+            receiver_threads::drone_receiver_loop(&arc, &event_recv, &kill_recv);
         });
         self.handles.push(handle);
 
         let arc_clone = self.simulation_data_ref.clone().unwrap();
         let handle = std::thread::spawn(move || {
-            receiver_threads::client_receiver_loop(arc_clone, client_receiver, kill_client_recv);
+            let arc = arc_clone;
+            let event_recv = client_receiver;
+            let kill_recv = kill_client_recv;
+            receiver_threads::client_receiver_loop(&arc, &event_recv, &kill_recv);
         });
         self.handles.push(handle);
 
         let arc_clone = self.simulation_data_ref.clone().unwrap();
         let handle = std::thread::spawn(move || {
-            receiver_threads::server_receiver_loop(arc_clone, server_receiver, kill_server_recv);
+            let arc = arc_clone;
+            let event_recv = server_receiver;
+            let kill_recv = kill_server_recv;
+            receiver_threads::server_receiver_loop(&arc, &event_recv, &kill_recv);
         });
         self.handles.push(handle);
     }
