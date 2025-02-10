@@ -41,6 +41,8 @@ pub enum CommunicationChoice {
 }
 
 /// Spawns the client window.
+/// #Arguments
+/// `id` is the id of the drone whose window needs to be spawned.
 pub fn spawn(
     ctx: &Context,
     mutex: &mut MutexGuard<SimulationData>,
