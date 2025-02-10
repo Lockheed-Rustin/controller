@@ -64,10 +64,9 @@ fn handle_message_assembled(
     let mut data = data_ref.lock().unwrap();
     data.add_log(to, log_line, Color32::WHITE);
     data.client_stats.get_mut(&to).unwrap().messages_assembled += 1;
-    if let ServerBody::ServerContent(scb) = body {
-        if let ServerContentBody::RespFile(v) = scb {
-            load_file(&mut data, v);
-        }
+
+    if let ServerBody::ServerContent(ServerContentBody::RespFile(v)) = body {
+        load_file(&mut data, v);
     }
     data.ctx.request_repaint();
 }
@@ -79,7 +78,7 @@ fn handle_message_fragmented(
     to: NodeId,
 ) {
     let mut log_line = format!("Fragmented message for server #{to}\n");
-    log_line.push_str(&helper::get_log_line_client_body(body));
+    log_line.push_str(&helper::get_log_line_client_body(&body));
     let mut data = data_ref.lock().unwrap();
     data.add_log(from, log_line, Color32::WHITE);
     data.client_stats

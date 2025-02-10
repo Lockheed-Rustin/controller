@@ -206,7 +206,7 @@ fn get_packet_type_str(t: &PacketType) -> &'static str {
 //     res
 // }
 
-pub fn get_log_line_client_body(client_body: ClientBody) -> String {
+pub fn get_log_line_client_body(client_body: &ClientBody) -> String {
     let mut res = "  Type: ".to_string();
     let type_str = match client_body {
         ClientBody::ReqServerType => "Request server type".to_string(),

@@ -121,8 +121,8 @@ impl SimulationControllerUI {
         // sidebar
         self.sidebar(ctx);
         // file windows
-        for (open, fws) in self.files.iter_mut() {
-            ui_components::file_window::spawn_file_window(ctx, open, fws);
+        for (open, fws) in &mut self.files {
+            ui_components::file_window::spawn(ctx, open, fws);
         }
         // node windows
         CentralPanel::default().show(ctx, |_ui| {
