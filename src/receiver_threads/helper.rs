@@ -250,7 +250,6 @@ pub fn get_log_line_server_body(client_body: &ServerBody) -> String {
             ServerContentBody::RespFile(_) => {
                 // format!("Content - Response file\n  Message content: {v:?}")
                 "Content - Response\n  File: [bytes]".to_string()
-
             }
             ServerContentBody::ErrFileNotFound => "Error - File not found".to_string(),
         },

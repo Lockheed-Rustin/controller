@@ -364,7 +364,7 @@ fn send(
     };
     mutex
         .sc
-        .client_send_message(id, state.server_destination_id?, client_body)
+        .client_send_message(id, state.server_destination_id?, client_body).ok()
 }
 
 impl Display for MessageChoice {
