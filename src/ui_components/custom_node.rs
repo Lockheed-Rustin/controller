@@ -9,6 +9,7 @@ use wg_2024::packet::NodeType;
 const RADIUS: f32 = 5.0;
 const COLOR: Color32 = Color32::WHITE;
 
+/// Struct for rendering a custom node in the Topology section
 #[derive(Clone)]
 pub struct NodeShape {
     label: String,
@@ -80,11 +81,13 @@ impl<E: Clone, Ty: EdgeType, Ix: IndexType> DisplayNode<(NodeId, NodeType), E, T
 }
 
 impl NodeShape {
+    /// Returns a vector containing the shapes used for rendering a client node
     fn get_client_shapes(screen_center: Pos2, screen_radius: f32) -> Vec<Shape> {
         let shape_circle = Shape::circle_filled(screen_center, screen_radius, COLOR);
         vec![shape_circle]
     }
 
+    /// Returns a vector containing the shapes used for rendering a server node
     fn get_server_shapes(screen_center: Pos2, screen_radius: f32) -> Vec<Shape> {
         let shape_rect = Shape::Rect(RectShape {
             rect: Rect::from_center_size(
@@ -101,6 +104,7 @@ impl NodeShape {
         vec![shape_rect]
     }
 
+    /// Returns a vector containing the shapes used for rendering a drone node
     fn get_drone_shapes(screen_center: Pos2, screen_radius: f32) -> Vec<Shape> {
         let shape_rect = Shape::Rect(RectShape {
             rect: Rect::from_center_size(
