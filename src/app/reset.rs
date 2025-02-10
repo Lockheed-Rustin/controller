@@ -1,12 +1,13 @@
 use crate::app::simulation_controller_ui::{
     ClientWindowState, DroneWindowState, SimulationControllerUI,
 };
-use crate::shared_data::{ClientStats, DroneStats, ServerStats, SimulationData};
 use crate::receiver_threads;
+use crate::shared_data::{ClientStats, DroneStats, ServerStats, SimulationData};
 use crossbeam_channel::unbounded;
 use drone_network::controller::SimulationController;
 use drone_network::network::{init_network, init_network_with_drone};
 use eframe::egui::Color32;
+use lockheedrustin_drone::LockheedRustin;
 use petgraph::graph::NodeIndex;
 use petgraph::graphmap::UnGraphMap;
 use petgraph::prelude::StableUnGraph;
@@ -17,10 +18,8 @@ use std::sync::{Arc, Mutex};
 use wg_2024::config::Config;
 use wg_2024::network::NodeId;
 use wg_2024::packet::NodeType;
-use lockheedrustin_drone::LockheedRustin;
 
 impl SimulationControllerUI {
-
     /// resets the app with `LockheedRustin` drones.
     pub fn reset_with_our_drone(&mut self) {
         self.reset(false);
@@ -121,7 +120,8 @@ impl SimulationControllerUI {
         if random_drones {
             init_network(&config).unwrap()
         } else {
-            init_network_with_drone::<LockheedRustin>(&config, "Lockheed Rustin".to_string()).unwrap()
+            init_network_with_drone::<LockheedRustin>(&config, "Lockheed Rustin".to_string())
+                .unwrap()
         }
     }
 

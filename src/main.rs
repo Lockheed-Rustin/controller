@@ -2,8 +2,8 @@ use app::simulation_controller_ui;
 use eframe::egui;
 
 mod app;
-pub mod shared_data;
 mod receiver_threads;
+pub mod shared_data;
 mod ui_components;
 
 fn main() -> eframe::Result {

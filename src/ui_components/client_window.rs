@@ -255,7 +255,12 @@ fn spawn_server_combobox(ui: &mut Ui, server_ids: &[NodeId], state: &mut ClientW
 }
 
 /// Spawns the drop-down menu for choosing the client id.
-fn spawn_client_combobox(ui: &mut Ui, id: NodeId, client_ids: &[NodeId], state: &mut ClientWindowState) {
+fn spawn_client_combobox(
+    ui: &mut Ui,
+    id: NodeId,
+    client_ids: &[NodeId],
+    state: &mut ClientWindowState,
+) {
     ui.label("Destination (Client) id:");
     ComboBox::from_id_salt("client")
         .width(50.0)
@@ -364,7 +369,8 @@ fn send(
     };
     mutex
         .sc
-        .client_send_message(id, state.server_destination_id?, client_body).ok()
+        .client_send_message(id, state.server_destination_id?, client_body)
+        .ok()
 }
 
 impl Display for MessageChoice {

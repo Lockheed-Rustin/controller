@@ -2,14 +2,14 @@ use std::sync::{Arc, Mutex, MutexGuard};
 
 use crossbeam_channel::{select_biased, Receiver};
 
+use super::helper;
+use crate::app::simulation_controller_ui::{ContentFile, ContentFileType};
+use crate::shared_data::SimulationData;
 use drone_network::controller::ClientEvent;
 use drone_network::message::{ClientBody, ServerBody, ServerContentBody};
 use eframe::egui::{Color32, ColorImage, TextureFilter, TextureOptions};
 use wg_2024::network::NodeId;
 use wg_2024::packet::{NodeType, Packet};
-use crate::app::simulation_controller_ui::{ContentFile, ContentFileType};
-use super::helper;
-use crate::shared_data::SimulationData;
 
 /// loop that will be running in the thread that listens for `ClientEvents`
 /// and update the shared data accordingly.
@@ -95,11 +95,7 @@ fn handle_message_fragmented(
 }
 
 /// load a file assembled by the client and put it in the shared data
-fn load_file(
-    data: &mut MutexGuard<SimulationData>,
-    name: &String,
-    v: &[u8]
-) {
+fn load_file(data: &mut MutexGuard<SimulationData>, name: &String, v: &[u8]) {
     if infer::is_image(v) {
         let image = image::load_from_memory(v).expect("Failed to load image");
         let size = [image.width() as usize, image.height() as usize];
@@ -113,15 +109,15 @@ fn load_file(
         };
 
         let texture = data.ctx.load_texture("my_texture", color_image, opt);
-        data.files.push(ContentFile{
+        data.files.push(ContentFile {
             name: name.to_string(),
             file: ContentFileType::Image(texture),
         });
     } else {
         let text = String::from_utf8_lossy(v).to_string();
-        data.files.push(ContentFile{
+        data.files.push(ContentFile {
             name: name.to_string(),
-            file: ContentFileType::Text(text)
+            file: ContentFileType::Text(text),
         });
     }
 }

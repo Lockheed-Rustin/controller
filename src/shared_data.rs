@@ -36,7 +36,7 @@ impl SimulationData {
             client_stats,
             server_stats,
             ctx,
-            files: vec![]
+            files: vec![],
         }
     }
 

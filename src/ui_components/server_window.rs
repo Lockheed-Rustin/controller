@@ -8,12 +8,7 @@ use crate::shared_data::SimulationData;
 use crate::ui_components;
 
 /// Spawns the server window.
-pub fn spawn(
-    ctx: &Context,
-    mutex: &mut MutexGuard<SimulationData>,
-    open: &mut bool,
-    id: NodeId,
-) {
+pub fn spawn(ctx: &Context, mutex: &mut MutexGuard<SimulationData>, open: &mut bool, id: NodeId) {
     Window::new(format!("Server #{id}"))
         .open(open)
         .fixed_size(vec2(400.0, 300.0))

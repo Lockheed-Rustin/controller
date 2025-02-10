@@ -3,7 +3,10 @@ use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
 
 use crossbeam_channel::Sender;
-use eframe::egui::{CentralPanel, Color32, Context, CursorIcon, Frame, Label, RichText, Sense, SidePanel, TextureHandle, TopBottomPanel, Ui, Vec2};
+use eframe::egui::{
+    CentralPanel, Color32, Context, CursorIcon, Frame, Label, RichText, Sense, SidePanel,
+    TextureHandle, TopBottomPanel, Ui, Vec2,
+};
 use eframe::CreationContext;
 use egui_graphs::{
     GraphView, LayoutRandom, LayoutStateRandom, SettingsInteraction, SettingsNavigation,
@@ -80,15 +83,9 @@ pub struct SimulationControllerUI {
     /// shared data
     pub(crate) simulation_data_ref: Option<Arc<Mutex<SimulationData>>>,
     pub(crate) nodes: HashMap<NodeId, NodeWindowState>,
-    pub (crate) files: Vec<(bool, ContentFile)>,
-    pub(crate) graph: egui_graphs::Graph<
-        (NodeId, NodeType),
-        (),
-        Undirected,
-        usize,
-        NodeShape,
-        EdgeShape,
-    >,
+    pub(crate) files: Vec<(bool, ContentFile)>,
+    pub(crate) graph:
+        egui_graphs::Graph<(NodeId, NodeType), (), Undirected, usize, NodeShape, EdgeShape>,
     pub(crate) graph_index_map: HashMap<NodeId, usize>,
 }
 
@@ -251,7 +248,10 @@ impl SimulationControllerUI {
                 self.reset_with_fair_drones();
             }
             ui.add_space(3.0);
-            if ui.button("Reset simulation with\nLockheed Rustin drone").clicked() {
+            if ui
+                .button("Reset simulation with\nLockheed Rustin drone")
+                .clicked()
+            {
                 self.reset_with_our_drone();
             }
             ui.add_space(3.0);
@@ -320,12 +320,8 @@ impl SimulationControllerUI {
         let marker = if *open { "> " } else { "" };
 
         let response = match drone_name {
-            None => {
-                ui.add(Label::new(format!("{marker}{s} #{id}")).sense(Sense::click()))
-            }
-            Some(name) => {
-                ui.add(Label::new(format!("{marker}{name} #{id}")).sense(Sense::click()))
-            }
+            None => ui.add(Label::new(format!("{marker}{s} #{id}")).sense(Sense::click())),
+            Some(name) => ui.add(Label::new(format!("{marker}{name} #{id}")).sense(Sense::click())),
         };
 
         if response.hovered() {

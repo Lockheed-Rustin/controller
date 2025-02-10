@@ -10,7 +10,11 @@ use wg_2024::packet::{NackType, NodeType, Packet, PacketType};
 
 // all nodes -----
 /// update shared data when a packet is sent.
-pub fn handle_packet_sent(sender_type: NodeType, p: &Packet, data_ref: &Arc<Mutex<SimulationData>>) {
+pub fn handle_packet_sent(
+    sender_type: NodeType,
+    p: &Packet,
+    data_ref: &Arc<Mutex<SimulationData>>,
+) {
     let (from_id, to_id) = get_from_and_to_packet_send(p);
     let log = get_log_packet_sent(p, to_id);
     let stat_index = get_packet_stat_index(&p.pack_type);
@@ -257,7 +261,10 @@ pub fn get_log_line_server_body(client_body: &ServerBody) -> String {
             }
             ServerContentBody::RespFile(v, name) => {
                 // format!("Content - Response file\n  Message content: {v:?}")
-                format!("Content - Response\n  File: {name}\n  Size: {} bytes", v.len())
+                format!(
+                    "Content - Response\n  File: {name}\n  Size: {} bytes",
+                    v.len()
+                )
             }
             ServerContentBody::ErrFileNotFound => "Error - File not found".to_string(),
         },

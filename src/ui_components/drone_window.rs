@@ -99,11 +99,7 @@ fn spawn_add_button(
                 match mutex.sc.add_edge(id, sid) {
                     Ok(()) => {
                         // push log to other node as well
-                        mutex.add_log(
-                            sid,
-                            format!("Link added with node {id}"),
-                            Color32::WHITE,
-                        );
+                        mutex.add_log(sid, format!("Link added with node {id}"), Color32::WHITE);
                         format!("Link added with node {sid}")
                     }
                     Err(e) => format!("Error in adding link with {sid}: {e:?}"),
@@ -122,10 +118,7 @@ fn spawn_pdr_slider(
     id: NodeId,
     state: &mut DroneWindowState,
 ) {
-    let response = ui.add(Slider::new(
-        &mut state.pdr_slider,
-        0.0..=1.0,
-    ));
+    let response = ui.add(Slider::new(&mut state.pdr_slider, 0.0..=1.0));
     if response.drag_stopped() || response.lost_focus() {
         let log_line = match mutex.sc.set_pdr(id, state.pdr_slider) {
             Ok(()) => format!("Changed PDR to {}", state.pdr_slider),
