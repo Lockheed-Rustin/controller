@@ -35,9 +35,7 @@ impl SimulationData {
             client_stats,
             server_stats,
             ctx,
-            // TODO: REMOVE AFTER FILES WORK
-            files: random_stuff()
-            // files: vec![]
+            files: vec![]
         }
     }
 
@@ -99,22 +97,4 @@ pub struct ServerStats {
     pub packets_received: [u64; 5],
     pub messages_assembled: u64,
     pub messages_fragmented: u64,
-}
-
-// TODO: REMOVE AFTER FILES WORK
-fn random_stuff() -> Vec<ContentFile> {
-    let mut v = vec![];
-    v.push(
-        ContentFile {
-            name: "titolo pazzo".to_string(),
-            file: ContentFileType::Text("testo pazzo\ntesto pazzo\ntesto pazzo\ntesto pazzo\ntesto pazzo\ntesto pazzo\n".to_string()),
-        },
-    );
-    v.push(
-        ContentFile {
-            name: "titolo pazzo 22222".to_string(),
-            file: ContentFileType::Text("testo pazzo 22223333333333333333333333333333333333333".to_string()),
-        },
-    );
-    v
 }

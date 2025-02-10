@@ -4,7 +4,7 @@ use crossbeam_channel::{select_biased, Receiver};
 
 use drone_networks::controller::ClientEvent;
 use drone_networks::message::{ClientBody, ServerBody, ServerContentBody};
-use eframe::egui::{Color32, ColorImage, TextureOptions};
+use eframe::egui::{Color32, ColorImage, TextureFilter, TextureOptions};
 use wg_2024::network::NodeId;
 use wg_2024::packet::{NodeType, Packet};
 use crate::app::simulation_controller_ui::{ContentFile, ContentFileType};
@@ -64,7 +64,6 @@ fn handle_message_assembled(
     let mut data = data_ref.lock().unwrap();
     data.add_log(to, log_line, Color32::WHITE);
     data.client_stats.get_mut(&to).unwrap().messages_assembled += 1;
-    // TODO: CHECK IF FILE SENT, THEN LOAD FILE AND PUT IT IN data.files
     if let ServerBody::ServerContent(scb) = body {
         if let ServerContentBody::RespFile(v) = scb {
             load_file(&mut data, v);
@@ -90,22 +89,23 @@ fn handle_message_fragmented(
     data.ctx.request_repaint();
 }
 
-// TODO: REMOVE AFTER FILES WORK
 fn load_file(
     data: &mut MutexGuard<SimulationData>,
     v: Vec<u8>
 ) {
-    // let text_bytes = include_bytes!("../../hello.txt");
-    // let text = String::from_utf8_lossy(text_bytes).to_string();
-    // println!("{}", text);
-    //
-    //
     if infer::is_image(&v) {
         let image = image::load_from_memory(&v).expect("Failed to load image");
         let size = [image.width() as usize, image.height() as usize];
         let rgba = image.to_rgba8();
         let color_image = ColorImage::from_rgba_unmultiplied(size, &rgba);
-        let texture = data.ctx.load_texture("my_texture", color_image, TextureOptions::default());
+
+        let opt = TextureOptions {
+            magnification: TextureFilter::Nearest,
+            minification: TextureFilter::Nearest,
+            ..TextureOptions::default()
+        };
+
+        let texture = data.ctx.load_texture("my_texture", color_image, opt);
         data.files.push(ContentFile{
             name: "Immagine".to_string(),
             file: ContentFileType::Image(texture),
