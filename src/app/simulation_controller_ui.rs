@@ -15,7 +15,7 @@ use egui_graphs::{
 use petgraph::stable_graph::StableUnGraph;
 use petgraph::Undirected;
 
-use petgraph::graph::NodeIndex;
+use petgraph::graph::{DefaultIx, NodeIndex};
 use wg_2024::network::NodeId;
 use wg_2024::packet::NodeType;
 
@@ -87,6 +87,7 @@ pub struct SimulationControllerUI {
     pub(crate) graph:
         egui_graphs::Graph<(NodeId, NodeType), (), Undirected, usize, NodeShape, EdgeShape>,
     pub(crate) graph_index_map: HashMap<NodeId, usize>,
+    pub(crate) graph_cache_cleared: bool,
 }
 
 impl eframe::App for SimulationControllerUI {
@@ -115,6 +116,7 @@ impl SimulationControllerUI {
             files: vec![],
             graph: egui_graphs::Graph::from(&StableUnGraph::default()),
             graph_index_map: HashMap::default(),
+            graph_cache_cleared: false,
         };
         res.reset_with_fair_drones();
         res
@@ -150,25 +152,38 @@ impl SimulationControllerUI {
         CentralPanel::default()
             .frame(Frame::default().fill(Color32::from_rgb(27, 27, 27)))
             .show(ctx, |ui| {
-                ui.add(
-                    &mut GraphView::<
+                let mut grap_view = GraphView::<
+                    (NodeId, NodeType),
+                    (),
+                    _,
+                    _,
+                    NodeShape,
+                    EdgeShape,
+                    LayoutStateRandom,
+                    LayoutRandom,
+                >::new(&mut self.graph)
+                .with_styles(&SettingsStyle::default().with_labels_always(true))
+                .with_interactions(&SettingsInteraction::default().with_dragging_enabled(true))
+                .with_navigations(
+                    &SettingsNavigation::default()
+                        .with_fit_to_screen_enabled(false)
+                        .with_zoom_and_pan_enabled(true),
+                );
+                ui.add(&mut grap_view);
+                // clear the graph cache only once after resetting
+                if !self.graph_cache_cleared {
+                    self.graph_cache_cleared = true;
+                    GraphView::<
                         (NodeId, NodeType),
-                        _,
-                        _,
-                        _,
+                        (),
+                        Undirected,
+                        DefaultIx,
                         NodeShape,
                         EdgeShape,
                         LayoutStateRandom,
                         LayoutRandom,
-                    >::new(&mut self.graph)
-                    .with_styles(&SettingsStyle::default().with_labels_always(true))
-                    .with_interactions(&SettingsInteraction::default().with_dragging_enabled(true))
-                    .with_navigations(
-                        &SettingsNavigation::default()
-                            .with_fit_to_screen_enabled(false)
-                            .with_zoom_and_pan_enabled(true),
-                    ),
-                );
+                    >::clear_cache(ui);
+                }
             });
     }
 

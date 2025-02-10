@@ -200,6 +200,8 @@ impl SimulationControllerUI {
 
     /// reset the app's topology graph, given a new `SimulationController`.
     fn reset_graph(&mut self, sc: &SimulationController) {
+        self.graph_cache_cleared = false;
+
         let sc_graph: &UnGraphMap<NodeId, ()> = sc.get_topology();
 
         let mut sg = StableUnGraph::default();
