@@ -1,5 +1,5 @@
-use drone_networks::message::ClientBody::{ClientCommunication, ClientContent};
-use drone_networks::message::{
+use drone_network::message::ClientBody::{ClientCommunication, ClientContent};
+use drone_network::message::{
     ClientBody, ClientCommunicationBody, ClientContentBody, CommunicationMessage,
 };
 use eframe::egui::{vec2, Color32, ComboBox, Context, TextEdit, TextStyle, Ui, Window};

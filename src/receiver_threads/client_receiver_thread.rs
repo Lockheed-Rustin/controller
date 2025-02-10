@@ -2,8 +2,8 @@ use std::sync::{Arc, Mutex, MutexGuard};
 
 use crossbeam_channel::{select_biased, Receiver};
 
-use drone_networks::controller::ClientEvent;
-use drone_networks::message::{ClientBody, ServerBody, ServerContentBody};
+use drone_network::controller::ClientEvent;
+use drone_network::message::{ClientBody, ServerBody, ServerContentBody};
 use eframe::egui::{Color32, ColorImage, TextureFilter, TextureOptions};
 use wg_2024::network::NodeId;
 use wg_2024::packet::{NodeType, Packet};

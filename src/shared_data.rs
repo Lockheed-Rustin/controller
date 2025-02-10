@@ -3,7 +3,7 @@ use std::collections::{HashMap, VecDeque};
 use eframe::egui::{Color32, Context};
 
 use crate::app::simulation_controller_ui::ContentFile;
-use drone_networks::controller::SimulationController;
+use drone_network::controller::SimulationController;
 use wg_2024::network::NodeId;
 
 const MAX_LOG_LENGTH: usize = 100;

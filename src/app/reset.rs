@@ -4,8 +4,8 @@ use crate::app::simulation_controller_ui::{
 use crate::shared_data::{ClientStats, DroneStats, ServerStats, SimulationData};
 use crate::receiver_threads;
 use crossbeam_channel::unbounded;
-use drone_networks::controller::SimulationController;
-use drone_networks::network::{init_network, init_network_with_drone};
+use drone_network::controller::SimulationController;
+use drone_network::network::{init_network, init_network_with_drone};
 use eframe::egui::Color32;
 use petgraph::graph::NodeIndex;
 use petgraph::graphmap::UnGraphMap;
