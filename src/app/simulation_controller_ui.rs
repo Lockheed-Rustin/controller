@@ -249,7 +249,6 @@ impl SimulationControllerUI {
     }
 
     pub fn spawn_node_windows(&mut self, ctx: &Context) {
-        // TODO: very inefficient
         let mut sorted_node_ids = self.get_all_ids();
         sorted_node_ids.sort_unstable();
 
