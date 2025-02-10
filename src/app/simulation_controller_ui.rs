@@ -22,6 +22,8 @@ use crate::ui_components::client_window::{CommunicationChoice, ContentChoice, Me
 use crate::ui_components::custom_edge::EdgeShape;
 use crate::ui_components::custom_node::NodeShape;
 
+/// ui state information about each node. The boolean represents if the window
+/// associated to the node is open or not.
 #[derive(Debug)]
 pub(crate) enum NodeWindowState {
     Drone(bool, DroneWindowState),
@@ -29,6 +31,7 @@ pub(crate) enum NodeWindowState {
     Server(bool),
 }
 
+/// window state information about each client.
 #[derive(Default, Debug)]
 pub struct ClientWindowState {
     pub message_choice: MessageChoice,
@@ -39,6 +42,7 @@ pub struct ClientWindowState {
     pub text_input: String,
 }
 
+/// window state information about each drone.
 #[derive(Default, Debug)]
 pub struct DroneWindowState {
     pub name: String,
@@ -46,22 +50,26 @@ pub struct DroneWindowState {
     pub add_link_selected_id: Option<NodeId>,
 }
 
+/// enum for representing the app's sections.
 #[derive(PartialEq, Clone, Copy)]
-
 pub(crate) enum Section {
     Control,
     Topology,
 }
 
+/// struct for storing a content file's data.
 pub enum ContentFileType {
     Image(TextureHandle),
     Text(String),
 }
+
+/// struct for storing content files to be shown.
 pub struct ContentFile {
     pub name: String,
     pub file: ContentFileType,
 }
 
+/// Main app struct.
 pub struct SimulationControllerUI {
     /// menu section
     pub(crate) section: Section,
@@ -115,6 +123,7 @@ impl SimulationControllerUI {
         res
     }
 
+    /// renders the control section of the app.
     fn control_section(&mut self, ctx: &Context) {
         self.update_id_list();
         self.update_files();
@@ -130,6 +139,7 @@ impl SimulationControllerUI {
         });
     }
 
+    /// renders the topology section of the app.
     fn topology_section(&mut self, ctx: &Context) {
         self.update_graph();
         TopBottomPanel::bottom("top-panel").show(ctx, |ui| {
@@ -165,6 +175,7 @@ impl SimulationControllerUI {
             });
     }
 
+    /// renders the menu bar for switching section.
     fn menu_bar(&mut self, ctx: &Context) {
         TopBottomPanel::top("menu")
             .frame(
@@ -180,6 +191,7 @@ impl SimulationControllerUI {
             });
     }
 
+    /// spawn a clickable label for the app's menu bar.
     fn spawn_menu_element(&mut self, ui: &mut Ui, str: &'static str, section: Section) {
         let text = if self.section == section {
             RichText::new(str).strong().underline().size(20.0)
@@ -196,6 +208,7 @@ impl SimulationControllerUI {
         ui.add_space(10.0);
     }
 
+    /// renders the sidebar of the control section.
     pub fn sidebar(&mut self, ctx: &Context) {
         SidePanel::left("left").show(ctx, |ui| {
             ui.add_space(5.0);
@@ -248,6 +261,7 @@ impl SimulationControllerUI {
         });
     }
 
+    /// spawn windows for all nodes.
     pub fn spawn_node_windows(&mut self, ctx: &Context) {
         let mut sorted_node_ids = self.get_all_ids();
         sorted_node_ids.sort_unstable();
@@ -291,6 +305,7 @@ impl SimulationControllerUI {
         }
     }
 
+    /// spawn a node list element for opening and closing node windows.
     fn spawn_node_list_element(&mut self, ui: &mut Ui, id: NodeId, s: &'static str) {
         ui.add_space(5.0);
 
@@ -322,6 +337,7 @@ impl SimulationControllerUI {
         ui.add_space(5.0);
     }
 
+    /// get all the app's stored node ids that match a given NodeType
     pub(crate) fn get_ids(&self, node_type: NodeType) -> Vec<NodeId> {
         let mut res = vec![];
         for (id, state) in &self.nodes {
@@ -346,6 +362,7 @@ impl SimulationControllerUI {
         res
     }
 
+    /// get all the app's stored node ids
     fn get_all_ids(&self) -> Vec<NodeId> {
         self.nodes.keys().copied().collect()
     }
@@ -362,6 +379,7 @@ impl SimulationControllerUI {
         }
     }
 
+    /// updates the graph rendered in the topology section.
     fn update_graph(&mut self) {
         self.update_id_list();
         // delete crashed drones
@@ -392,6 +410,7 @@ impl SimulationControllerUI {
         }
     }
 
+    /// checks for new files to display.
     fn update_files(&mut self) {
         // delete all files with closed windows
         self.files.retain(|(open, _)| *open);

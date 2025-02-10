@@ -20,13 +20,18 @@ use wg_2024::packet::NodeType;
 use lockheedrustin_drone::LockheedRustin;
 
 impl SimulationControllerUI {
+
+    /// resets the app with LockheedRustin drones.
     pub fn reset_with_our_drone(&mut self) {
         self.reset(false);
     }
+
+    /// resets the app with the drones bought during the fair.
     pub fn reset_with_fair_drones(&mut self) {
         self.reset(true);
     }
 
+    /// resets the app.
     fn reset(&mut self, random_drones: bool) {
         self.kill_old_receiving_threads();
         // delete all file windows
@@ -94,6 +99,7 @@ impl SimulationControllerUI {
         self.handles.push(handle);
     }
 
+    /// kills receiving threads from previous iteration of the simulation.
     fn kill_old_receiving_threads(&mut self) {
         // kill old receiving threads
         for s in &self.kill_senders {
@@ -108,6 +114,7 @@ impl SimulationControllerUI {
         self.kill_senders.clear();
     }
 
+    /// gets a new SimulationController.
     fn get_simulation_controller(random_drones: bool) -> SimulationController {
         let file_str = fs::read_to_string("config.toml").unwrap();
         let config: Config = toml::from_str(&file_str).unwrap();
@@ -118,6 +125,7 @@ impl SimulationControllerUI {
         }
     }
 
+    /// reset the app's information about nodes, given a new SimulationController.
     fn reset_ids(&mut self, sc: &SimulationController) {
         self.nodes.clear();
         for id in sc.get_drone_ids() {
@@ -150,6 +158,8 @@ impl SimulationControllerUI {
         }
     }
 
+    /// returns a new struct for storing logs about nodes. Assumes self has updated
+    /// information about nodes.
     fn get_new_logs(&self) -> HashMap<NodeId, VecDeque<(String, Color32)>> {
         let mut logs = HashMap::new();
         for &id in self.nodes.keys() {
@@ -158,6 +168,8 @@ impl SimulationControllerUI {
         logs
     }
 
+    /// returns a new struct for storing stats about drones. Assumes self has updated
+    /// information about nodes.
     fn get_new_drone_stats(&self) -> HashMap<NodeId, DroneStats> {
         let mut drone_stats = HashMap::new();
         for drone_id in self.get_ids(NodeType::Drone) {
@@ -165,6 +177,9 @@ impl SimulationControllerUI {
         }
         drone_stats
     }
+
+    /// returns a new struct for storing stats about clients. Assumes self has updated
+    /// information about nodes.
     fn get_new_client_stats(&self) -> HashMap<NodeId, ClientStats> {
         let mut client_stats = HashMap::new();
         for client_id in self.get_ids(NodeType::Client) {
@@ -172,6 +187,9 @@ impl SimulationControllerUI {
         }
         client_stats
     }
+
+    /// returns a new struct for storing stats about servers. Assumes self has updated
+    /// information about nodes.
     fn get_new_server_stats(&self) -> HashMap<NodeId, ServerStats> {
         let mut server_stats = HashMap::new();
         for server_id in self.get_ids(NodeType::Server) {
@@ -180,6 +198,7 @@ impl SimulationControllerUI {
         server_stats
     }
 
+    /// reset the app's topology graph, given a new SimulationController.
     fn reset_graph(&mut self, sc: &SimulationController) {
         let sc_graph: &UnGraphMap<NodeId, ()> = sc.get_topology();
 
