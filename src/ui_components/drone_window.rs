@@ -50,7 +50,7 @@ pub fn spawn(
             ui.add_space(3.0);
 
             ui.horizontal(|ui| {
-                if ui.button("Crash").clicked() && mutex.sc.crash_drone(id).is_none() {
+                if ui.button("Crash").clicked() && mutex.sc.crash_drone(id).is_err() {
                     mutex.add_log(id, "Cannot crash".to_string(), Color32::LIGHT_RED);
                 }
                 if ui.button("Clear log").clicked() {
@@ -97,7 +97,7 @@ fn spawn_add_button(
             None => "Error: id not selected".to_string(),
             Some(sid) => {
                 match mutex.sc.add_edge(id, sid) {
-                    Some(()) => {
+                    Ok(()) => {
                         // push log to other node as well
                         mutex.add_log(
                             sid,
@@ -106,7 +106,7 @@ fn spawn_add_button(
                         );
                         format!("Link added with node {sid}")
                     }
-                    None => format!("Failed to add link with node {sid}"),
+                    Err(e) => format!("Error in adding link with {sid}: {e:?}"),
                 }
             }
         };
@@ -128,8 +128,8 @@ fn spawn_pdr_slider(
     ));
     if response.drag_stopped() || response.lost_focus() {
         let log_line = match mutex.sc.set_pdr(id, state.pdr_slider) {
-            Some(()) => format!("Changed PDR to {}", state.pdr_slider),
-            None => "Failed to change PDR".to_string(),
+            Ok(()) => format!("Changed PDR to {}", state.pdr_slider),
+            Err(e) => format!("Failed to change PDR: {e:?}"),
         };
         mutex.add_log(id, log_line, Color32::WHITE);
     }
