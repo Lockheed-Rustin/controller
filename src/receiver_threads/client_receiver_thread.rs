@@ -65,8 +65,8 @@ fn handle_message_assembled(
     data.add_log(to, log_line, Color32::WHITE);
     data.client_stats.get_mut(&to).unwrap().messages_assembled += 1;
 
-    if let ServerBody::ServerContent(ServerContentBody::RespFile(ref v)) = body {
-        load_file(&mut data, v);
+    if let ServerBody::ServerContent(ServerContentBody::RespFile(ref v, name)) = body {
+        load_file(&mut data, name, v);
     }
     data.ctx.request_repaint();
 }
@@ -90,6 +90,7 @@ fn handle_message_fragmented(
 
 fn load_file(
     data: &mut MutexGuard<SimulationData>,
+    name: &String,
     v: &[u8]
 ) {
     if infer::is_image(v) {
@@ -106,13 +107,13 @@ fn load_file(
 
         let texture = data.ctx.load_texture("my_texture", color_image, opt);
         data.files.push(ContentFile{
-            name: "Immagine".to_string(),
+            name: name.to_string(),
             file: ContentFileType::Image(texture),
         });
     } else {
         let text = String::from_utf8_lossy(v).to_string();
         data.files.push(ContentFile{
-            name: "Testo".to_string(),
+            name: name.to_string(),
             file: ContentFileType::Text(text)
         });
     }

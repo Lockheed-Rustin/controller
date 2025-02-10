@@ -212,9 +212,8 @@ pub fn get_log_line_client_body(client_body: &ClientBody) -> String {
         ClientBody::ReqServerType => "Request server type".to_string(),
         ClientBody::ClientContent(ccb) => match ccb {
             ClientContentBody::ReqFilesList => "Content - Request files list".to_string(),
-            ClientContentBody::ReqFile(_) => {
-                //format!("Content - Request file\n  File: {f}")
-                "Content - Request file\n  File: [bytes]".to_string()
+            ClientContentBody::ReqFile(f) => {
+                format!("Content - Request file\n  File: {f}")
             }
         },
         ClientBody::ClientCommunication(ccb) => match ccb {
@@ -247,9 +246,9 @@ pub fn get_log_line_server_body(client_body: &ServerBody) -> String {
             ServerContentBody::RespFilesList(v) => {
                 format!("Content - Response files list\n  Message content: {v:?}")
             }
-            ServerContentBody::RespFile(_) => {
+            ServerContentBody::RespFile(v, name) => {
                 // format!("Content - Response file\n  Message content: {v:?}")
-                "Content - Response\n  File: [bytes]".to_string()
+                format!("Content - Response\n  File: {name}\n  Size: {} bytes", v.len())
             }
             ServerContentBody::ErrFileNotFound => "Error - File not found".to_string(),
         },
