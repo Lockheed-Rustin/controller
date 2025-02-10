@@ -11,7 +11,8 @@ use wg_2024::packet::{NodeType, Packet};
 use super::helper;
 use crate::shared_data::SimulationData;
 
-// ----- Server -----
+/// loop that will be running in the thread that listens for ServerEvents
+/// and update the shared data accordingly
 pub fn receiver_loop(
     data_ref: &Arc<Mutex<SimulationData>>,
     rec_client: &Receiver<ServerEvent>,
@@ -33,6 +34,7 @@ pub fn receiver_loop(
     }
 }
 
+/// update shared data based on the event
 fn handle_event(data_ref: &Arc<Mutex<SimulationData>>, event: &ServerEvent) {
     match event {
         ServerEvent::PacketSent(p) => handle_packet_sent(data_ref, p),
@@ -46,14 +48,17 @@ fn handle_event(data_ref: &Arc<Mutex<SimulationData>>, event: &ServerEvent) {
     }
 }
 
+/// update shared data when a packet is sent
 fn handle_packet_sent(data_ref: &Arc<Mutex<SimulationData>>, p: &Packet) {
     helper::handle_packet_sent(NodeType::Server, p, data_ref);
 }
 
+/// update shared data when a packet is received
 fn handle_packet_received(data_ref: &Arc<Mutex<SimulationData>>, p: &Packet, id: NodeId) {
     helper::handle_packet_received(id, NodeType::Server, p, data_ref);
 }
 
+/// update shared data when a message is assembled
 fn handle_message_assembled(
     data_ref: &Arc<Mutex<SimulationData>>,
     body: &ClientBody,
@@ -68,6 +73,7 @@ fn handle_message_assembled(
     data.ctx.request_repaint();
 }
 
+/// update shared data when a message is fragmented
 fn handle_message_fragmented(
     data_ref: &Arc<Mutex<SimulationData>>,
     body: &ServerBody,

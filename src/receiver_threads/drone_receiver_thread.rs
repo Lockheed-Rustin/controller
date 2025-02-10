@@ -8,6 +8,8 @@ use wg_2024::packet::{NodeType, Packet};
 use super::helper;
 use crate::shared_data::SimulationData;
 
+/// loop that will be running in the thread that listens for DroneEvents
+/// and update the shared data accordingly
 pub fn receiver_loop(
     data_ref: &Arc<Mutex<SimulationData>>,
     rec_client: &Receiver<DroneEvent>,
@@ -29,6 +31,7 @@ pub fn receiver_loop(
     }
 }
 
+/// update shared data based on the event
 fn handle_event(data_ref: &Arc<Mutex<SimulationData>>, event: &DroneEvent) {
     match event {
         DroneEvent::PacketSent(p) => {
@@ -43,6 +46,7 @@ fn handle_event(data_ref: &Arc<Mutex<SimulationData>>, event: &DroneEvent) {
     }
 }
 
+/// update shared data when a packet is dropped
 fn handle_packet_dropped(data_ref: &Arc<Mutex<SimulationData>>, p: &Packet) {
     let drone_id = p.routing_header.hops[p.routing_header.hop_index];
     let from_id = p.routing_header.hops[p.routing_header.hop_index - 1];
@@ -64,10 +68,12 @@ fn handle_packet_dropped(data_ref: &Arc<Mutex<SimulationData>>, p: &Packet) {
     data.ctx.request_repaint();
 }
 
+/// update shared data when a packet is sent
 fn handle_packet_sent(data_ref: &Arc<Mutex<SimulationData>>, p: &Packet) {
     helper::handle_packet_sent(NodeType::Drone, p, data_ref);
 }
 
+/// update shared data when a packet is sent to the simulation controller
 fn handle_controller_shortcut(data_ref: &Arc<Mutex<SimulationData>>, p: &Packet) {
     let data = data_ref.lock().unwrap();
     _ = data.sc.shortcut(p.clone());

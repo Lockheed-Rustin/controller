@@ -11,6 +11,8 @@ use crate::app::simulation_controller_ui::{ContentFile, ContentFileType};
 use super::helper;
 use crate::shared_data::SimulationData;
 
+/// loop that will be running in the thread that listens for ClientEvents
+/// and update the shared data accordingly
 pub fn receiver_loop(
     data_ref: &Arc<Mutex<SimulationData>>,
     rec_client: &Receiver<ClientEvent>,
@@ -32,6 +34,7 @@ pub fn receiver_loop(
     }
 }
 
+/// update shared data based on the event
 fn handle_event(data_ref: &Arc<Mutex<SimulationData>>, event: &ClientEvent) {
     match event {
         ClientEvent::PacketSent(p) => handle_packet_sent(data_ref, p),
@@ -45,14 +48,17 @@ fn handle_event(data_ref: &Arc<Mutex<SimulationData>>, event: &ClientEvent) {
     }
 }
 
+/// update shared data when a packet is sent
 fn handle_packet_sent(data_ref: &Arc<Mutex<SimulationData>>, p: &Packet) {
     helper::handle_packet_sent(NodeType::Client, p, data_ref);
 }
 
+/// update shared data when a packet is received
 fn handle_packet_received(data_ref: &Arc<Mutex<SimulationData>>, p: &Packet, id: NodeId) {
     helper::handle_packet_received(id, NodeType::Client, p, data_ref);
 }
 
+/// update shared data when a message is assembled
 fn handle_message_assembled(
     data_ref: &Arc<Mutex<SimulationData>>,
     body: &ServerBody,
@@ -64,13 +70,13 @@ fn handle_message_assembled(
     let mut data = data_ref.lock().unwrap();
     data.add_log(to, log_line, Color32::WHITE);
     data.client_stats.get_mut(&to).unwrap().messages_assembled += 1;
-
     if let ServerBody::ServerContent(ServerContentBody::RespFile(ref v, name)) = body {
         load_file(&mut data, name, v);
     }
     data.ctx.request_repaint();
 }
 
+/// update shared data when a message is fragmented
 fn handle_message_fragmented(
     data_ref: &Arc<Mutex<SimulationData>>,
     body: &ClientBody,
@@ -88,6 +94,7 @@ fn handle_message_fragmented(
     data.ctx.request_repaint();
 }
 
+/// load a file assembled by the client and put it in the shared data
 fn load_file(
     data: &mut MutexGuard<SimulationData>,
     name: &String,

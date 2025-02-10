@@ -9,6 +9,7 @@ use wg_2024::network::NodeId;
 use wg_2024::packet::{NackType, NodeType, Packet, PacketType};
 
 // all nodes -----
+/// update shared data when a packet is sent.
 pub fn handle_packet_sent(sender_type: NodeType, p: &Packet, data_ref: &Arc<Mutex<SimulationData>>) {
     let (from_id, to_id) = get_from_and_to_packet_send(p);
     let log = get_log_packet_sent(p, to_id);
@@ -35,11 +36,15 @@ pub fn handle_packet_sent(sender_type: NodeType, p: &Packet, data_ref: &Arc<Mute
     data.ctx.request_repaint();
 }
 
+/// get log for a packet being sent.
+/// a log is defined by its text and its color.
 fn get_log_packet_sent(p: &Packet, to_id: Option<NodeId>) -> Option<(String, Color32)> {
     let line = get_log_line_packet_sent(p, to_id)?;
     let color = get_log_color_packet(p)?;
     Some((line, color))
 }
+
+/// get log text for a packet being sent.
 fn get_log_line_packet_sent(p: &Packet, to_id: Option<NodeId>) -> Option<String> {
     let to_id = to_id?;
     match &p.pack_type {
@@ -52,6 +57,7 @@ fn get_log_line_packet_sent(p: &Packet, to_id: Option<NodeId>) -> Option<String>
     }
 }
 
+/// get log color given a packet.
 fn get_log_color_packet(p: &Packet) -> Option<Color32> {
     match &p.pack_type {
         PacketType::MsgFragment(_) => Some(Color32::GRAY),
@@ -61,6 +67,10 @@ fn get_log_color_packet(p: &Packet) -> Option<Color32> {
     }
 }
 
+/// get the NodeId of sender and receiver of a packet. This assumes that
+/// all nodes follow the protocol.
+/// #Panics
+/// This might panic if a node does not follow the protocol regarding packets.
 fn get_from_and_to_packet_send(p: &Packet) -> (NodeId, Option<NodeId>) {
     let from_id = if let PacketType::FloodRequest(fr) = &p.pack_type {
         fr.path_trace.last().unwrap().0
@@ -76,6 +86,7 @@ fn get_from_and_to_packet_send(p: &Packet) -> (NodeId, Option<NodeId>) {
 }
 
 // clients and servers -----
+/// update shared data when a packet is received.
 pub fn handle_packet_received(
     receiver_id: NodeId,
     receiver_type: NodeType,
@@ -109,12 +120,15 @@ pub fn handle_packet_received(
     data.ctx.request_repaint();
 }
 
+/// get log for a packet being sent.
+/// a log is defined by its text and its color.
 fn get_log_packet_received(p: &Packet, from_id: NodeId) -> Option<(String, Color32)> {
     let line = get_log_line_packet_received(p, from_id)?;
     let color = get_log_color_packet(p)?;
     Some((line, color))
 }
 
+/// get log text for a packet being sent.
 fn get_log_line_packet_received(p: &Packet, receiver_id: NodeId) -> Option<String> {
     match &p.pack_type {
         PacketType::FloodResponse(_) | PacketType::FloodRequest(_) => None,
@@ -133,6 +147,10 @@ fn get_log_line_packet_received(p: &Packet, receiver_id: NodeId) -> Option<Strin
     }
 }
 
+/// get the NodeId of sender of a packet. This assumes that
+/// all nodes follow the protocol.
+/// #Panics
+/// This might panic if a node does not follow the protocol regarding packets.
 fn get_from_packet_received(p: &Packet) -> NodeId {
     let from_id = if let PacketType::FloodRequest(fr) = &p.pack_type {
         fr.path_trace.last().unwrap().0
@@ -145,6 +163,8 @@ fn get_from_packet_received(p: &Packet) -> NodeId {
     from_id
 }
 
+/// returns true if the packet was "shortcutted" to the simulation controller.
+/// This assumes that all nodes follow the protocol.
 fn is_shortcut(p: &Packet, receiver_id: NodeId) -> bool {
     let mut is_shortcut = true;
     if p.routing_header.hops.is_empty() {
@@ -166,7 +186,7 @@ fn is_shortcut(p: &Packet, receiver_id: NodeId) -> bool {
 }
 
 // log strings and stats -----
-
+/// return the index array associated with t for updating stats about packets
 fn get_packet_stat_index(t: &PacketType) -> usize {
     match t {
         PacketType::MsgFragment(_) => 0,
@@ -177,6 +197,7 @@ fn get_packet_stat_index(t: &PacketType) -> usize {
     }
 }
 
+/// returns a static string containing the packet type name.
 fn get_packet_type_str(t: &PacketType) -> &'static str {
     match t {
         PacketType::MsgFragment(_) => "Fragment",
@@ -192,20 +213,7 @@ fn get_packet_type_str(t: &PacketType) -> &'static str {
     }
 }
 
-// fn format_path_trace(pt: &Vec<(NodeId, NodeType)>) -> String {
-//     let mut res = "[ ".to_string();
-//     for (id, t) in pt {
-//         res.push(match t {
-//             NodeType::Client => 'C',
-//             NodeType::Drone => 'D',
-//             NodeType::Server => 'S',
-//         });
-//         res.push_str(&format!("{} ", id));
-//     }
-//     res.push(']');
-//     res
-// }
-
+/// return a log text displaying the content of a ClientBody
 pub fn get_log_line_client_body(client_body: &ClientBody) -> String {
     let mut res = "  Type: ".to_string();
     let type_str = match client_body {
@@ -235,6 +243,7 @@ pub fn get_log_line_client_body(client_body: &ClientBody) -> String {
     res
 }
 
+/// return a log text displaying the content of a ServerBody
 pub fn get_log_line_server_body(client_body: &ServerBody) -> String {
     let mut res = "  Type: ".to_string();
     let type_str = match client_body {
