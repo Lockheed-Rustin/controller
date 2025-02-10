@@ -11,6 +11,7 @@ use crate::shared_data::SimulationData;
 use crate::ui_components;
 use wg_2024::network::NodeId;
 
+/// Represents the choice of the message type in the "Actions" form section.
 #[derive(PartialEq, Copy, Clone, Debug, Default)]
 pub enum MessageChoice {
     #[default]
@@ -20,6 +21,7 @@ pub enum MessageChoice {
     Communication,
 }
 
+/// Represents the choice of the content message type in the "Actions" form section.
 #[derive(PartialEq, Copy, Clone, Default, Debug)]
 pub enum ContentChoice {
     #[default]
@@ -28,6 +30,7 @@ pub enum ContentChoice {
     ReqFile,
 }
 
+/// Represents the choice of the communication message type in the "Actions" form section.
 #[derive(PartialEq, Copy, Clone, Default, Debug)]
 pub enum CommunicationChoice {
     #[default]
@@ -37,6 +40,7 @@ pub enum CommunicationChoice {
     ReqClientsList,
 }
 
+/// Spawns the client window.
 pub fn spawn(
     ctx: &Context,
     mutex: &mut MutexGuard<SimulationData>,
@@ -66,6 +70,7 @@ pub fn spawn(
         });
 }
 
+/// Spawns the form for choosing the message to be sent.
 fn spawn_message_combobox(
     ui: &mut Ui,
     mutex: &mut MutexGuard<SimulationData>,
@@ -100,6 +105,7 @@ fn spawn_message_combobox(
     }
 }
 
+/// Spawns the form for choosing the content message to be sent.
 fn spawn_content_combobox(
     ui: &mut Ui,
     mutex: &mut MutexGuard<SimulationData>,
@@ -123,6 +129,7 @@ fn spawn_content_combobox(
     };
 }
 
+/// Spawns the form for choosing the communication message to be sent.
 fn spawn_communication_combobox(
     ui: &mut Ui,
     mutex: &mut MutexGuard<SimulationData>,
@@ -161,6 +168,7 @@ fn spawn_communication_combobox(
     };
 }
 
+/// Spawns the form for sending the message.
 fn spawn_send_form(
     ui: &mut Ui,
     mutex: &mut MutexGuard<SimulationData>,
@@ -222,6 +230,7 @@ fn spawn_send_form(
     }
 }
 
+/// Spawns the drop-down menu for choosing the server id.
 fn spawn_server_combobox(ui: &mut Ui, server_ids: &[NodeId], state: &mut ClientWindowState) {
     ui.label("Server id:");
     let node_ids_copy_for_closure = server_ids.iter().copied();
@@ -243,6 +252,7 @@ fn spawn_server_combobox(ui: &mut Ui, server_ids: &[NodeId], state: &mut ClientW
         });
 }
 
+/// Spawns the drop-down menu for choosing the client id.
 fn spawn_client_combobox(ui: &mut Ui, id: NodeId, client_ids: &[NodeId], state: &mut ClientWindowState) {
     ui.label("Destination (Client) id:");
     ComboBox::from_id_salt("client")
@@ -263,6 +273,7 @@ fn spawn_client_combobox(ui: &mut Ui, id: NodeId, client_ids: &[NodeId], state: 
         });
 }
 
+/// Spawns the multiline text input.
 fn spawn_text_input_multiline(ui: &mut Ui, state: &mut ClientWindowState, width: f32) {
     ui.add(
         TextEdit::multiline(&mut state.text_input)
@@ -271,6 +282,7 @@ fn spawn_text_input_multiline(ui: &mut Ui, state: &mut ClientWindowState, width:
     );
 }
 
+/// Spawns the single line text input.
 fn spawn_text_input_singleline(ui: &mut Ui, state: &mut ClientWindowState, width: f32) {
     ui.add(
         TextEdit::singleline(&mut state.text_input)
@@ -279,6 +291,7 @@ fn spawn_text_input_singleline(ui: &mut Ui, state: &mut ClientWindowState, width
     );
 }
 
+/// Spawns the send button.
 fn spawn_send_button(
     ui: &mut Ui,
     mutex: &mut MutexGuard<SimulationData>,
@@ -302,6 +315,7 @@ fn spawn_send_button(
     }
 }
 
+/// spawns a selectable item for drop-down menus.
 fn spawn_choice<V: PartialEq + Display + Copy>(
     ui: &mut Ui,
     current_value: &mut V,
@@ -310,6 +324,7 @@ fn spawn_choice<V: PartialEq + Display + Copy>(
     ui.selectable_value(current_value, selected_value, format!("{selected_value}"));
 }
 
+/// Constructs the message with the form data and sends it.
 fn send(
     mutex: &mut MutexGuard<SimulationData>,
     id: NodeId,
