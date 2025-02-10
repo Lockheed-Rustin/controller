@@ -337,7 +337,7 @@ impl SimulationControllerUI {
         ui.add_space(5.0);
     }
 
-    /// get all the app's stored node ids that match a given NodeType
+    /// get all the app's stored node ids that match a given `NodeType`
     pub(crate) fn get_ids(&self, node_type: NodeType) -> Vec<NodeId> {
         let mut res = vec![];
         for (id, state) in &self.nodes {

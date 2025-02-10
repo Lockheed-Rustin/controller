@@ -11,8 +11,8 @@ use crate::app::simulation_controller_ui::{ContentFile, ContentFileType};
 use super::helper;
 use crate::shared_data::SimulationData;
 
-/// loop that will be running in the thread that listens for ClientEvents
-/// and update the shared data accordingly
+/// loop that will be running in the thread that listens for `ClientEvents`
+/// and update the shared data accordingly.
 pub fn receiver_loop(
     data_ref: &Arc<Mutex<SimulationData>>,
     rec_client: &Receiver<ClientEvent>,

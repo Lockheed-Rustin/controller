@@ -21,7 +21,7 @@ use lockheedrustin_drone::LockheedRustin;
 
 impl SimulationControllerUI {
 
-    /// resets the app with LockheedRustin drones.
+    /// resets the app with `LockheedRustin` drones.
     pub fn reset_with_our_drone(&mut self) {
         self.reset(false);
     }
@@ -114,7 +114,7 @@ impl SimulationControllerUI {
         self.kill_senders.clear();
     }
 
-    /// gets a new SimulationController.
+    /// gets a new `SimulationController`.
     fn get_simulation_controller(random_drones: bool) -> SimulationController {
         let file_str = fs::read_to_string("config.toml").unwrap();
         let config: Config = toml::from_str(&file_str).unwrap();
@@ -125,7 +125,7 @@ impl SimulationControllerUI {
         }
     }
 
-    /// reset the app's information about nodes, given a new SimulationController.
+    /// reset the app's information about nodes, given a new `SimulationController`.
     fn reset_ids(&mut self, sc: &SimulationController) {
         self.nodes.clear();
         for id in sc.get_drone_ids() {
@@ -198,7 +198,7 @@ impl SimulationControllerUI {
         server_stats
     }
 
-    /// reset the app's topology graph, given a new SimulationController.
+    /// reset the app's topology graph, given a new `SimulationController`.
     fn reset_graph(&mut self, sc: &SimulationController) {
         let sc_graph: &UnGraphMap<NodeId, ()> = sc.get_topology();
 

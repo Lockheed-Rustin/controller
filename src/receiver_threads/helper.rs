@@ -67,7 +67,7 @@ fn get_log_color_packet(p: &Packet) -> Option<Color32> {
     }
 }
 
-/// get the NodeId of sender and receiver of a packet. This assumes that
+/// get the `NodeId` of sender and receiver of a packet. This assumes that
 /// all nodes follow the protocol.
 /// #Panics
 /// This might panic if a node does not follow the protocol regarding packets.
@@ -147,7 +147,7 @@ fn get_log_line_packet_received(p: &Packet, receiver_id: NodeId) -> Option<Strin
     }
 }
 
-/// get the NodeId of sender of a packet. This assumes that
+/// get the `NodeId` of sender of a packet. This assumes that
 /// all nodes follow the protocol.
 /// #Panics
 /// This might panic if a node does not follow the protocol regarding packets.
@@ -213,7 +213,7 @@ fn get_packet_type_str(t: &PacketType) -> &'static str {
     }
 }
 
-/// return a log text displaying the content of a ClientBody
+/// returns a log text displaying the content of a `ClientBody`.
 pub fn get_log_line_client_body(client_body: &ClientBody) -> String {
     let mut res = "  Type: ".to_string();
     let type_str = match client_body {
@@ -243,7 +243,7 @@ pub fn get_log_line_client_body(client_body: &ClientBody) -> String {
     res
 }
 
-/// return a log text displaying the content of a ServerBody
+/// return a log text displaying the content of a `ServerBody`
 pub fn get_log_line_server_body(client_body: &ServerBody) -> String {
     let mut res = "  Type: ".to_string();
     let type_str = match client_body {
