@@ -3,10 +3,7 @@ use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
 
 use crossbeam_channel::Sender;
-use eframe::egui::{
-    CentralPanel, Color32, Context, CursorIcon, Frame, Label, RichText, Sense, SidePanel,
-    TopBottomPanel, Ui, Vec2,
-};
+use eframe::egui::{CentralPanel, Color32, Context, CursorIcon, Frame, Label, RichText, Sense, SidePanel, TextureHandle, TopBottomPanel, Ui, Vec2};
 use eframe::CreationContext;
 use egui_graphs::{
     GraphView, LayoutRandom, LayoutStateRandom, SettingsInteraction, SettingsNavigation,
@@ -56,6 +53,15 @@ pub(crate) enum Section {
     Topology,
 }
 
+pub enum ContentFileType {
+    Image(TextureHandle),
+    Text(String),
+}
+pub struct ContentFile {
+    pub name: String,
+    pub file: ContentFileType,
+}
+
 pub struct SimulationControllerUI {
     /// menu section
     pub(crate) section: Section,
@@ -66,6 +72,7 @@ pub struct SimulationControllerUI {
     /// shared data
     pub(crate) simulation_data_ref: Option<Arc<Mutex<SimulationData>>>,
     pub(crate) nodes: HashMap<NodeId, NodeWindowState>,
+    pub (crate) files: Vec<(bool, ContentFile)>,
     pub(crate) graph: egui_graphs::Graph<
         (NodeId, NodeType),
         (),
@@ -100,6 +107,7 @@ impl SimulationControllerUI {
             kill_senders: Vec::default(),
             simulation_data_ref: None,
             nodes: HashMap::default(),
+            files: vec![],
             graph: egui_graphs::Graph::from(&StableUnGraph::default()),
             graph_index_map: HashMap::default(),
         };
@@ -109,8 +117,13 @@ impl SimulationControllerUI {
 
     fn control_section(&mut self, ctx: &Context) {
         self.update_id_list();
+        self.update_files();
         // sidebar
         self.sidebar(ctx);
+        // file windows
+        for (open, fws) in &mut self.files {
+            ui_components::file_window::spawn(ctx, open, fws);
+        }
         // node windows
         CentralPanel::default().show(ctx, |_ui| {
             self.spawn_node_windows(ctx);
@@ -377,6 +390,17 @@ impl SimulationControllerUI {
             if !are_connected {
                 self.graph.add_edge(i1, i2, ());
             }
+        }
+    }
+
+    fn update_files(&mut self) {
+        // delete all files with closed windows
+        self.files.retain(|(open, _)| *open);
+        let binding = self.simulation_data_ref.clone().unwrap();
+        let mut mutex = binding.lock().unwrap();
+        // take all files from shared data
+        while let Some(file) = mutex.files.pop() {
+            self.files.push((true, file));
         }
     }
 }

@@ -9,9 +9,9 @@ use super::helper;
 use crate::shared_data::SimulationData;
 
 pub fn receiver_loop(
-    data_ref: Arc<Mutex<SimulationData>>,
-    rec_client: Receiver<DroneEvent>,
-    rec_kill: Receiver<()>,
+    data_ref: &Arc<Mutex<SimulationData>>,
+    rec_client: &Receiver<DroneEvent>,
+    rec_kill: &Receiver<()>,
 ) {
     loop {
         select_biased! {
@@ -22,23 +22,23 @@ pub fn receiver_loop(
             }
             recv(rec_client) -> packet => {
                 if let Ok(event) = packet {
-                    handle_event(&data_ref, event);
+                    handle_event(data_ref, &event);
                 }
             }
         }
     }
 }
 
-fn handle_event(data_ref: &Arc<Mutex<SimulationData>>, event: DroneEvent) {
+fn handle_event(data_ref: &Arc<Mutex<SimulationData>>, event: &DroneEvent) {
     match event {
         DroneEvent::PacketSent(p) => {
-            handle_packet_sent(data_ref, &p);
+            handle_packet_sent(data_ref, p);
         }
         DroneEvent::PacketDropped(p) => {
-            handle_packet_dropped(data_ref, &p);
+            handle_packet_dropped(data_ref, p);
         }
         DroneEvent::ControllerShortcut(p) => {
-            handle_controller_shortcut(data_ref, &p);
+            handle_controller_shortcut(data_ref, p);
         }
     }
 }

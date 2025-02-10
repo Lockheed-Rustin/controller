@@ -206,14 +206,15 @@ fn get_packet_type_str(t: &PacketType) -> &'static str {
 //     res
 // }
 
-pub fn get_log_line_client_body(client_body: ClientBody) -> String {
+pub fn get_log_line_client_body(client_body: &ClientBody) -> String {
     let mut res = "  Type: ".to_string();
     let type_str = match client_body {
         ClientBody::ReqServerType => "Request server type".to_string(),
         ClientBody::ClientContent(ccb) => match ccb {
             ClientContentBody::ReqFilesList => "Content - Request files list".to_string(),
-            ClientContentBody::ReqFile(f) => {
-                format!("Content - Request file\n  File: {f}")
+            ClientContentBody::ReqFile(_) => {
+                //format!("Content - Request file\n  File: {f}")
+                "Content - Request file\n  File: [bytes]".to_string()
             }
         },
         ClientBody::ClientCommunication(ccb) => match ccb {
@@ -235,7 +236,7 @@ pub fn get_log_line_client_body(client_body: ClientBody) -> String {
     res
 }
 
-pub fn get_log_line_server_body(client_body: ServerBody) -> String {
+pub fn get_log_line_server_body(client_body: &ServerBody) -> String {
     let mut res = "  Type: ".to_string();
     let type_str = match client_body {
         ServerBody::RespServerType(t) => {
@@ -246,8 +247,10 @@ pub fn get_log_line_server_body(client_body: ServerBody) -> String {
             ServerContentBody::RespFilesList(v) => {
                 format!("Content - Response files list\n  Message content: {v:?}")
             }
-            ServerContentBody::RespFile(v) => {
-                format!("Content - Response files list\n  Message content: {v:?}")
+            ServerContentBody::RespFile(_) => {
+                // format!("Content - Response file\n  Message content: {v:?}")
+                "Content - Response\n  File: [bytes]".to_string()
+
             }
             ServerContentBody::ErrFileNotFound => "Error - File not found".to_string(),
         },

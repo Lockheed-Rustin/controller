@@ -2,6 +2,7 @@ use std::collections::{HashMap, VecDeque};
 
 use eframe::egui::{Color32, Context};
 
+use crate::app::simulation_controller_ui::ContentFile;
 use drone_networks::controller::SimulationController;
 use wg_2024::network::NodeId;
 
@@ -14,6 +15,7 @@ pub struct SimulationData {
     pub client_stats: HashMap<NodeId, ClientStats>,
     pub server_stats: HashMap<NodeId, ServerStats>,
     pub ctx: Context,
+    pub files: Vec<ContentFile>,
 }
 
 impl SimulationData {
@@ -33,6 +35,7 @@ impl SimulationData {
             client_stats,
             server_stats,
             ctx,
+            files: vec![]
         }
     }
 

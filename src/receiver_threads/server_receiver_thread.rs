@@ -13,9 +13,9 @@ use crate::shared_data::SimulationData;
 
 // ----- Server -----
 pub fn receiver_loop(
-    data_ref: Arc<Mutex<SimulationData>>,
-    rec_client: Receiver<ServerEvent>,
-    rec_kill: Receiver<()>,
+    data_ref: &Arc<Mutex<SimulationData>>,
+    rec_client: &Receiver<ServerEvent>,
+    rec_kill: &Receiver<()>,
 ) {
     loop {
         select_biased! {
@@ -26,22 +26,22 @@ pub fn receiver_loop(
             }
             recv(rec_client) -> packet => {
                 if let Ok(event) = packet {
-                    handle_event(&data_ref, event);
+                    handle_event(data_ref, &event);
                 }
             }
         }
     }
 }
 
-fn handle_event(data_ref: &Arc<Mutex<SimulationData>>, event: ServerEvent) {
+fn handle_event(data_ref: &Arc<Mutex<SimulationData>>, event: &ServerEvent) {
     match event {
-        ServerEvent::PacketSent(p) => handle_packet_sent(data_ref, &p),
-        ServerEvent::PacketReceived(p, id) => handle_packet_received(data_ref, &p, id),
+        ServerEvent::PacketSent(p) => handle_packet_sent(data_ref, p),
+        ServerEvent::PacketReceived(p, id) => handle_packet_received(data_ref, p, *id),
         ServerEvent::MessageAssembled { body, from, to } => {
-            handle_message_assembled(data_ref, body, from, to);
+            handle_message_assembled(data_ref, body, *from, *to);
         }
         ServerEvent::MessageFragmented { body, from, to } => {
-            handle_message_fragmented(data_ref, body, from, to);
+            handle_message_fragmented(data_ref, body, *from, *to);
         }
     }
 }
@@ -56,7 +56,7 @@ fn handle_packet_received(data_ref: &Arc<Mutex<SimulationData>>, p: &Packet, id:
 
 fn handle_message_assembled(
     data_ref: &Arc<Mutex<SimulationData>>,
-    body: ClientBody,
+    body: &ClientBody,
     from: NodeId,
     to: NodeId,
 ) {
@@ -70,7 +70,7 @@ fn handle_message_assembled(
 
 fn handle_message_fragmented(
     data_ref: &Arc<Mutex<SimulationData>>,
-    body: ServerBody,
+    body: &ServerBody,
     from: NodeId,
     to: NodeId,
 ) {
