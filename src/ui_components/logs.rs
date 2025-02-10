@@ -7,6 +7,7 @@ use wg_2024::network::NodeId;
 use crate::shared_data::SimulationData;
 use crate::ui_components::text::spawn_white_heading;
 
+/// spawns a scroll area containing logs for the node with given id
 pub fn spawn(ui: &mut Ui, mutex: &MutexGuard<SimulationData>, id: NodeId) {
     spawn_white_heading(ui, "History");
     ui.add_space(5.0);

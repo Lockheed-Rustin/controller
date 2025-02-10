@@ -5,6 +5,7 @@ use petgraph::{stable_graph::IndexType, EdgeType};
 const COLOR: Color32 = Color32::from_rgb(70, 70, 70);
 const WIDTH: f32 = 3.0;
 
+/// Struct for rendering a custom edge in the Topology section
 #[derive(Clone)]
 pub struct EdgeShape {
     default_impl: DefaultEdgeShape,

@@ -1,6 +1,7 @@
 use crate::app::simulation_controller_ui::{ContentFile, ContentFileType};
 use eframe::egui::{vec2, Context, Image, ScrollArea, Window};
 
+/// Spawns a window containing a file.
 pub fn spawn(
     ctx: &Context,
     open: &mut bool,
